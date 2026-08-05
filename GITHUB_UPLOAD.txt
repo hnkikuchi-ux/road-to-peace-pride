@@ -1,0 +1,5 @@
+GitHubの「giin-home-free」リポジトリで Add file → Upload files を押し、
+このフォルダ内のファイルとフォルダをすべてアップロードしてください。
+
+アップロード後、README.mdの先頭に表示される
+「Deploy to Cloudflare」ボタンを押します。

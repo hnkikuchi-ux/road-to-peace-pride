@@ -1,0 +1,29 @@
+{
+  "name": "giin-home-cloud-pilot",
+  "version": "1.0.0",
+  "description": "地方議員がスマホから個別ホームページを更新し、SNS共有もできるCloudflare Workersアプリ",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --check src/index.js",
+    "dev": "wrangler dev",
+    "db:migrations:apply": "wrangler d1 migrations apply DB --remote",
+    "deploy": "npm run db:migrations:apply && wrangler deploy"
+  },
+  "cloudflare": {
+    "bindings": {
+      "DB": {
+        "description": "議員プロフィール、政策、実績、活動報告を保存するD1データベースです。Cloudflareが自動作成します。"
+      },
+      "MEDIA": {
+        "description": "プロフィール写真と活動写真を保存するKV名前空間です。Cloudflareが自動作成します。"
+      },
+      "SETUP_KEY": {
+        "description": "試用議員を追加する管理者専用パスワードです。英字・数字・記号を組み合わせ、12文字以上で設定してください。"
+      }
+    }
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
