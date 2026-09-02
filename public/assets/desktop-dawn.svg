@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100" role="img" aria-label="夜明けの山々と金色の道">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#040b1d"/>
+    <stop offset=".48" stop-color="#0b1b43"/>
+    <stop offset=".72" stop-color="#22265b"/>
+    <stop offset="1" stop-color="#080f25"/>
+  </linearGradient>
+  <radialGradient id="dawn" cx="50%" cy="64%" r="34%">
+    <stop offset="0" stop-color="#fff4c8" stop-opacity="1"/>
+    <stop offset=".08" stop-color="#ffd874" stop-opacity=".98"/>
+    <stop offset=".23" stop-color="#b7732c" stop-opacity=".42"/>
+    <stop offset=".52" stop-color="#6958aa" stop-opacity=".14"/>
+    <stop offset="1" stop-color="#0b1632" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="mountL" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#111a3b"/>
+    <stop offset=".55" stop-color="#202450"/>
+    <stop offset="1" stop-color="#090f25"/>
+  </linearGradient>
+  <linearGradient id="mountR" x1="1" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#181641"/>
+    <stop offset=".48" stop-color="#29255a"/>
+    <stop offset="1" stop-color="#080e22"/>
+  </linearGradient>
+  <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#fff6c6"/>
+    <stop offset=".2" stop-color="#f8cd65"/>
+    <stop offset=".65" stop-color="#c88328"/>
+    <stop offset="1" stop-color="#6c3d14" stop-opacity=".2"/>
+  </linearGradient>
+  <linearGradient id="mist" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#8176cf" stop-opacity="0"/>
+    <stop offset=".5" stop-color="#a991d8" stop-opacity=".22"/>
+    <stop offset="1" stop-color="#8176cf" stop-opacity="0"/>
+  </linearGradient>
+  <filter id="blur24"><feGaussianBlur stdDeviation="24"/></filter>
+  <filter id="blur10"><feGaussianBlur stdDeviation="10"/></filter>
+  <filter id="glow"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="2.2"/></filter>
+</defs>
+<rect width="900" height="1100" fill="url(#sky)"/>
+<rect width="900" height="1100" fill="url(#dawn)"/>
+
+<!-- stars -->
+<g fill="#f8e8b0" opacity=".72">
+  <circle cx="112" cy="151" r="1.5"/><circle cx="201" cy="97" r="1"/><circle cx="325" cy="174" r="1.3"/>
+  <circle cx="627" cy="118" r="1.2"/><circle cx="751" cy="188" r="1.5"/><circle cx="826" cy="92" r=".9"/>
+  <circle cx="158" cy="287" r=".9"/><circle cx="707" cy="272" r="1"/><circle cx="568" cy="215" r=".8"/>
+</g>
+<g stroke="#f0cf76" stroke-width="1" opacity=".62">
+  <path d="M93 225h14M100 218v14"/><path d="M770 337h18M779 328v18"/><path d="M688 183h10M693 178v10"/>
+</g>
+
+<!-- atmospheric cloud layers -->
+<ellipse cx="450" cy="566" rx="255" ry="72" fill="#5e57a1" opacity=".18" filter="url(#blur24)"/>
+<path d="M85 550 C190 492 280 530 350 506 C405 487 462 495 510 519 C590 559 676 499 824 552 L824 620 L85 620Z" fill="url(#mist)" filter="url(#blur10)" opacity=".72"/>
+<path d="M70 632 C188 584 282 604 356 575 C401 557 448 552 500 571 C574 597 683 575 836 626" fill="none" stroke="#b1a0dc" stroke-width="16" stroke-linecap="round" opacity=".1" filter="url(#blur10)"/>
+
+<!-- distant mountains -->
+<path d="M0 660 L86 585 L150 619 L250 508 L317 581 L395 522 L456 595 L523 522 L588 584 L677 496 L760 588 L842 542 L900 604 L900 850 L0 850Z" fill="#17214a" opacity=".78"/>
+<path d="M0 721 L138 586 L235 662 L328 565 L442 682 L565 562 L673 664 L788 562 L900 675 L900 890 L0 890Z" fill="#101936" opacity=".9"/>
+
+<!-- foreground valleys -->
+<path d="M0 684 C137 624 214 668 324 730 C372 758 404 783 445 815 L445 1100 L0 1100Z" fill="url(#mountL)"/>
+<path d="M900 675 C764 625 682 671 580 729 C533 756 495 786 455 817 L455 1100 L900 1100Z" fill="url(#mountR)"/>
+<path d="M0 789 C126 749 224 780 343 857 L357 1100 L0 1100Z" fill="#090f24" opacity=".88"/>
+<path d="M900 782 C776 747 675 783 558 856 L541 1100 L900 1100Z" fill="#080e22" opacity=".9"/>
+
+<!-- dawn source -->
+<circle cx="450" cy="642" r="54" fill="#ffd772" opacity=".22" filter="url(#blur24)"/>
+<circle cx="450" cy="643" r="24" fill="#fff1b3" opacity=".72" filter="url(#blur10)"/>
+<ellipse cx="450" cy="651" rx="14" ry="32" fill="#fff8dc" opacity=".96" filter="url(#glow)"/>
+
+<!-- winding road of light -->
+<path d="M450 664 C425 696 502 716 457 746 C413 775 495 793 449 825 C405 854 476 881 435 916 C404 944 462 981 422 1044" fill="none" stroke="#4e2e13" stroke-width="23" stroke-linecap="round" opacity=".4" filter="url(#soft)"/>
+<path d="M450 664 C425 696 502 716 457 746 C413 775 495 793 449 825 C405 854 476 881 435 916 C404 944 462 981 422 1044" fill="none" stroke="url(#road)" stroke-width="11" stroke-linecap="round" filter="url(#glow)"/>
+<path d="M450 666 C432 694 491 714 456 742 C429 765 483 789 451 815 C425 838 466 867 439 896" fill="none" stroke="#fff7c7" stroke-width="3" stroke-linecap="round" opacity=".92"/>
+
+<!-- subtle gold ambient dust -->
+<g fill="#e8bf5e" opacity=".42">
+  <circle cx="371" cy="689" r="1.2"/><circle cx="521" cy="711" r="1"/><circle cx="346" cy="748" r=".9"/>
+  <circle cx="563" cy="772" r="1.1"/><circle cx="393" cy="843" r="1.3"/><circle cx="511" cy="900" r=".9"/>
+</g>
+
+<!-- edge vignette -->
+<rect x="0" y="0" width="900" height="1100" fill="none" stroke="#cda54d" stroke-width="1.2" opacity=".22"/>
+<rect x="18" y="18" width="864" height="1064" fill="none" stroke="#cda54d" stroke-width=".6" opacity=".1"/>
+</svg>
