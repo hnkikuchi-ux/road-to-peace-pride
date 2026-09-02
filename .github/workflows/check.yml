@@ -24,6 +24,7 @@ jobs:
           node --check src/ui-enhancer.js
           node --check src/top-bg-enhancer.js
           node --check src/motion-enhancer.js
+          node --check src/responsive-enhancer.js
           node --check src/touch-safety.js
           node --check public/zip-store.js
       - name: Verify required public files
@@ -43,15 +44,18 @@ jobs:
           grep -Fq "url('/assets/top-cover.webp')" src/top-bg-enhancer.js
           grep -Fq 'border:0!important' src/top-bg-enhancer.js
           grep -Fq "aria-label','閲覧パスワード" src/top-bg-enhancer.js
-      - name: Verify premium motion system
+      - name: Verify premium motion and responsive system
         run: |
           grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
-          grep -Fq "import app from './motion-enhancer.js'" src/touch-safety.js
+          grep -Fq "import app from './motion-enhancer.js'" src/responsive-enhancer.js
+          grep -Fq "import app from './responsive-enhancer.js'" src/touch-safety.js
           grep -Fq '記録をひらく' src/motion-enhancer.js
           grep -Fq '私の記録を綴る' src/motion-enhancer.js
           grep -Fq 'rppRipple' src/motion-enhancer.js
           grep -Fq 'prefers-reduced-motion' src/motion-enhancer.js
           grep -Fq 'rpp-pressed' src/motion-enhancer.js
+          grep -Fq 'editorial composition' src/responsive-enhancer.js
+          grep -Fq '@media (min-width:900px)' src/responsive-enhancer.js
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
@@ -61,7 +65,7 @@ jobs:
           node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
       - name: Verify security and UI enhancer routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/touch-safety.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('motion + touch-safe wrapper active; security routes preserved')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/touch-safety.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('responsive + motion + touch-safe wrapper active; security routes preserved')"
           grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
           grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
           grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
