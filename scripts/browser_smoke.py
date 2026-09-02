@@ -73,11 +73,15 @@ try:
     visible(driver,'#otp').send_keys(otp)
     click(driver,'#verify')
     visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor without viewer password')
-    for field,value in [('soku','テスト総区'),('bunku',''),('honbu','テスト本部'),('shibu','テスト支部'),('name','ブラウザ確認'),('title','動作確認用下書き'),('body','これは公開されないPREVIEW動作確認用の入力です。')]:
+    org=driver.find_element(By.ID,'org')
+    if org.tag_name.lower()!='input': fail('organization is not a free-text input')
+    if driver.find_elements(By.ID,'soku') or driver.find_elements(By.ID,'bunku') or driver.find_elements(By.ID,'honbu') or driver.find_elements(By.ID,'shibu'):
+        fail('legacy organization fields are still visible')
+    if driver.find_elements(By.ID,'category'): fail('category field is still visible')
+    if driver.find_elements(By.ID,'export'): fail('manual export button is still visible')
+    ok('author form uses one organization field with no category/export button')
+    for field,value in [('org','テスト総区 テスト本部 テスト支部'),('name','ブラウザ確認'),('title','動作確認用下書き'),('body','これは公開されないPREVIEW動作確認用の入力です。')]:
         el=driver.find_element(By.ID,field); el.clear(); el.send_keys(value)
-    for field in ('soku','bunku','honbu','shibu'):
-        if driver.find_element(By.ID,field).tag_name.lower()!='input': fail(f'{field} is not a free-text input')
-    ok('organization fields are free-text inputs')
     click(driver,'#save')
     WebDriverWait(driver,WAIT).until(lambda d:'端末' in d.find_element(By.ID,'savemsg').text or 'PREVIEW' in d.find_element(By.ID,'savemsg').text)
     ok('preview draft save stays device-side')
