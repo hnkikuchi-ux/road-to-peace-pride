@@ -24,6 +24,7 @@ function randomHex(bytes=32){
 }
 function sessionCookie(name,token,maxAge){return `${name}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`}
 function clearCookie(name){return `${name}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`}
+function clientIp(request){return request.headers.get('CF-Connecting-IP')||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown'}
 
 async function ensureGuardSchema(env){
   if(!guardReady){
@@ -42,7 +43,10 @@ async function settingMap(env){
   const rows=(await env.DB.prepare('SELECT key,value FROM rpp_settings').all()).results||[];
   const out={};for(const r of rows)out[r.key]=r.value??'';return out;
 }
-function isPreview(s){return (s.site_mode||'preview')!=='production'}
+function isPreview(env,s){
+  if(String(env.FORCE_PREVIEW||'').toLowerCase()==='true')return true;
+  return (s.site_mode||'preview')!=='production';
+}
 function previewWritesAllowed(env,s){return String(env.ALLOW_PREVIEW_SUBMISSIONS||s.preview_submissions||'false').toLowerCase()==='true'}
 async function validSession(env,request,kind,cookieName){
   await ensureGuardSchema(env);
@@ -64,9 +68,9 @@ async function validFullAdminPassword(env,s,supplied){
   return false;
 }
 async function requireFullAdmin(env,request){return validSession(env,request,'admin_full','rpp_admin_full')}
+async function responseJson(response){try{return await response.clone().json()}catch{return {}}}
 async function appendJson(response,extra){
-  let data={};try{data=await response.clone().json()}catch{return response}
-  const h=new Headers(response.headers);h.set('Content-Type','application/json; charset=utf-8');
+  const data=await responseJson(response);const h=new Headers(response.headers);h.set('Content-Type','application/json; charset=utf-8');
   return new Response(JSON.stringify({...data,...extra}),{status:response.status,headers:h});
 }
 async function consumeRateLimit(env,key,limit,windowMs){
@@ -81,30 +85,33 @@ async function consumeRateLimit(env,key,limit,windowMs){
   return true;
 }
 async function checkOtpRate(env,request,email){
-  const ip=request.headers.get('CF-Connecting-IP')||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
-  const [emailKey,ipKey]=await Promise.all([sha256(`otp-email:${String(email).toLowerCase()}`),sha256(`otp-ip:${ip}`)]);
-  const emailOk=await consumeRateLimit(env,emailKey,6,60*60*1000);
-  if(!emailOk)return {ok:false,error:'認証コードの送信回数が多いため、しばらく待ってからお試しください。'};
-  const ipOk=await consumeRateLimit(env,ipKey,200,60*60*1000);
-  if(!ipOk)return {ok:false,error:'この接続元からの認証要求が多いため、しばらく待ってからお試しください。'};
+  const [emailKey,ipKey]=await Promise.all([sha256(`otp-email:${String(email).toLowerCase()}`),sha256(`otp-ip:${clientIp(request)}`)]);
+  if(!await consumeRateLimit(env,emailKey,6,60*60*1000))return {ok:false,error:'認証コードの送信回数が多いため、しばらく待ってからお試しください。'};
+  if(!await consumeRateLimit(env,ipKey,200,60*60*1000))return {ok:false,error:'この接続元からの認証要求が多いため、しばらく待ってからお試しください。'};
   return {ok:true};
+}
+async function checkAdminRate(env,request){
+  const key=await sha256(`admin-login:${clientIp(request)}`);
+  return consumeRateLimit(env,key,20,15*60*1000);
 }
 
 export default {
   async fetch(request,env){
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
     try{
-      const s=await settingMap(env),preview=isPreview(s),allowPreviewWrites=previewWritesAllowed(env,s);
+      const s=await settingMap(env),preview=isPreview(env,s),allowPreviewWrites=previewWritesAllowed(env,s);
 
-      if(Math.random()<0.02){
-        env.DB.prepare('DELETE FROM rpp_rate_limits WHERE expires_at<?').bind(new Date().toISOString()).run().catch(()=>{});
+      if(Math.random()<0.02)env.DB.prepare('DELETE FROM rpp_rate_limits WHERE expires_at<?').bind(new Date().toISOString()).run().catch(()=>{});
+
+      if(path==='/status'||path==='/status.html'){
+        if(!await requireFullAdmin(env,request))return Response.redirect(new URL('/admin.html',request.url),302);
+        return env.ASSETS.fetch(request);
       }
 
       if(path==='/api/admin/login'&&request.method==='POST'){
+        if(!await checkAdminRate(env,request))return json({error:'管理者ログインの試行回数が多いため、15分ほど待ってからお試しください。'},429);
         const b=await request.clone().json().catch(()=>({}));
-        if(!await validFullAdminPassword(env,s,b.password)){
-          return json({error:'管理者パスワードを確認してください。初回はCloudflareのSETUP_KEYを使用してください。'},401);
-        }
+        if(!await validFullAdminPassword(env,s,b.password))return json({error:'管理者パスワードを確認してください。初回はCloudflareのSETUP_KEYを使用してください。'},401);
         const base=await baseWorker.fetch(request,env);
         if(!base.ok)return base;
         const token=await createFullAdminSession(env),h=new Headers(base.headers);
@@ -133,9 +140,15 @@ export default {
         return json({error:'PREVIEW MODEでは安全のためクラウドへの原稿・写真保存を停止しています。入力内容はこの端末に保存されます。'},403);
       }
 
-      if((path==='/api/config'||path==='/api/health')&&request.method==='GET'){
-        const base=await baseWorker.fetch(request,env);
-        return appendJson(base,{previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v2',authorOtpDirect:true,otpRateLimited:true});
+      if(path==='/api/config'&&request.method==='GET'){
+        const base=await baseWorker.fetch(request,env),d=await responseJson(base);
+        return json({preview:Boolean(d.preview),siteMode:d.siteMode||'preview',submissionDeadline:d.submissionDeadline||'',deadlinePassed:Boolean(d.deadlinePassed),bookOpen:d.bookOpen!==false,viewerPasswordConfigured:Boolean(d.viewerPasswordConfigured),securityGuard:'v3'});
+      }
+
+      if(path==='/api/health'&&request.method==='GET'){
+        const base=await baseWorker.fetch(request,env),d=await responseJson(base),admin=await requireFullAdmin(env,request);
+        if(admin)return json({...d,previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v3',authorOtpDirect:true,otpRateLimited:true,diagnosticsProtected:true});
+        return json({ok:Boolean(d.ok),preview:Boolean(d.preview),bookOpen:d.bookOpen!==false,storageConfigured:Boolean(d.storageConfigured),securityGuard:'v3',authorOtpDirect:true,otpRateLimited:true,adminDemoDisabled:true,previewSubmissionsAllowed:allowPreviewWrites,diagnosticsProtected:true});
       }
 
       return baseWorker.fetch(request,env);
