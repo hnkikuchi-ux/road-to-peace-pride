@@ -6,11 +6,15 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
-BASE=os.environ.get('RPP_BASE_URL','https://giin-home-cloud-pilot.hn-kikuchi.workers.dev')
+BASE=os.environ.get('RPP_BASE_URL','https://road-to-peace-pride.hn-kikuchi.workers.dev')
 OUT=Path(os.environ.get('RPP_SCREENSHOT_DIR','artifacts/screens'));OUT.mkdir(parents=True,exist_ok=True)
 
 def wait_visible(d,sel): return WebDriverWait(d,20).until(EC.visibility_of_element_located((By.CSS_SELECTOR,sel)))
 def ok(msg): print('  ✓ '+msg,flush=True)
+
+def inside_viewport(d,el,tolerance=2):
+    r=el.rect; vw=float(d.execute_script('return window.innerWidth'))
+    return r['x']>=-tolerance and r['x']+r['width']<=vw+tolerance
 
 opt=Options();opt.add_argument('--headless=new');opt.add_argument('--no-sandbox');opt.add_argument('--disable-dev-shm-usage');opt.add_argument('--lang=ja-JP')
 d=webdriver.Chrome(options=opt)
@@ -32,10 +36,14 @@ try:
     WebDriverWait(d,20).until(lambda x:x.execute_script("return window.innerWidth>=900 && getComputedStyle(document.querySelector('#gate .gate-card')).height!=='auto'"))
     rect=card.rect
     assert rect['width']>900, rect
+    assert inside_viewport(d,card), ('desktop card clipped',rect,d.execute_script('return window.innerWidth'))
     title=wait_visible(d,'#rppDesktopCopy .title'); assert 'PEACE PRIDE' in title.text
+    assert inside_viewport(d,title), ('desktop title clipped',title.rect)
     assert wait_visible(d,'#rppDesktopCopy .jp').text.strip()=='9.12までの挑戦と誓いの記録'
-    pw=wait_visible(d,'#pw'); assert pw.rect['x']>700
-    ok('desktop uses wide editorial two-column composition with live title')
+    pw=wait_visible(d,'#pw'); assert pw.rect['x']>700 and inside_viewport(d,pw), ('password control clipped',pw.rect)
+    unlock=wait_visible(d,'#unlock'); assert inside_viewport(d,unlock), ('unlock control clipped',unlock.rect)
+    author=wait_visible(d,'#gateAuthorLink'); assert inside_viewport(d,author), ('author link clipped',author.rect)
+    ok('desktop two-column composition stays fully inside viewport')
     d.save_screenshot(str(OUT/'06-desktop-editorial-login.png'))
     print('MOTION / DESKTOP QA PASSED',flush=True)
 finally:
