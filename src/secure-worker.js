@@ -27,21 +27,7 @@ function clearCookie(name){return `${name}=; Path=/; HttpOnly; Secure; SameSite=
 
 async function ensureGuardSchema(env){
   if(!guardReady){
-    guardReady=env.DB.exec(`
-      CREATE TABLE IF NOT EXISTS rpp_sessions(
-        token_hash TEXT PRIMARY KEY,
-        kind TEXT NOT NULL,
-        subject TEXT,
-        expires_at TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS rpp_settings(key TEXT PRIMARY KEY,value TEXT);
-      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('site_mode','preview');
-      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_hash','');
-      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_salt','');
-      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('preview_submissions','false');
-      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_guard_v1','0');
-    `).then(async()=>{
+    guardReady=env.DB.exec(`CREATE TABLE IF NOT EXISTS rpp_sessions(token_hash TEXT PRIMARY KEY,kind TEXT NOT NULL,subject TEXT,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS rpp_settings(key TEXT PRIMARY KEY,value TEXT);\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('site_mode','preview');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_hash','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_salt','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('preview_submissions','false');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_guard_v1','0');`).then(async()=>{
       const marker=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='admin_guard_v1'").first();
       if(String(marker?.value||'0')!=='1'){
         await env.DB.prepare("DELETE FROM rpp_sessions WHERE kind='admin' OR kind='admin_full'").run();
