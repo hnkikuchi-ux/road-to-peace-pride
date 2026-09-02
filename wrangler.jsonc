@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "road-to-peace-pride",
-  "main": "src/touch-safety.js",
+  "main": "src/exact-cover.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
