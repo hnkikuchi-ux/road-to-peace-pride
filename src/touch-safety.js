@@ -1,4 +1,4 @@
-import app from './final-polish.js';
+import app from './final-polish-v2.js';
 
 export default {
   async fetch(request,env,ctx){
