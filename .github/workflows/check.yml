@@ -17,8 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm ci
-      - run: npm run check
+      - name: Check Worker JavaScript syntax
+        run: node --check src/rpp-worker.js
+      - name: Validate organization JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('public/organization-master.json','utf8')); console.log('organization-master.json OK')"
       - name: Verify required public files
         run: |
           test -f public/index.html
@@ -26,3 +28,4 @@ jobs:
           test -f public/admin.html
           test -f public/status.html
           test -f public/organization-master.json
+          test -f public/version.json
