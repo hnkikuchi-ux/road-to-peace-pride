@@ -66,6 +66,8 @@ async function ensureSchema(env){
       INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('submission_deadline','');
       INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('auto_publish','true');
       INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('book_open','true');
+      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('viewer_password_hash','');
+      INSERT OR IGNORE INTO rpp_settings(key,value) VALUES('viewer_password_salt','');
     `);
   }
   return schemaReady;
@@ -73,7 +75,7 @@ async function ensureSchema(env){
 
 async function settings(env){
   const rows=(await env.DB.prepare('SELECT key,value FROM rpp_settings').all()).results||[];
-  const out={site_mode:'preview',target_count:'300',submission_deadline:'',auto_publish:'true',book_open:'true'};
+  const out={site_mode:'preview',target_count:'300',submission_deadline:'',auto_publish:'true',book_open:'true',viewer_password_hash:'',viewer_password_salt:''};
   for(const r of rows)out[r.key]=r.value??'';
   return out;
 }
@@ -96,7 +98,7 @@ function publicConfig(env,s){
     autoPublish:String(s.auto_publish)!=='false',
     bookOpen:String(s.book_open)!=='false',
     emailConfigured:Boolean(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL),
-    viewerPasswordConfigured:Boolean(env.VIEWER_PASSWORD),
+    viewerPasswordConfigured:Boolean(env.VIEWER_PASSWORD||s.viewer_password_hash),
     adminPasswordConfigured:Boolean(env.ADMIN_PASSWORD||env.SETUP_KEY)
   };
 }
@@ -137,9 +139,13 @@ async function api(request,env,url,path){
 
   if(path==='/api/viewer/login'&&request.method==='POST'){
     if(!cfg.bookOpen)return json({error:'現在、文集の閲覧を一時停止しています。'},403);
-    const body=await request.json().catch(()=>({}));const expected=env.VIEWER_PASSWORD||(preview?'demo':'');
-    if(!expected)return json({error:'閲覧パスワードが未設定です。'},503);
-    if(String(body.password||'')!==String(expected))return json({error:'パスワードを確認してください。'},401);
+    const body=await request.json().catch(()=>({}));const supplied=String(body.password||'');
+    let valid=false;
+    if(env.VIEWER_PASSWORD)valid=supplied===String(env.VIEWER_PASSWORD);
+    else if(s.viewer_password_hash&&s.viewer_password_salt)valid=(await sha256(`${s.viewer_password_salt}:${supplied}`))===s.viewer_password_hash;
+    else if(preview)valid=supplied==='demo';
+    else return json({error:'閲覧パスワードが未設定です。'},503);
+    if(!valid)return json({error:'パスワードを確認してください。'},401);
     const token=await createSession(env,'viewer',null,60*60*24*7);return json({ok:true,preview},200,{'Set-Cookie':sessionCookie('rpp_viewer',token,60*60*24*7)});
   }
   if(path==='/api/viewer/logout'&&request.method==='POST'){await deleteSession(env,request,'rpp_viewer');return json({ok:true},200,{'Set-Cookie':clearCookie('rpp_viewer')})}
@@ -210,9 +216,14 @@ async function api(request,env,url,path){
   }
   if(path==='/api/admin/settings'){
     if(!await requireAdmin(env,request))return json({error:'管理者認証が必要です。'},401);
-    if(request.method==='GET')return json({...s,...cfg});
+    if(request.method==='GET'){const {viewer_password_hash,viewer_password_salt,...safeSettings}=s;return json({...safeSettings,...cfg})}
     if(request.method==='PUT'){
       const b=await request.json().catch(()=>({}));
+      let pendingViewerHash=s.viewer_password_hash||'',pendingViewerSalt=s.viewer_password_salt||'';
+      if(String(b.viewer_password_new||'').trim()){
+        if(String(b.viewer_password_new).length<8)return json({error:'閲覧パスワードは8文字以上にしてください。'},400);
+        pendingViewerSalt=randomHex(16);pendingViewerHash=await sha256(`${pendingViewerSalt}:${String(b.viewer_password_new)}`);
+      }
       const next={
         target_count:String(Math.max(1,Math.min(5000,Number(b.target_count||s.target_count||300)))),
         submission_deadline:safeText(b.submission_deadline??s.submission_deadline,40),
@@ -221,9 +232,10 @@ async function api(request,env,url,path){
         site_mode:(b.site_mode==='production'?'production':'preview')
       };
       if(next.site_mode==='production'){
-        const missing=[];if(!env.VIEWER_PASSWORD)missing.push('VIEWER_PASSWORD');if(!(env.ADMIN_PASSWORD||env.SETUP_KEY))missing.push('ADMIN_PASSWORD');if(!(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL))missing.push('BREVO_API_KEY / OTP_SENDER_EMAIL');
+        const missing=[];if(!(env.VIEWER_PASSWORD||pendingViewerHash))missing.push('閲覧パスワード');if(!(env.ADMIN_PASSWORD||env.SETUP_KEY))missing.push('ADMIN_PASSWORD');if(!(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL))missing.push('BREVO_API_KEY / OTP_SENDER_EMAIL');
         if(missing.length)return json({error:`本番切替前にCloudflare Secretsを設定してください: ${missing.join(', ')}`},400);
       }
+      next.viewer_password_hash=pendingViewerHash;next.viewer_password_salt=pendingViewerSalt;
       for(const [k,v] of Object.entries(next))await env.DB.prepare('INSERT INTO rpp_settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(k,v).run();
       const refreshed=await settings(env);return json({ok:true,...refreshed,...publicConfig(env,refreshed)});
     }
