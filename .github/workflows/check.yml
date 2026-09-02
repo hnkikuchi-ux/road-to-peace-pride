@@ -29,3 +29,5 @@ jobs:
           test -f public/status.html
           test -f public/organization-master.json
           test -f public/version.json
+      - name: Validate Cloudflare Worker bundle
+        run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
