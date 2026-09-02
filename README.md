@@ -16,6 +16,7 @@ Cloudflare Workers + Static Assets
   ├─ 閲覧パスワード認証
   ├─ 投稿者メールOTP認証
   ├─ 管理者認証
+  ├─ Security Guard
   ├─ API
   ├─ D1: 原稿・セッション・運用設定
   └─ KV: 投稿写真
@@ -37,8 +38,10 @@ Cloudflare Workers + Static Assets
 - Googleアカウント不要
 - Email + 6桁OTP
 - 自分の原稿だけ作成・編集
-- 20秒ごとCloudflareへ自動保存
-- 端末にもローカルバックアップ
+- 組織名（総区・分区・本部・支部）は自由入力
+- 端末へ即時ローカル保存
+- PRODUCTIONでは20秒ごとCloudflareへ自動保存
+- PREVIEWでは安全のためCloudflareへの原稿・写真保存を停止
 - 本人JSONバックアップ
 - 写真1枚
 - 写真は最大1600pxへ再圧縮
@@ -78,8 +81,12 @@ rpp/<story-id>/main.jpg
 - 投稿者OTPはD1へハッシュ保存・10分で失効
 - OTP連続再送は120秒制限
 - 認証試行回数制限
+- PRODUCTIONでOTPを要求するには先に閲覧パスワード認証が必要
 - 投稿者セッションはHttpOnly + Secure Cookie
 - 管理セッションもHttpOnly + Secure Cookie
+- 管理画面の簡易デモコードは無効
+- 初回管理認証はCloudflare `SETUP_KEY` を使用可能
+- Security GuardがPREVIEW中の原稿・写真クラウド書込みを停止
 - 写真の固定公開URLを発行しない
 - GitHubには投稿本文・投稿写真・本番パスワードを保存しない
 - Brevo APIキーは管理画面から入力可能。Cloudflare `SETUP_KEY` を使いAES-GCMで暗号化してD1保存
@@ -99,6 +106,7 @@ rpp/<story-id>/main.jpg
 - Brevo APIキー
 - OTP送信元メール
 - OTPテスト送信
+- 本番条件チェック
 - 投稿者一覧
 - 提出済 / 下書き / 写真ありフィルター
 - JSONバックアップ
@@ -107,20 +115,24 @@ rpp/<story-id>/main.jpg
 
 ## Preview → Production
 
-Preview中は以下で動作確認できます。
+PREVIEW中は安全確認モードです。
 
-- 閲覧パスワード: `demo`（本番パスワード未設定時）
-- 管理画面: `654321` でも確認可能
-- メール未設定時: OTPを投稿画面内に表示
+- 閲覧パスワードは、本番パスワード未設定時のみ `demo` を利用可能
+- 管理画面の簡易デモコードは使用しない
+- 管理画面の初回ログインはCloudflare `SETUP_KEY` を使用可能
+- メール未設定時は投稿画面に確認用OTPを表示
+- 原稿・写真はCloudflareへ保存せず端末保存のみ
 
 本番切替は管理画面から行います。
 
-1. 閲覧パスワードを設定
+1. SETUP_KEYで管理画面へログイン
 2. 管理者パスワードを設定
-3. Brevo APIキー + 送信元メールを設定
-4. テストメール送信
-5. `/status.html` が READY になったことを確認
-6. Site Mode を `PRODUCTION` に変更
+3. 閲覧パスワードを設定
+4. Brevo APIキー + 送信元メールを設定
+5. テストメール送信
+6. `/status.html` が READY になったことを確認
+7. 投稿・閲覧テストを実施
+8. Site Mode を `PRODUCTION` に変更
 
 本番切替時、必要設定が足りない場合はWorker側で拒否します。
 
@@ -143,7 +155,9 @@ APIキーはCloudflareのSecrets画面へ直接入力しなくても、管理画
 以下を自動診断します。
 
 - Worker API
+- Security Guard
 - PREVIEW / PRODUCTION
+- PREVIEW中のクラウド書込み停止状態
 - D1
 - KV写真Storage
 - 閲覧パスワード
@@ -151,7 +165,18 @@ APIキーはCloudflareのSecrets画面へ直接入力しなくても、管理画
 - Email OTP
 - 文集OPEN / PAUSED
 - 原稿締切
+- Build Version
 - 次に必要な設定
+
+## 自動チェック
+
+GitHub Actionsで、pushごとに以下を検証します。
+
+- `src/rpp-worker.js` 構文
+- `src/secure-worker.js` 構文
+- 必須公開ファイル
+- `wrangler.jsonc` が `secure-worker.js` を起動対象にしていること
+- WranglerによるCloudflareデプロイドライラン
 
 ## Design
 
