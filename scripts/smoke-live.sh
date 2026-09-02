@@ -12,7 +12,7 @@ contains(){ local file="$1" text="$2" label="$3"; grep -Fq "$text" "$file" && pa
 not_contains(){ local file="$1" text="$2" label="$3"; if grep -Fq "$text" "$file"; then fail "$label"; else pass "$label"; fi; }
 
 EXPECTED_BUILD="$(python3 -c "import json; print(json.load(open('public/version.json'))['build'])")"
-echo "Waiting for live assets and Security Guard v2"
+echo "Waiting for live assets and Security Guard v3"
 ready=0
 for i in $(seq 1 30); do
   LIVE_BUILD=''; GUARD=''
@@ -22,12 +22,12 @@ for i in $(seq 1 30); do
   if http "$BASE/api/health?ts=$(date +%s)" -o /tmp/rpp-health-wait.json 2>/dev/null; then
     GUARD="$(python3 -c "import json; print(json.load(open('/tmp/rpp-health-wait.json')).get('securityGuard',''))" 2>/dev/null || true)"
   fi
-  if [[ "$LIVE_BUILD" == "$EXPECTED_BUILD" && "$GUARD" == "v2" ]]; then ready=1; break; fi
+  if [[ "$LIVE_BUILD" == "$EXPECTED_BUILD" && "$GUARD" == "v3" ]]; then ready=1; break; fi
   echo "  assets=$LIVE_BUILD guard=$GUARD ($i/30)"
   sleep 4
 done
-[[ "$ready" == 1 ]] || fail "latest Cloudflare assets and Security Guard v2 are live"
-pass "latest Cloudflare assets and Security Guard v2 are live"
+[[ "$ready" == 1 ]] || fail "latest Cloudflare assets and Security Guard v3 are live"
+pass "latest Cloudflare assets and Security Guard v3 are live"
 
 echo "1) Static pages"
 for page in index author admin; do
@@ -42,7 +42,10 @@ contains /tmp/rpp-author.html 'id="bunku"' 'organization: 分区 is free input'
 not_contains /tmp/rpp-author.html 'organization-master.json' 'author page has no organization-master dependency'
 not_contains /tmp/rpp-admin.html '654321' 'admin page has no demo admin code'
 
-echo "2) Health/config"
+STATUS_CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$BASE/status.html")
+[[ "$STATUS_CODE" == "302" ]] && pass 'diagnostics page requires admin session' || fail "diagnostics unauth status=$STATUS_CODE"
+
+echo "2) Sanitized public health/config"
 http "$BASE/api/health?ts=$(date +%s)" -o /tmp/rpp-health.json
 python3 - <<'PY'
 import json
@@ -53,9 +56,13 @@ checks={
  'photo storage binding': x.get('storageConfigured') is True,
  'admin demo disabled': x.get('adminDemoDisabled') is True,
  'preview cloud writes disabled': x.get('previewSubmissionsAllowed') is False,
- 'security guard v2': x.get('securityGuard') == 'v2',
+ 'security guard v3': x.get('securityGuard') == 'v3',
  'author OTP is direct': x.get('authorOtpDirect') is True,
  'production OTP rate limit enabled': x.get('otpRateLimited') is True,
+ 'diagnostics protected': x.get('diagnosticsProtected') is True,
+ 'story count hidden from public health': 'stories' not in x,
+ 'email config hidden from public health': 'emailConfigured' not in x,
+ 'admin config hidden from public health': 'adminPasswordConfigured' not in x,
 }
 for k,v in checks.items():
  print(('  ✓ ' if v else '  ✗ ')+k)
@@ -78,7 +85,6 @@ if not ok: raise SystemExit(x)
 PY
 
 echo "4) Author preview authentication"
-# Use a fresh cookie jar so author OTP is proven to work without viewer login.
 AUTHOR_COOKIE="$(mktemp)"
 EMAIL="smoke-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}@example.invalid"
 CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-otp.json -w '%{http_code}' -X POST "$BASE/api/auth/request" -H 'content-type: application/json' --data "{\"email\":\"$EMAIL\"}")
