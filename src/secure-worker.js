@@ -69,10 +69,6 @@ async function validFullAdminPassword(env,s,supplied){
 }
 async function requireFullAdmin(env,request){return validSession(env,request,'admin_full','rpp_admin_full')}
 async function responseJson(response){try{return await response.clone().json()}catch{return {}}}
-async function appendJson(response,extra){
-  const data=await responseJson(response);const h=new Headers(response.headers);h.set('Content-Type','application/json; charset=utf-8');
-  return new Response(JSON.stringify({...data,...extra}),{status:response.status,headers:h});
-}
 async function consumeRateLimit(env,key,limit,windowMs){
   const now=Date.now(),expires=new Date(now+windowMs).toISOString();
   const row=await env.DB.prepare('SELECT count,expires_at FROM rpp_rate_limits WHERE rate_key=?').bind(key).first();
@@ -100,7 +96,6 @@ export default {
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
     try{
       const s=await settingMap(env),preview=isPreview(env,s),allowPreviewWrites=previewWritesAllowed(env,s);
-
       if(Math.random()<0.02)env.DB.prepare('DELETE FROM rpp_rate_limits WHERE expires_at<?').bind(new Date().toISOString()).run().catch(()=>{});
 
       if(path==='/status'||path==='/status.html'){
@@ -148,7 +143,7 @@ export default {
       if(path==='/api/health'&&request.method==='GET'){
         const base=await baseWorker.fetch(request,env),d=await responseJson(base),admin=await requireFullAdmin(env,request);
         if(admin)return json({...d,previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v3',authorOtpDirect:true,otpRateLimited:true,diagnosticsProtected:true});
-        return json({ok:Boolean(d.ok),preview:Boolean(d.preview),bookOpen:d.bookOpen!==false,storageConfigured:Boolean(d.storageConfigured),securityGuard:'v3',authorOtpDirect:true,otpRateLimited:true,adminDemoDisabled:true,previewSubmissionsAllowed:allowPreviewWrites,diagnosticsProtected:true});
+        return json({ok:Boolean(d.ok),preview:Boolean(d.preview),bookOpen:d.bookOpen!==false,viewerPasswordConfigured:Boolean(d.viewerPasswordConfigured),storageConfigured:Boolean(d.storageConfigured),securityGuard:'v3',authorOtpDirect:true,otpRateLimited:true,adminDemoDisabled:true,previewSubmissionsAllowed:allowPreviewWrites,diagnosticsProtected:true});
       }
 
       return baseWorker.fetch(request,env);
