@@ -111,7 +111,7 @@ export default {
     const type=response.headers.get('content-type')||'';
     if(!type.includes('text/html'))return response;
     if(path==='/'||path==='/index.html')return appendHtml(response,INDEX_ENHANCEMENT);
-    if(path==='/author.html')return appendHtml(response,AUTHOR_ENHANCEMENT);
+    if(path==='/author'||path==='/author.html')return appendHtml(response,AUTHOR_ENHANCEMENT);
     return response;
   }
 };
