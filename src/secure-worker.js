@@ -27,7 +27,7 @@ function clearCookie(name){return `${name}=; Path=/; HttpOnly; Secure; SameSite=
 
 async function ensureGuardSchema(env){
   if(!guardReady){
-    guardReady=env.DB.exec(`CREATE TABLE IF NOT EXISTS rpp_sessions(token_hash TEXT PRIMARY KEY,kind TEXT NOT NULL,subject TEXT,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS rpp_settings(key TEXT PRIMARY KEY,value TEXT);\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('site_mode','preview');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_hash','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_salt','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('preview_submissions','false');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_guard_v1','0');`).then(async()=>{
+    guardReady=env.DB.exec(`CREATE TABLE IF NOT EXISTS rpp_sessions(token_hash TEXT PRIMARY KEY,kind TEXT NOT NULL,subject TEXT,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);\nCREATE TABLE IF NOT EXISTS rpp_settings(key TEXT PRIMARY KEY,value TEXT);\nCREATE TABLE IF NOT EXISTS rpp_rate_limits(rate_key TEXT PRIMARY KEY,count INTEGER NOT NULL,expires_at TEXT NOT NULL);\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('site_mode','preview');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_hash','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_password_salt','');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('preview_submissions','false');\nINSERT OR IGNORE INTO rpp_settings(key,value) VALUES('admin_guard_v1','0');`).then(async()=>{
       const marker=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='admin_guard_v1'").first();
       if(String(marker?.value||'0')!=='1'){
         await env.DB.prepare("DELETE FROM rpp_sessions WHERE kind='admin' OR kind='admin_full'").run();
@@ -69,12 +69,36 @@ async function appendJson(response,extra){
   const h=new Headers(response.headers);h.set('Content-Type','application/json; charset=utf-8');
   return new Response(JSON.stringify({...data,...extra}),{status:response.status,headers:h});
 }
+async function consumeRateLimit(env,key,limit,windowMs){
+  const now=Date.now(),expires=new Date(now+windowMs).toISOString();
+  const row=await env.DB.prepare('SELECT count,expires_at FROM rpp_rate_limits WHERE rate_key=?').bind(key).first();
+  if(!row||Date.parse(row.expires_at)<=now){
+    await env.DB.prepare('INSERT INTO rpp_rate_limits(rate_key,count,expires_at) VALUES(?,1,?) ON CONFLICT(rate_key) DO UPDATE SET count=1,expires_at=excluded.expires_at').bind(key,expires).run();
+    return true;
+  }
+  if(Number(row.count||0)>=limit)return false;
+  await env.DB.prepare('UPDATE rpp_rate_limits SET count=count+1 WHERE rate_key=?').bind(key).run();
+  return true;
+}
+async function checkOtpRate(env,request,email){
+  const ip=request.headers.get('CF-Connecting-IP')||request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';
+  const [emailKey,ipKey]=await Promise.all([sha256(`otp-email:${String(email).toLowerCase()}`),sha256(`otp-ip:${ip}`)]);
+  const emailOk=await consumeRateLimit(env,emailKey,6,60*60*1000);
+  if(!emailOk)return {ok:false,error:'認証コードの送信回数が多いため、しばらく待ってからお試しください。'};
+  const ipOk=await consumeRateLimit(env,ipKey,200,60*60*1000);
+  if(!ipOk)return {ok:false,error:'この接続元からの認証要求が多いため、しばらく待ってからお試しください。'};
+  return {ok:true};
+}
 
 export default {
   async fetch(request,env){
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
     try{
       const s=await settingMap(env),preview=isPreview(s),allowPreviewWrites=previewWritesAllowed(env,s);
+
+      if(Math.random()<0.02){
+        env.DB.prepare('DELETE FROM rpp_rate_limits WHERE expires_at<?').bind(new Date().toISOString()).run().catch(()=>{});
+      }
 
       if(path==='/api/admin/login'&&request.method==='POST'){
         const b=await request.clone().json().catch(()=>({}));
@@ -97,8 +121,11 @@ export default {
       }
 
       if(path==='/api/auth/request'&&request.method==='POST'&&!preview){
-        if(!await validSession(env,request,'viewer','rpp_viewer')){
-          return json({error:'先に文集の閲覧パスワードでログインしてから、原稿投稿画面を開いてください。'},401);
+        const b=await request.clone().json().catch(()=>({}));
+        const email=String(b.email||'').trim().toLowerCase();
+        if(/^\S+@\S+\.\S+$/.test(email)){
+          const rate=await checkOtpRate(env,request,email);
+          if(!rate.ok)return json({error:rate.error},429);
         }
       }
 
@@ -108,13 +135,12 @@ export default {
 
       if((path==='/api/config'||path==='/api/health')&&request.method==='GET'){
         const base=await baseWorker.fetch(request,env);
-        return appendJson(base,{previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v1'});
+        return appendJson(base,{previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v2',authorOtpDirect:true,otpRateLimited:true});
       }
 
       return baseWorker.fetch(request,env);
     }catch(e){
       console.error(e);
-      if(path==='/api/health')return json({error:'処理に失敗しました。',detail:String(e?.message||e)},500);
       return json({error:'処理に失敗しました。'},500);
     }
   }
