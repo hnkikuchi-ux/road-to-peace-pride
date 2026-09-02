@@ -128,6 +128,7 @@ export default {
       return baseWorker.fetch(request,env);
     }catch(e){
       console.error(e);
+      if(path==='/api/health')return json({error:'処理に失敗しました。',detail:String(e?.message||e)},500);
       return json({error:'処理に失敗しました。'},500);
     }
   }
