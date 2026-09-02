@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "road-to-peace-pride",
+  "name": "giin-home-cloud-pilot",
   "main": "src/rpp-worker.js",
   "compatibility_date": "2026-08-05",
   "assets": {
