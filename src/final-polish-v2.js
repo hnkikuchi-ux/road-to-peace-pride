@@ -24,7 +24,7 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
   body.rpp-gate-active .wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
   body.rpp-gate-active #gate{width:100%!important;max-width:none!important}
   #gate .gate-card{width:min(1160px,92vw)!important;height:min(700px,84svh)!important}
-  #gate .gate-card.orn:before{left:2%!important;top:10%!important;width:39.5%!important;height:72%!important;background:url('/assets/top-cover.webp') top center/100% auto no-repeat!important;border:1px solid rgba(214,170,75,.28)!important;border-radius:4px!important;box-shadow:0 30px 78px rgba(0,0,0,.44)!important;filter:saturate(1.04) contrast(1.02)!important;overflow:hidden!important}
+  #gate .gate-card.orn:before{left:2%!important;top:7%!important;width:39.5%!important;height:80%!important;background:url('/assets/desktop-dawn.svg') center/cover no-repeat!important;border:1px solid rgba(214,170,75,.22)!important;border-radius:12px!important;box-shadow:0 30px 78px rgba(0,0,0,.44),inset 0 0 0 1px rgba(255,234,166,.025)!important;filter:none!important;overflow:hidden!important}
   #gate .gate-card.orn:after{right:1.5%!important;width:49.5%!important;height:min(570px,76svh)!important;border-radius:28px!important;background:linear-gradient(150deg,rgba(6,20,48,.965),rgba(3,12,31,.94))!important;box-shadow:0 36px 95px rgba(0,0,0,.48),inset 0 0 0 1px rgba(248,218,138,.045),inset 0 0 75px rgba(91,65,145,.09)!important}
   #gate .gate-card>.eyebrow,#gate .gate-card>h1,#gate .gate-card>.sub,#gate .gate-card>.rule{display:none!important}
   #rppDesktopCopy{display:block;position:absolute;right:5.25%;top:13.5%;width:42%;z-index:3;text-align:center;pointer-events:none}
