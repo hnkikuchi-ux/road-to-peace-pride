@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "giin-home-cloud-pilot",
-  "main": "src/index.js",
+  "name": "road-to-peace-pride",
+  "main": "src/rpp-worker.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
@@ -12,12 +12,14 @@
     {
       "binding": "DB",
       "database_name": "giin-home-db",
-      "migrations_dir": "migrations","database_id": "0fe4c779-377a-4691-a2c9-af858c6ece4c"
+      "migrations_dir": "migrations",
+      "database_id": "0fe4c779-377a-4691-a2c9-af858c6ece4c"
     }
   ],
   "kv_namespaces": [
     {
-      "binding": "MEDIA","id": "9c223c1636874dbc912583c8704bea42"
+      "binding": "MEDIA",
+      "id": "9c223c1636874dbc912583c8704bea42"
     }
   ],
   "secrets": {
