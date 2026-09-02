@@ -95,12 +95,11 @@ try:
     if 'hidden' not in dash_classes: fail('old admin demo code opened dashboard')
     ok('old admin demo code is rejected in UI')
 
-    print('4) System status page', flush=True)
+    print('4) Diagnostics privacy', flush=True)
     driver.get(BASE+'/status.html')
-    visible(driver,'#box')
-    WebDriverWait(driver,WAIT).until(lambda d:'Cloudflare Worker' in d.find_element(By.ID,'box').text)
-    if 'ERROR' in driver.find_element(By.ID,'box').text: fail('status page reports system error')
-    ok('status page renders live health')
+    WebDriverWait(driver,WAIT).until(lambda d:'/admin' in d.current_url)
+    visible(driver,'#login')
+    ok('unauthenticated diagnostics redirect to admin login')
 
     logs=[x for x in driver.get_log('browser') if x.get('level')=='SEVERE']
     markers=('Uncaught','SyntaxError','ReferenceError','TypeError','javascript error')
