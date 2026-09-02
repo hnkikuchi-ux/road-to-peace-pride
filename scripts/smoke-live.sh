@@ -37,8 +37,14 @@ for page in index author admin; do
 done
 contains /tmp/rpp-index.html '続きから読む' 'reader has resume control'
 contains /tmp/rpp-index.html 'id="fontUp"' 'reader has font-size control'
-contains /tmp/rpp-author.html 'id="soku"' 'organization: 総区 is free input'
-contains /tmp/rpp-author.html 'id="bunku"' 'organization: 分区 is free input'
+contains /tmp/rpp-author.html 'id="org"' 'author has one organization field'
+not_contains /tmp/rpp-author.html 'id="soku"' 'legacy 総区 field removed'
+not_contains /tmp/rpp-author.html 'id="bunku"' 'legacy 分区 field removed'
+not_contains /tmp/rpp-author.html 'id="honbu"' 'legacy 本部 field removed'
+not_contains /tmp/rpp-author.html 'id="shibu"' 'legacy 支部 field removed'
+not_contains /tmp/rpp-author.html 'id="category"' 'category field removed'
+not_contains /tmp/rpp-author.html 'id="export"' 'manual device export button removed'
+contains /tmp/rpp-author.html '写真（任意・1枚まで）' 'photo remains optional'
 not_contains /tmp/rpp-author.html 'organization-master.json' 'author page has no organization-master dependency'
 not_contains /tmp/rpp-admin.html '654321' 'admin page has no demo admin code'
 
@@ -97,7 +103,7 @@ CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-me.json -w '
 [[ "$CODE" == "200" ]] && pass 'author can open own editor session' || { cat /tmp/rpp-me.json; rm -f "$AUTHOR_COOKIE"; fail "author session status=$CODE"; }
 
 echo "5) PREVIEW cloud-write guard"
-CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-save.json -w '%{http_code}' -X PUT "$BASE/api/me/story" -H 'content-type: application/json' --data '{"record_date":"2026-09-12","soku":"テスト総区","bunku":"","honbu":"テスト本部","shibu":"テスト支部","category":"体験談","name":"テスト","title":"テスト","body":"テスト","status":"draft"}')
+CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-save.json -w '%{http_code}' -X PUT "$BASE/api/me/story" -H 'content-type: application/json' --data '{"record_date":"2026-09-12","soku":"テスト組織","bunku":"","honbu":"","shibu":"","category":"","name":"テスト","title":"テスト","body":"テスト","status":"draft"}')
 [[ "$CODE" == "403" ]] && pass 'preview blocks cloud story writes' || { cat /tmp/rpp-save.json; rm -f "$AUTHOR_COOKIE"; fail "preview write status=$CODE"; }
 
 echo "6) Admin demo code must be rejected"
