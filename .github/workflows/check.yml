@@ -18,16 +18,17 @@ jobs:
         with:
           node-version: '22'
       - name: Check Worker JavaScript syntax
-        run: node --check src/rpp-worker.js
-      - name: Validate organization JSON
-        run: node -e "JSON.parse(require('fs').readFileSync('public/organization-master.json','utf8')); console.log('organization-master.json OK')"
+        run: |
+          node --check src/rpp-worker.js
+          node --check src/secure-worker.js
       - name: Verify required public files
         run: |
           test -f public/index.html
           test -f public/author.html
           test -f public/admin.html
           test -f public/status.html
-          test -f public/organization-master.json
           test -f public/version.json
+      - name: Verify security worker is active
+        run: node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/secure-worker.js') process.exit(1); console.log('secure-worker active')"
       - name: Validate Cloudflare Worker bundle
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
