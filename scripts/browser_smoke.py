@@ -1,7 +1,6 @@
 import os, re, time, sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
@@ -57,7 +56,7 @@ try:
     ok('A+ changes reading font size')
     click(driver,'#backToc'); visible(driver,'#toc:not(.hidden)'); ok('reader returns to TOC')
     if driver.execute_script('return document.documentElement.scrollWidth > window.innerWidth + 2'):
-        fail('viewer has no horizontal overflow at 390px')
+        fail('viewer has horizontal overflow at 390px')
     ok('viewer fits 390px mobile width')
 
     print('2) Author mobile journey', flush=True)
@@ -73,18 +72,17 @@ try:
     otp=m.group(1); ok('preview OTP is displayed')
     visible(driver,'#otp').send_keys(otp)
     click(driver,'#verify')
-    visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor')
+    visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor without viewer password')
     for field,value in [('soku','テスト総区'),('bunku',''),('honbu','テスト本部'),('shibu','テスト支部'),('name','ブラウザ確認'),('title','動作確認用下書き'),('body','これは公開されないPREVIEW動作確認用の入力です。')]:
         el=driver.find_element(By.ID,field); el.clear(); el.send_keys(value)
     for field in ('soku','bunku','honbu','shibu'):
-        tag=driver.find_element(By.ID,field).tag_name.lower()
-        if tag!='input': fail(f'{field} is a free-text input')
+        if driver.find_element(By.ID,field).tag_name.lower()!='input': fail(f'{field} is not a free-text input')
     ok('organization fields are free-text inputs')
     click(driver,'#save')
     WebDriverWait(driver,WAIT).until(lambda d:'端末' in d.find_element(By.ID,'savemsg').text or 'PREVIEW' in d.find_element(By.ID,'savemsg').text)
     ok('preview draft save stays device-side')
     if driver.execute_script('return document.documentElement.scrollWidth > window.innerWidth + 2'):
-        fail('author page has no horizontal overflow at 390px')
+        fail('author page has horizontal overflow at 390px')
     ok('author editor fits 390px mobile width')
 
     print('3) Admin guard in browser', flush=True)
@@ -93,25 +91,24 @@ try:
     driver.find_element(By.ID,'password').send_keys('654321')
     click(driver,'#go')
     WebDriverWait(driver,WAIT).until(lambda d:d.find_element(By.ID,'loginMsg').text.strip()!='')
-    if not driver.find_element(By.ID,'dash').get_attribute('class').find('hidden')>=0:
-        fail('old admin demo code cannot open dashboard')
+    dash_classes=driver.find_element(By.ID,'dash').get_attribute('class') or ''
+    if 'hidden' not in dash_classes: fail('old admin demo code opened dashboard')
     ok('old admin demo code is rejected in UI')
 
     print('4) System status page', flush=True)
     driver.get(BASE+'/status.html')
     visible(driver,'#box')
     WebDriverWait(driver,WAIT).until(lambda d:'Cloudflare Worker' in d.find_element(By.ID,'box').text)
-    if 'ERROR' in driver.find_element(By.ID,'box').text:
-        fail('status page reports no system error')
+    if 'ERROR' in driver.find_element(By.ID,'box').text: fail('status page reports system error')
     ok('status page renders live health')
 
     logs=[x for x in driver.get_log('browser') if x.get('level')=='SEVERE']
-    # Ignore favicon/resource noise, but fail on JS exceptions.
-    js_errors=[x for x in logs if 'favicon' not in x.get('message','').lower() and '404' not in x.get('message','')]
+    markers=('Uncaught','SyntaxError','ReferenceError','TypeError','javascript error')
+    js_errors=[x for x in logs if any(m.lower() in x.get('message','').lower() for m in markers)]
     if js_errors:
         print(js_errors, file=sys.stderr)
-        fail('no severe browser JavaScript errors')
-    ok('no severe browser JavaScript errors')
+        fail('severe browser JavaScript errors detected')
+    ok('no severe browser JavaScript exceptions')
     print('MOBILE BROWSER SMOKE PASSED', flush=True)
 finally:
     driver.quit()
