@@ -28,8 +28,8 @@ pass "latest Cloudflare build is live"
 echo "1) Static pages"
 for page in index author admin; do
   path="/"; [[ "$page" != index ]] && path="/$page.html"
-  code=$(curl -sS -o "/tmp/rpp-$page.html" -w '%{http_code}' "$BASE$path")
-  [[ "$code" == 200 ]] && pass "$page page HTTP 200" || fail "$page page HTTP $code"
+  code=$(curl -sS -L -o "/tmp/rpp-$page.html" -w '%{http_code}' "$BASE$path")
+  [[ "$code" == 200 ]] && pass "$page page HTTP 200 after redirects" || fail "$page page HTTP $code"
 done
 contains /tmp/rpp-index.html '続きから読む' 'reader has resume control'
 contains /tmp/rpp-index.html 'id="fontUp"' 'reader has font-size control'
