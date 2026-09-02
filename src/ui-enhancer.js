@@ -7,14 +7,17 @@ const AUTHOR_ENHANCEMENT = `
 #rppRecovery .rpp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 #rppRecovery button{border:1px solid rgba(216,184,102,.45);border-radius:999px;background:rgba(255,255,255,.06);color:#fff;padding:9px 13px;cursor:pointer}
 #photoOptionalNote{margin-top:8px;padding:9px 11px;border-left:3px solid #d8b866;background:rgba(216,184,102,.07)}
+.previewbar{pointer-events:none!important}
 </style>
 <script>
 (()=>{
   const $=s=>document.querySelector(s);
-  const fields=['record_date','soku','bunku','honbu','shibu','category','name','title','body'];
+  const fields=['record_date','org','name','title','body'];
   const norm=v=>String(v??'');
-  const storySignature=s=>fields.map(k=>norm(s?.[k])).join('\\u241f');
-  const setFields=s=>{if(!s)return;for(const id of fields){const el=$('#'+id);if(el&&s[id]!=null)el.value=s[id]}if(typeof window.counts==='function')window.counts()};
+  const storyOrg=s=>norm(s?.org||[s?.soku,s?.bunku,s?.honbu,s?.shibu].filter(Boolean).join('／'));
+  const valueFor=(s,k)=>k==='org'?storyOrg(s):norm(s?.[k]);
+  const storySignature=s=>fields.map(k=>valueFor(s,k)).join('\\u241f');
+  const setFields=s=>{if(!s)return;for(const id of fields){const el=$('#'+id);if(el)el.value=valueFor(s,id)}if(typeof window.counts==='function')window.counts()};
   const setMessage=(text,cls='ok')=>{const e=$('#savemsg');if(e){e.textContent=text;e.className='note '+cls}};
 
   function markPhotoOptional(hasPhoto=false){
@@ -43,15 +46,15 @@ const AUTHOR_ENHANCEMENT = `
     box.innerHTML='<strong>この端末に、クラウドより新しい下書きがあります。</strong><div class="note">端末側とクラウド側を自動で上書きせず、どちらを使うか選べます。</div><div class="rpp-actions"><button type="button" id="restoreLocal">端末の下書きを復元</button><button type="button" id="keepCloud">クラウド版を使う</button></div>';
     anchor.insertAdjacentElement('afterend',box);
     $('#restoreLocal').onclick=()=>{
-      const merged={...local,status:server?.status==='submitted'?'submitted':(local.status||'draft')};
+      const merged={...local,org:storyOrg(local),status:server?.status==='submitted'?'submitted':(local.status||'draft')};
       setFields(merged);if($('#statusBadge'))$('#statusBadge').textContent=merged.status==='submitted'?'提出済':'下書き';
       try{localStorage.setItem('rpp_draft_'+email,JSON.stringify({...merged,saved_at:new Date().toISOString()}))}catch{}
       setMessage(server?.status==='submitted'?'端末の新しい内容を復元しました。提出済み状態は維持しています。':'端末の新しい下書きを復元しました。','ok');
       box.remove();
     };
     $('#keepCloud').onclick=()=>{
-      setFields(server);if($('#statusBadge'))$('#statusBadge').textContent=server?.status==='submitted'?'提出済':'下書き';
-      try{localStorage.setItem('rpp_draft_'+email,JSON.stringify({...server,saved_at:server?.updated_at||new Date().toISOString()}))}catch{}
+      const normalized={...server,org:storyOrg(server)};setFields(normalized);if($('#statusBadge'))$('#statusBadge').textContent=server?.status==='submitted'?'提出済':'下書き';
+      try{localStorage.setItem('rpp_draft_'+email,JSON.stringify({...normalized,saved_at:server?.updated_at||new Date().toISOString()}))}catch{}
       setMessage('クラウド版を使用します。端末下書きはクラウド版に合わせました。','ok');box.remove();
     };
   }
@@ -100,9 +103,7 @@ const INDEX_ENHANCEMENT = `
 })();
 </script>`;
 
-function appendHtml(response,html){
-  return new HTMLRewriter().on('body',{element(el){el.append(html,{html:true})}}).transform(response);
-}
+function appendHtml(response,html){return new HTMLRewriter().on('body',{element(el){el.append(html,{html:true})}}).transform(response)}
 
 export default {
   async fetch(request,env,ctx){
