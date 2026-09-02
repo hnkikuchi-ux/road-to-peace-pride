@@ -17,10 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check Worker JavaScript syntax
+      - name: Check JavaScript syntax
         run: |
           node --check src/rpp-worker.js
           node --check src/secure-worker.js
+          node --check public/zip-store.js
       - name: Verify required public files
         run: |
           test -f public/index.html
@@ -28,10 +29,19 @@ jobs:
           test -f public/admin.html
           test -f public/status.html
           test -f public/version.json
+          test -f public/zip-store.js
           test -f scripts/smoke-live.sh
           test -f scripts/browser_smoke.py
+      - name: Verify admin has no third-party JavaScript
+        run: |
+          ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
+          grep -Fq 'src="./zip-store.js"' public/admin.html
+      - name: Exercise built-in ZIP writer
+        run: |
+          node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
       - name: Verify security worker is active
-        run: node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/secure-worker.js') process.exit(1); console.log('secure-worker active')"
+        run: |
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/secure-worker.js') process.exit(1); if(!c.assets.run_worker_first.includes('/status')) process.exit(1); console.log('secure-worker active and diagnostics routed through guard')"
       - name: Validate Cloudflare Worker bundle
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
