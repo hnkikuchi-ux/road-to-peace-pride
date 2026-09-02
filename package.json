@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/rpp-worker.js",
+    "check": "node --check src/rpp-worker.js && node --check src/secure-worker.js",
     "dev": "wrangler dev",
     "deploy": "npm run check && wrangler deploy"
   },
