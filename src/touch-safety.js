@@ -1,4 +1,4 @@
-import app from './motion-enhancer.js';
+import app from './responsive-enhancer.js';
 
 export default {
   async fetch(request,env,ctx){
