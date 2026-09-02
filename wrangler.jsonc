@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "giin-home-cloud-pilot",
-  "main": "src/route-fix.js",
+  "main": "src/ui-enhancer.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
