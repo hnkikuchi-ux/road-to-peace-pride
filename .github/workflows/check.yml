@@ -39,6 +39,7 @@ jobs:
           test -f scripts/smoke-live.sh
           test -f scripts/browser_smoke.py
           test -f scripts/ux_regression.py
+          test -f scripts/motion_smoke.py
       - name: Verify approved cover wiring
         run: |
           grep -Fq "url('/assets/top-cover.webp')" src/top-bg-enhancer.js
@@ -101,11 +102,13 @@ jobs:
         run: python scripts/browser_smoke.py
       - name: Exercise optional photo, TOC search, and submitted-safe save
         run: python scripts/ux_regression.py
-      - name: Upload mobile visual QA screenshots
+      - name: Exercise premium motion and desktop editorial layout
+        run: python scripts/motion_smoke.py
+      - name: Upload mobile and desktop visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-visual-qa
+          name: visual-qa
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
