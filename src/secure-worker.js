@@ -90,13 +90,6 @@ export default {
     try{
       const s=await settingMap(env),preview=isPreview(s),allowPreviewWrites=previewWritesAllowed(env,s);
 
-      if(path==='/organization-master.json'){
-        const author=await validSession(env,request,'author','rpp_author');
-        const admin=await requireFullAdmin(env,request);
-        if(!author&&!admin)return json({error:'投稿者認証が必要です。'},401);
-        return env.ASSETS.fetch(request);
-      }
-
       if(path==='/api/admin/login'&&request.method==='POST'){
         const b=await request.clone().json().catch(()=>({}));
         if(!await validFullAdminPassword(env,s,b.password)){
@@ -129,7 +122,7 @@ export default {
 
       if((path==='/api/config'||path==='/api/health')&&request.method==='GET'){
         const base=await baseWorker.fetch(request,env);
-        return appendJson(base,{previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true});
+        return appendJson(base,{previewSubmissionsAllowed:allowPreviewWrites,adminDemoDisabled:true,securityGuard:'v1'});
       }
 
       return baseWorker.fetch(request,env);
