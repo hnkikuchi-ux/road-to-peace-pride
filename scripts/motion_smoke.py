@@ -32,9 +32,10 @@ try:
     WebDriverWait(d,20).until(lambda x:x.execute_script("return window.innerWidth>=900 && getComputedStyle(document.querySelector('#gate .gate-card')).height!=='auto'"))
     rect=card.rect
     assert rect['width']>900, rect
-    h1=wait_visible(d,'#gate .gate-card > h1'); assert 'PEACE PRIDE' in h1.text
+    title=wait_visible(d,'#rppDesktopCopy .title'); assert 'PEACE PRIDE' in title.text
+    assert wait_visible(d,'#rppDesktopCopy .jp').text.strip()=='9.12までの挑戦と誓いの記録'
     pw=wait_visible(d,'#pw'); assert pw.rect['x']>700
-    ok('desktop uses wide editorial two-column composition')
+    ok('desktop uses wide editorial two-column composition with live title')
     d.save_screenshot(str(OUT/'06-desktop-editorial-login.png'))
     print('MOTION / DESKTOP QA PASSED',flush=True)
 finally:
