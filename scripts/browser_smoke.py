@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
-BASE=os.environ.get('RPP_BASE_URL','https://giin-home-cloud-pilot.hn-kikuchi.workers.dev')
+BASE=os.environ.get('RPP_BASE_URL','https://road-to-peace-pride.hn-kikuchi.workers.dev')
 WAIT=20
 SHOT_DIR=Path(os.environ.get('RPP_SCREENSHOT_DIR','artifacts/screens'))
 SHOT_DIR.mkdir(parents=True, exist_ok=True)
@@ -94,6 +94,10 @@ try:
     print('2) Author mobile journey', flush=True)
     driver.get(BASE+'/author.html')
     visible(driver,'#auth')
+    if driver.find_element(By.CSS_SELECTOR,'.top a.pill').text.strip()!='閲覧トップ': fail('author top link is not clear Japanese')
+    if driver.find_element(By.CSS_SELECTOR,'#auth h1').text.strip()!='あなたの記録を綴る': fail('author access heading still uses old manuscript wording')
+    if '公開ブック' in driver.find_element(By.TAG_NAME,'body').text: fail('old 公開ブック wording remains on author page')
+    ok('author entry language is clear and consistent')
     email=f'browser-smoke-{int(time.time())}@example.invalid'
     driver.find_element(By.ID,'email').send_keys(email)
     click(driver,'#send')
@@ -105,6 +109,13 @@ try:
     visible(driver,'#otp').send_keys(otp)
     click(driver,'#verify')
     visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor without viewer password')
+    if driver.find_element(By.CSS_SELECTOR,'#editor h1').text.strip()!='記録の入力・編集': fail('editor heading still uses old manuscript wording')
+    deadline=driver.find_element(By.ID,'deadlineEditor').text
+    if '記録' not in deadline or '原稿' in deadline: fail('deadline copy is not record-centered language')
+    picker=visible(driver,'#rppFilePicker')
+    if '写真を選ぶ' not in picker.text: fail('Japanese photo picker is missing')
+    if '公開ブック' in driver.find_element(By.TAG_NAME,'body').text: fail('old 公開ブック wording remains after author login')
+    ok('author editor uses record-centered language and Japanese photo picker')
     driver.execute_script('window.scrollTo(0,0)')
     full_shot(driver,'03-author-editor.png')
     org=driver.find_element(By.ID,'org')
