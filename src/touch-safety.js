@@ -1,4 +1,4 @@
-import app from './responsive-enhancer.js';
+import app from './final-polish.js';
 
 export default {
   async fetch(request,env,ctx){
