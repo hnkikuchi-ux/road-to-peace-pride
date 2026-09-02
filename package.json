@@ -1,25 +1,24 @@
 {
-  "name": "giin-home-cloud-pilot",
+  "name": "road-to-peace-pride",
   "version": "1.0.0",
-  "description": "地方議員がスマホから個別ホームページを更新し、SNS共有もできるCloudflare Workersアプリ",
+  "description": "ROAD TO PEACE PRIDE / MEMORIAL COLLECTION 2026 online anthology on Cloudflare Workers",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check src/index.js",
+    "check": "node --check src/rpp-worker.js",
     "dev": "wrangler dev",
-    "db:migrations:apply": "wrangler d1 migrations apply DB --remote",
-    "deploy": "npm run db:migrations:apply && wrangler deploy"
+    "deploy": "npm run check && wrangler deploy"
   },
   "cloudflare": {
     "bindings": {
       "DB": {
-        "description": "議員プロフィール、政策、実績、活動報告を保存するD1データベースです。Cloudflareが自動作成します。"
+        "description": "原稿本文、投稿状態、認証セッション、運用設定を保存するD1データベース"
       },
       "MEDIA": {
-        "description": "プロフィール写真と活動写真を保存するKV名前空間です。Cloudflareが自動作成します。"
+        "description": "投稿写真を非公開で保存するKV名前空間"
       },
       "SETUP_KEY": {
-        "description": "試用議員を追加する管理者専用パスワードです。英字・数字・記号を組み合わせ、12文字以上で設定してください。"
+        "description": "初期管理認証およびメールAPIキー暗号化に使うWorker Secret。十分に長いランダム文字列を設定"
       }
     }
   },
