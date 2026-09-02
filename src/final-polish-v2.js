@@ -21,12 +21,9 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
 
 #rppDesktopCopy{display:none}
 @media (min-width:900px){
-  /* The base site uses a 900px wrapper. Widen it only while the login gate is visible. */
   body.rpp-gate-active .wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
   body.rpp-gate-active #gate{width:100%!important;max-width:none!important}
   #gate .gate-card{width:min(1160px,92vw)!important;height:min(700px,84svh)!important}
-
-  /* Show only the artwork portion of the supplied cover on desktop; old baked controls are cropped away. */
   #gate .gate-card.orn:before{left:2%!important;top:10%!important;width:39.5%!important;height:72%!important;background:url('/assets/top-cover.webp') top center/100% auto no-repeat!important;border:1px solid rgba(214,170,75,.28)!important;border-radius:4px!important;box-shadow:0 30px 78px rgba(0,0,0,.44)!important;filter:saturate(1.04) contrast(1.02)!important;overflow:hidden!important}
   #gate .gate-card.orn:after{right:1.5%!important;width:49.5%!important;height:min(570px,76svh)!important;border-radius:28px!important;background:linear-gradient(150deg,rgba(6,20,48,.965),rgba(3,12,31,.94))!important;box-shadow:0 36px 95px rgba(0,0,0,.48),inset 0 0 0 1px rgba(248,218,138,.045),inset 0 0 75px rgba(91,65,145,.09)!important}
   #gate .gate-card>.eyebrow,#gate .gate-card>h1,#gate .gate-card>.sub,#gate .gate-card>.rule{display:none!important}
@@ -54,7 +51,7 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
 
   const gate=document.querySelector('#gate');
   const syncGate=()=>document.body.classList.toggle('rpp-gate-active',Boolean(gate&&!gate.classList.contains('hidden')));
-  if(gate){syncGate();new MutationObserver(syncGate).observe(gate,{attributes:true,attributeFilter:['class']})}
+  if(gate){syncGate();new MutationObserver(syncGate).observe(gate,{attributes:true,attributeFilter:['class']});}
 
   const card=document.querySelector('#gate .gate-card');
   if(card&&!document.querySelector('#rppDesktopCopy')){
@@ -63,8 +60,8 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
     card.appendChild(el);
   }
 
-  /* Author-facing language: explain the action instead of exposing internal product terms. */
-  const path=location.pathname.replace(/\/$/,'')||'/';
+  const rawPath=location.pathname||'/';
+  const path=(rawPath.length>1&&rawPath.endsWith('/'))?rawPath.slice(0,-1):rawPath;
   if(path==='/author'||path==='/author.html'){
     const topLink=document.querySelector('.top a.pill');if(topLink)topLink.textContent='閲覧トップ';
     const authTitle=document.querySelector('#auth h1');if(authTitle)authTitle.textContent='あなたの記録を綴る';
@@ -72,8 +69,8 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
     const heroSub=document.querySelector('#rppAuthorHero .rpp-author-sub');if(heroSub)heroSub.textContent='記録を綴る・編集';
     const previewBar=document.querySelector('#previewBar');if(previewBar)previewBar.textContent=previewBar.textContent.replace('原稿・写真','記録・写真');
 
-    const rewriteDeadline=e=>{if(!e)return;const next=e.textContent.replaceAll('原稿受付','記録の受付').replaceAll('原稿の編集・提出期限','記録の編集・提出期限').replaceAll('原稿の締切','記録の締切');if(e.textContent!==next)e.textContent=next};
-    for(const id of ['deadlineAuth','deadlineEditor']){const e=document.getElementById(id);if(!e)continue;rewriteDeadline(e);new MutationObserver(()=>rewriteDeadline(e)).observe(e,{childList:true,subtree:true,characterData:true})}
+    const rewriteDeadline=e=>{if(!e)return;const next=e.textContent.replaceAll('原稿受付','記録の受付').replaceAll('原稿の編集・提出期限','記録の編集・提出期限').replaceAll('原稿の締切','記録の締切');if(e.textContent!==next)e.textContent=next;};
+    for(const id of ['deadlineAuth','deadlineEditor']){const e=document.getElementById(id);if(!e)continue;rewriteDeadline(e);new MutationObserver(()=>rewriteDeadline(e)).observe(e,{childList:true,subtree:true,characterData:true});}
 
     const photo=document.querySelector('#photo');
     if(photo&&!document.querySelector('#rppFilePicker')){
@@ -81,13 +78,13 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
       const picker=document.createElement('label');picker.id='rppFilePicker';picker.setAttribute('for','photo');picker.innerHTML='<span class="rpp-file-button">写真を選ぶ</span><span class="rpp-file-name">選択されていません</span>';
       photo.insertAdjacentElement('afterend',picker);
       const name=picker.querySelector('.rpp-file-name');
-      photo.addEventListener('change',()=>{name.textContent=photo.files?.[0]?.name||'選択されていません'});
+      photo.addEventListener('change',()=>{name.textContent=photo.files?.[0]?.name||'選択されていません';});
     }
   }
 
   for(const id of ['#savemsg','#authmsg','#msg','#loginMsg']){
     const target=document.querySelector(id);if(!target)continue;target.setAttribute('aria-live','polite');
-    new MutationObserver(()=>{target.classList.remove('rpp-feedback');void target.offsetWidth;target.classList.add('rpp-feedback')}).observe(target,{childList:true,subtree:true,characterData:true});
+    new MutationObserver(()=>{target.classList.remove('rpp-feedback');void target.offsetWidth;target.classList.add('rpp-feedback');}).observe(target,{childList:true,subtree:true,characterData:true});
   }
 })();
 </script>`;
