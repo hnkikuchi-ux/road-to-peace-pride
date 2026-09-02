@@ -1,4 +1,4 @@
-import app from './top-bg-enhancer.js';
+import app from './motion-enhancer.js';
 
 export default {
   async fetch(request,env,ctx){
