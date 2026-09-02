@@ -29,6 +29,15 @@ def shot(driver,name):
     driver.save_screenshot(str(path))
     ok(f'visual QA screenshot: {path}')
 
+def full_shot(driver,name):
+    old=driver.get_window_size()
+    height=int(driver.execute_script('return Math.max(document.body.scrollHeight,document.documentElement.scrollHeight)'))
+    driver.set_window_size(390,min(max(height+160,844),6000))
+    driver.execute_script('window.scrollTo(0,0)')
+    time.sleep(.2)
+    shot(driver,name)
+    driver.set_window_size(old['width'],old['height'])
+
 opt=Options()
 opt.add_argument('--headless=new')
 opt.add_argument('--no-sandbox')
@@ -46,10 +55,20 @@ try:
     visible(driver,'#gate')
     visible(driver,'#pw')
     WebDriverWait(driver,WAIT).until(lambda d:d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card')).backgroundImage.includes('top-cover.webp')"))
+    dims=driver.execute_async_script("""
+      const done=arguments[0],img=new Image();
+      img.onload=()=>done([img.naturalWidth,img.naturalHeight]);
+      img.onerror=()=>done(null);
+      img.src='/assets/top-cover.webp?qa='+Date.now();
+    """)
+    if not dims or dims[0] < 400 or dims[1] < 700: fail('approved top cover image failed to decode')
+    ok(f'approved top cover decodes at {dims[0]}x{dims[1]}')
     shot(driver,'01-top-cover.png')
     pw=driver.find_element(By.ID,'pw'); pw.send_keys('demo')
     click(driver,'#unlock')
     visible(driver,'#cover:not(.hidden)'); ok('viewer password opens cover')
+    if driver.find_element(By.ID,'gate').is_displayed(): fail('top gate remains visible after viewer login')
+    ok('top gate hides after viewer login')
     click(driver,'#tocBtn')
     visible(driver,'#toc:not(.hidden)')
     items=WebDriverWait(driver,WAIT).until(lambda d:d.find_elements(By.CSS_SELECTOR,'.toc-item button'))
@@ -61,7 +80,7 @@ try:
     if not title: fail('story title is visible')
     ok('story opens from TOC')
     driver.execute_script('window.scrollTo(0,0)')
-    shot(driver,'02-story-page.png')
+    full_shot(driver,'02-story-page.png')
     before=float(driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('#body')).fontSize)"))
     click(driver,'#fontUp')
     after=float(driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('#body')).fontSize)"))
@@ -87,7 +106,7 @@ try:
     click(driver,'#verify')
     visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor without viewer password')
     driver.execute_script('window.scrollTo(0,0)')
-    shot(driver,'03-author-editor.png')
+    full_shot(driver,'03-author-editor.png')
     org=driver.find_element(By.ID,'org')
     if org.tag_name.lower()!='input': fail('organization is not a free-text input')
     if driver.find_elements(By.ID,'soku') or driver.find_elements(By.ID,'bunku') or driver.find_elements(By.ID,'honbu') or driver.find_elements(By.ID,'shibu'):
