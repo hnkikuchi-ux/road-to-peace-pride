@@ -3,7 +3,8 @@ import uiWorker from './ui-enhancer.js';
 const TOP_STYLE = `
 <style>
 /* Approved cover artwork is the top page. Functional controls are aligned over the artwork. */
-#gate{display:block!important;min-height:0!important;padding:0!important;background:#030b1b!important;overflow:hidden!important;position:relative!important}
+#gate:not(.hidden){display:block!important;min-height:0!important;padding:0!important;background:#030b1b!important;overflow:hidden!important;position:relative!important}
+#gate.hidden{display:none!important}
 #gate:before,#gate:after{display:none!important;content:none!important;border:0!important;box-shadow:none!important}
 #gate .gate-card{position:relative!important;width:min(100vw,720px)!important;max-width:none!important;aspect-ratio:480/853!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#030b1b url('/assets/top-cover.webp') center/100% 100% no-repeat!important;backdrop-filter:none!important;overflow:hidden!important}
 #gate .gate-card.orn:before,#gate .gate-card.orn:after{display:none!important}
@@ -18,7 +19,7 @@ const TOP_STYLE = `
 #gate #msg:empty{display:none!important}
 #gate #demoHint{display:none!important}
 .preview{pointer-events:none!important;background:rgba(4,14,32,.92)!important;color:#dfc477!important;border-top:1px solid rgba(215,177,83,.34)!important;font-weight:600!important}
-@media(min-width:721px){#gate{padding:18px 0!important}#gate .gate-card{box-shadow:0 24px 90px rgba(0,0,0,.42)!important}}
+@media(min-width:721px){#gate:not(.hidden){padding:18px 0!important}#gate .gate-card{box-shadow:0 24px 90px rgba(0,0,0,.42)!important}}
 </style>
 <script>
 (()=>{
