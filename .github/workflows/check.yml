@@ -22,6 +22,7 @@ jobs:
           node --check src/rpp-worker.js
           node --check src/secure-worker.js
           node --check src/ui-enhancer.js
+          node --check src/touch-safety.js
           node --check public/zip-store.js
       - name: Verify required public files
         run: |
@@ -43,12 +44,13 @@ jobs:
           node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
       - name: Verify security and UI enhancer routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/ui-enhancer.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('canonical author path enhanced directly; security routes preserved')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/touch-safety.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('touch-safe UI wrapper active; security routes preserved')"
           grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
           grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
           grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
           grep -Fq '提出済みのまま' src/ui-enhancer.js
           grep -Fq '題名・氏名で検索' src/ui-enhancer.js
+          grep -Fq 'pointer-events:none' src/touch-safety.js
       - name: Validate Cloudflare Worker bundle
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
