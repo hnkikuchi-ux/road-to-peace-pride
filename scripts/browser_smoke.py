@@ -1,4 +1,5 @@
 import os, re, time, sys
+from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -7,6 +8,8 @@ from selenium.webdriver.chrome.options import Options
 
 BASE=os.environ.get('RPP_BASE_URL','https://giin-home-cloud-pilot.hn-kikuchi.workers.dev')
 WAIT=20
+SHOT_DIR=Path(os.environ.get('RPP_SCREENSHOT_DIR','artifacts/screens'))
+SHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 def ok(msg): print(f'  ✓ {msg}', flush=True)
 def fail(msg):
@@ -20,6 +23,11 @@ def click(driver, selector):
     el=WebDriverWait(driver,WAIT).until(EC.element_to_be_clickable((By.CSS_SELECTOR,selector)))
     driver.execute_script('arguments[0].scrollIntoView({block:"center"});',el)
     el.click(); return el
+
+def shot(driver,name):
+    path=SHOT_DIR/name
+    driver.save_screenshot(str(path))
+    ok(f'visual QA screenshot: {path}')
 
 opt=Options()
 opt.add_argument('--headless=new')
@@ -36,7 +44,10 @@ try:
     print('1) Viewer mobile journey', flush=True)
     driver.get(BASE+'/')
     visible(driver,'#gate')
-    pw=visible(driver,'#pw'); pw.send_keys('demo')
+    visible(driver,'#pw')
+    WebDriverWait(driver,WAIT).until(lambda d:d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card')).backgroundImage.includes('top-cover.webp')"))
+    shot(driver,'01-top-cover.png')
+    pw=driver.find_element(By.ID,'pw'); pw.send_keys('demo')
     click(driver,'#unlock')
     visible(driver,'#cover:not(.hidden)'); ok('viewer password opens cover')
     click(driver,'#tocBtn')
@@ -49,6 +60,8 @@ try:
     title=driver.find_element(By.ID,'title').text.strip()
     if not title: fail('story title is visible')
     ok('story opens from TOC')
+    driver.execute_script('window.scrollTo(0,0)')
+    shot(driver,'02-story-page.png')
     before=float(driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('#body')).fontSize)"))
     click(driver,'#fontUp')
     after=float(driver.execute_script("return parseFloat(getComputedStyle(document.querySelector('#body')).fontSize)"))
@@ -73,6 +86,8 @@ try:
     visible(driver,'#otp').send_keys(otp)
     click(driver,'#verify')
     visible(driver,'#editor:not(.hidden)'); ok('OTP opens author editor without viewer password')
+    driver.execute_script('window.scrollTo(0,0)')
+    shot(driver,'03-author-editor.png')
     org=driver.find_element(By.ID,'org')
     if org.tag_name.lower()!='input': fail('organization is not a free-text input')
     if driver.find_elements(By.ID,'soku') or driver.find_elements(By.ID,'bunku') or driver.find_elements(By.ID,'honbu') or driver.find_elements(By.ID,'shibu'):
