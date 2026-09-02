@@ -22,6 +22,7 @@ jobs:
           node --check src/rpp-worker.js
           node --check src/secure-worker.js
           node --check src/ui-enhancer.js
+          node --check src/top-bg-enhancer.js
           node --check src/touch-safety.js
           node --check public/zip-store.js
       - name: Verify required public files
@@ -32,9 +33,15 @@ jobs:
           test -f public/status.html
           test -f public/version.json
           test -f public/zip-store.js
+          test -f public/assets/top-cover.webp
           test -f scripts/smoke-live.sh
           test -f scripts/browser_smoke.py
           test -f scripts/ux_regression.py
+      - name: Verify approved cover wiring
+        run: |
+          grep -Fq "url('/assets/top-cover.webp')" src/top-bg-enhancer.js
+          grep -Fq 'border:0!important' src/top-bg-enhancer.js
+          grep -Fq "aria-label','閲覧パスワード" src/top-bg-enhancer.js
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
@@ -80,3 +87,11 @@ jobs:
         run: python scripts/browser_smoke.py
       - name: Exercise optional photo, TOC search, and submitted-safe save
         run: python scripts/ux_regression.py
+      - name: Upload mobile visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-visual-qa
+          path: artifacts/screens
+          if-no-files-found: warn
+          retention-days: 7
