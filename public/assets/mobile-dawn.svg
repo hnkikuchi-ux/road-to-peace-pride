@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 941 1672" role="img" aria-label="星空と山並み、金色の道が夜明けへ続く背景">
+<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#03112b"/><stop offset=".48" stop-color="#082657"/><stop offset=".7" stop-color="#0a1736"/><stop offset="1" stop-color="#020916"/></linearGradient>
+  <radialGradient id="dawn" cx="50%" cy="63%" r="29%"><stop offset="0" stop-color="#fff1a8" stop-opacity=".98"/><stop offset=".08" stop-color="#f6c451" stop-opacity=".85"/><stop offset=".28" stop-color="#b8842c" stop-opacity=".28"/><stop offset=".72" stop-color="#513770" stop-opacity=".12"/><stop offset="1" stop-color="#08152f" stop-opacity="0"/></radialGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#8b5a16"/><stop offset=".2" stop-color="#e0ac48"/><stop offset=".5" stop-color="#fff0a5"/><stop offset=".8" stop-color="#d99b2f"/><stop offset="1" stop-color="#7e5014"/></linearGradient>
+  <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft"><feGaussianBlur stdDeviation="22"/></filter>
+</defs>
+<rect width="941" height="1672" fill="url(#sky)"/><rect width="941" height="1672" fill="url(#dawn)"/>
+<g fill="#d8ecff" opacity=".78">
+ <circle cx="108" cy="91" r="1.4"/><circle cx="183" cy="146" r="1"/><circle cx="268" cy="89" r="1.5"/><circle cx="345" cy="170" r="1"/><circle cx="430" cy="74" r="1.2"/><circle cx="513" cy="126" r="1.3"/><circle cx="616" cy="88" r="1"/><circle cx="715" cy="152" r="1.4"/><circle cx="829" cy="99" r="1.1"/>
+ <circle cx="70" cy="236" r="1"/><circle cx="151" cy="297" r="1.5"/><circle cx="242" cy="242" r="1"/><circle cx="326" cy="320" r="1.2"/><circle cx="419" cy="258" r="1.4"/><circle cx="553" cy="302" r="1.1"/><circle cx="654" cy="227" r="1.5"/><circle cx="757" cy="313" r="1"/><circle cx="874" cy="258" r="1.4"/>
+ <circle cx="98" cy="401" r="1.2"/><circle cx="209" cy="361" r="1"/><circle cx="303" cy="439" r="1.5"/><circle cx="397" cy="385" r="1"/><circle cx="526" cy="433" r="1.4"/><circle cx="648" cy="378" r="1.2"/><circle cx="779" cy="420" r="1.5"/><circle cx="861" cy="370" r="1"/>
+</g>
+<g fill="#f4c75b" opacity=".8"><circle cx="143" cy="492" r="1.3"/><circle cx="232" cy="546" r="1"/><circle cx="343" cy="500" r="1.4"/><circle cx="595" cy="515" r="1.2"/><circle cx="711" cy="557" r="1.4"/><circle cx="823" cy="487" r="1"/></g>
+<g fill="#fff7cf" filter="url(#glow)"><circle cx="122" cy="209" r="2.1"/><circle cx="788" cy="286" r="2.2"/><circle cx="326" cy="192" r="1.8"/><circle cx="669" cy="157" r="1.7"/><circle cx="211" cy="467" r="2"/><circle cx="739" cy="445" r="1.9"/></g>
+<ellipse cx="470" cy="785" rx="210" ry="128" fill="#f5c451" opacity=".18" filter="url(#soft)"/>
+<path d="M0 1015 L0 696 L80 735 L137 683 L205 760 L270 710 L338 782 L405 730 L470 815 L530 742 L598 790 L664 719 L735 768 L812 690 L941 742 L941 1015 Z" fill="#061127"/>
+<path d="M0 1036 L0 815 L109 846 L176 793 L245 868 L327 817 L409 895 L494 822 L578 882 L669 808 L754 866 L842 799 L941 844 L941 1036 Z" fill="#091735" opacity=".94"/>
+<path d="M0 1090 L0 928 L126 955 L229 913 L322 983 L430 925 L530 994 L637 930 L752 981 L846 927 L941 959 L941 1090 Z" fill="#0a1730"/>
+<path d="M470 792 C465 835 510 850 470 881 C430 912 509 930 474 965 C440 999 521 1015 474 1061 C438 1096 507 1117 469 1168" fill="none" stroke="#f9d160" stroke-width="15" stroke-linecap="round" opacity=".22" filter="url(#glow)"/>
+<path d="M470 792 C465 835 510 850 470 881 C430 912 509 930 474 965 C440 999 521 1015 474 1061 C438 1096 507 1117 469 1168" fill="none" stroke="url(#gold)" stroke-width="5.5" stroke-linecap="round"/>
+<circle cx="470" cy="785" r="9" fill="#fff6c8" filter="url(#glow)"/><path d="M470 750v70M435 785h70" stroke="#ffe08a" stroke-width="3" opacity=".9"/>
+<rect x="18" y="18" width="905" height="1636" rx="2" fill="none" stroke="#b7832c" stroke-width="2" opacity=".9"/><rect x="31" y="31" width="879" height="1610" fill="none" stroke="#e1b65b" stroke-width="1" opacity=".35"/>
+<g stroke="#c79435" stroke-width="3" fill="none" opacity=".92"><path d="M31 118V31h104M31 83h52V31M910 118V31H806M910 83h-52V31M31 1554v87h104M31 1589h52v52M910 1554v87H806M910 1589h-52v52"/></g>
+</svg>
