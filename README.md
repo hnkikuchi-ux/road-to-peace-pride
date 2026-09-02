@@ -17,11 +17,11 @@ Cloudflare Workers + Static Assets
   ├─ 投稿者メールOTP認証
   ├─ 管理者認証
   ├─ API
-  ├─ D1: 原稿・セッション・設定
+  ├─ D1: 原稿・セッション・運用設定
   └─ KV: 投稿写真
 ```
 
-Supabaseは必須ではありません。現在Cloudflare側にすでに存在するD1/KVを再利用する構成へ移行しました。
+**Supabaseは不要です。** 既存Cloudflare D1/KVをそのまま利用します。
 
 ## 閲覧
 
@@ -37,12 +37,14 @@ Supabaseは必須ではありません。現在Cloudflare側にすでに存在�
 - Googleアカウント不要
 - Email + 6桁OTP
 - 自分の原稿だけ作成・編集
-- 20秒ごとクラウド自動保存
+- 20秒ごとCloudflareへ自動保存
 - 端末にもローカルバックアップ
+- 本人JSONバックアップ
 - 写真1枚
 - 写真は最大1600pxへ再圧縮
 - 題名40字以内
 - 本文1000字程度
+- 管理者設定の締切後はサーバー側でも保存停止
 
 ### 原文保護
 
@@ -61,7 +63,7 @@ Supabaseは必須ではありません。現在Cloudflare側にすでに存在�
 Cloudflare D1 `rpp_stories`
 
 ### 写真
-Cloudflare KV `MEDIA`
+Cloudflare KV binding `MEDIA`
 
 概念上のキー:
 
@@ -72,32 +74,84 @@ rpp/<story-id>/main.jpg
 ## 認証・セキュリティ
 
 - 閲覧パスワード判定はWorker側
+- 閲覧パスワードはハッシュ化してD1保存可能
 - 投稿者OTPはD1へハッシュ保存・10分で失効
-- OTPは連続再送を120秒制限
-- 投稿者セッションはHttpOnly Cookie
-- 管理セッションもHttpOnly Cookie
-- 写真の公開URLを固定で発行しない
+- OTP連続再送は120秒制限
+- 認証試行回数制限
+- 投稿者セッションはHttpOnly + Secure Cookie
+- 管理セッションもHttpOnly + Secure Cookie
+- 写真の固定公開URLを発行しない
 - GitHubには投稿本文・投稿写真・本番パスワードを保存しない
+- Brevo APIキーは管理画面から入力可能。Cloudflare `SETUP_KEY` を使いAES-GCMで暗号化してD1保存
 
-## Preview / Production
+## 管理画面
 
-環境変数 `PREVIEW_MODE` が未設定または `true` の間は公開確認モードです。
+`/admin.html`
 
-本番化時はCloudflare側で以下を設定します。
+管理画面から以下を設定・確認できます。
 
-- `PREVIEW_MODE=false`
-- `VIEWER_PASSWORD`（共通閲覧パスワード）
-- `BREVO_API_KEY`（メールOTP送信用）
-- `OTP_SENDER_EMAIL`（Brevoで認証済み送信元）
-- `OTP_SENDER_NAME`（任意）
-- `OTP_PEPPER`（任意・推奨）
+- 対象人数
+- 原稿締切
+- PREVIEW / PRODUCTION
+- 文集閲覧ON/OFF
+- 閲覧パスワード
+- 管理者パスワード
+- Brevo APIキー
+- OTP送信元メール
+- OTPテスト送信
+- 投稿者一覧
+- 提出済 / 下書き / 写真ありフィルター
+- JSONバックアップ
+- CSV出力
+- 本文＋写真の完全ZIPバックアップ
 
-管理者認証は既存Worker Secret `SETUP_KEY` を利用できます。
+## Preview → Production
 
-## Preview Mode
+Preview中は以下で動作確認できます。
 
-本番メール設定前は、メール送信の代わりに投稿画面へOTPを表示して動作確認できます。
-閲覧用の確認パスワードは `demo` です。
+- 閲覧パスワード: `demo`（本番パスワード未設定時）
+- 管理画面: `654321` でも確認可能
+- メール未設定時: OTPを投稿画面内に表示
+
+本番切替は管理画面から行います。
+
+1. 閲覧パスワードを設定
+2. 管理者パスワードを設定
+3. Brevo APIキー + 送信元メールを設定
+4. テストメール送信
+5. `/status.html` が READY になったことを確認
+6. Site Mode を `PRODUCTION` に変更
+
+本番切替時、必要設定が足りない場合はWorker側で拒否します。
+
+## Email OTP
+
+現在はBrevo APIを使用する設計です。
+
+必要なもの:
+
+- Brevoアカウント
+- Brevo API Key
+- Brevoで利用可能な送信元メールアドレス
+
+APIキーはCloudflareのSecrets画面へ直接入力しなくても、管理画面から暗号化保存できます。
+
+## System Status
+
+`/status.html`
+
+以下を自動診断します。
+
+- Worker API
+- PREVIEW / PRODUCTION
+- D1
+- KV写真Storage
+- 閲覧パスワード
+- 管理者パスワード
+- Email OTP
+- 文集OPEN / PAUSED
+- 原稿締切
+- 次に必要な設定
 
 ## Design
 
@@ -111,3 +165,7 @@ rpp/<story-id>/main.jpg
 ## Repository
 
 `hnkikuchi-ux/road-to-peace-pride`
+
+## Cloudflare
+
+現在のWorker名は既存の秘密設定を維持するため `giin-home-cloud-pilot` を一時的に継続しています。文集本番設定完了後に公開URL名を整理できます。
