@@ -36,24 +36,29 @@ jobs:
           test -f public/status.html
           test -f public/version.json
           test -f public/zip-store.js
-          test -f public/assets/top-cover.webp
+          test -f public/assets/mobile-dawn.svg
+          test -f public/assets/desktop-dawn.svg
           test -f scripts/smoke-live.sh
           test -f scripts/browser_smoke.py
           test -f scripts/ux_regression.py
           test -f scripts/motion_smoke.py
-      - name: Verify approved cover wiring
+      - name: Verify premium vector cover wiring
         run: |
-          grep -Fq "url('/assets/top-cover.webp')" src/top-bg-enhancer.js
-          grep -Fq 'border:0!important' src/top-bg-enhancer.js
+          grep -Fq "url('/assets/mobile-dawn.svg')" src/top-bg-enhancer.js
+          grep -Fq 'rpp-sparkles' src/top-bg-enhancer.js
+          grep -Fq 'rppTwinkle' src/top-bg-enhancer.js
           grep -Fq "aria-label','閲覧パスワード" src/top-bg-enhancer.js
+          grep -Fq 'rpp-ja' src/touch-safety.js
+          grep -Fq 'rpp-en' src/touch-safety.js
+          grep -Fq 'WRITE YOUR STORY' src/touch-safety.js
       - name: Verify premium motion responsive and polish system
         run: |
           grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
           grep -Fq "import app from './motion-enhancer.js'" src/responsive-enhancer.js
           grep -Fq "import app from './responsive-enhancer.js'" src/final-polish-v2.js
           grep -Fq "import app from './final-polish-v2.js'" src/touch-safety.js
-          grep -Fq '記録をひらく' src/final-polish-v2.js
-          grep -Fq '私の記録を綴る' src/final-polish-v2.js
+          grep -Fq '記録をひらく' src/touch-safety.js
+          grep -Fq '私の記録を綴る' src/touch-safety.js
           grep -Fq 'rppRipple' src/motion-enhancer.js
           grep -Fq 'prefers-reduced-motion' src/motion-enhancer.js
           grep -Fq 'rpp-pressed' src/motion-enhancer.js
@@ -91,11 +96,7 @@ jobs:
         run: |
           NEW='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           OLD='https://giin-home-cloud-pilot.hn-kikuchi.workers.dev'
-          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then
-            BASE="$NEW"
-          else
-            BASE="$OLD"
-          fi
+          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
           echo "Testing public URL: $BASE"
       - name: Exercise deployed Cloudflare site end to end
@@ -112,11 +113,7 @@ jobs:
         run: |
           NEW='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           OLD='https://giin-home-cloud-pilot.hn-kikuchi.workers.dev'
-          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then
-            BASE="$NEW"
-          else
-            BASE="$OLD"
-          fi
+          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
           echo "Testing public URL: $BASE"
       - uses: actions/setup-python@v5
