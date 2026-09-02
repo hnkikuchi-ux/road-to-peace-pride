@@ -2,47 +2,51 @@ import uiWorker from './ui-enhancer.js';
 
 const TOP_STYLE = `
 <style>
-/* Approved cover artwork is the top page. Functional controls are aligned over the artwork. */
-#gate:not(.hidden){display:block!important;min-height:0!important;padding:0!important;background:#030b1b!important;overflow:hidden!important;position:relative!important}
+#gate:not(.hidden){display:block!important;min-height:0!important;padding:0!important;background:#020916!important;overflow:hidden!important;position:relative!important}
 #gate.hidden{display:none!important}
-#gate:before,#gate:after{display:none!important;content:none!important;border:0!important;box-shadow:none!important}
-#gate .gate-card{position:relative!important;width:min(100vw,720px)!important;max-width:none!important;aspect-ratio:480/853!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#030b1b url('/assets/top-cover.webp') center/100% 100% no-repeat!important;backdrop-filter:none!important;overflow:hidden!important}
-#gate .gate-card.orn:before,#gate .gate-card.orn:after{display:none!important}
+#gate:before,#gate:after{display:none!important;content:none!important}
+#gate .gate-card{position:relative!important;width:min(100vw,720px)!important;max-width:none!important;aspect-ratio:941/1672!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:#020916 url('/assets/mobile-dawn.svg') center/100% 100% no-repeat!important;overflow:hidden!important;isolation:isolate!important}
+#gate .gate-card.orn:before{content:""!important;display:block!important;position:absolute!important;z-index:1!important;inset:0!important;pointer-events:none!important;background:radial-gradient(circle at 50% 44%,rgba(255,218,112,.14),transparent 13%),linear-gradient(180deg,transparent 57%,rgba(2,8,20,.08) 63%,rgba(2,8,20,.8) 100%)!important}
+#gate .gate-card.orn:after{content:""!important;display:block!important;position:absolute!important;z-index:2!important;left:6.5%!important;right:6.5%!important;top:62.2%!important;bottom:4.2%!important;border:1px solid rgba(224,176,71,.78)!important;border-radius:8px!important;background:linear-gradient(180deg,rgba(2,15,35,.48),rgba(2,10,25,.78))!important;box-shadow:inset 0 0 0 6px rgba(224,176,71,.025),0 20px 55px rgba(0,0,0,.2)!important;pointer-events:none!important}
 #gate .gate-card>.rule{display:none!important}
-#gate .gate-card>.eyebrow,#gate .gate-card>h1,#gate .gate-card>.sub,#gate .gate-card>.gate-bridge{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important}
-#gate #pw{position:absolute!important;z-index:5!important;left:18.1%!important;top:69.55%!important;width:63.8%!important;height:4.72%!important;margin:0!important;padding:0 4%!important;border:0!important;border-radius:4px!important;background:transparent!important;color:#f5e7bd!important;font:500 clamp(12px,3.6vw,17px)/1 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.02em!important;box-shadow:none!important;outline:none!important;backdrop-filter:none!important}
-#gate #pw::placeholder{color:transparent!important}
-#gate #pw:focus,#gate #pw:not(:placeholder-shown){background:rgba(3,12,30,.84)!important;backdrop-filter:blur(2px)!important}
-#gate #pw:focus::placeholder{color:rgba(225,215,190,.52)!important}
-#gate #pw:focus{box-shadow:inset 0 0 0 1px rgba(255,229,149,.52),0 0 0 3px rgba(229,186,83,.12)!important}
-#gate #unlock{position:absolute!important;z-index:6!important;left:19.8%!important;top:76.7%!important;width:60.4%!important;height:6.55%!important;margin:0!important;padding:0!important;border:0!important;border-radius:5px!important;background:transparent!important;color:transparent!important;box-shadow:none!important;min-height:0!important}
+#gate .gate-card>.eyebrow{position:absolute!important;z-index:4!important;display:block!important;left:10%!important;right:10%!important;top:5.9%!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;clip:auto!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;text-align:center!important;color:#e7c46b!important;font:700 clamp(10px,2.7vw,15px)/1.2 ui-serif,"Times New Roman","Yu Mincho",serif!important;letter-spacing:.24em!important;text-shadow:0 2px 10px rgba(0,0,0,.55)!important}
+#gate .gate-card>h1{position:absolute!important;z-index:4!important;display:block!important;left:7%!important;right:7%!important;top:12.2%!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;clip:auto!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;text-align:center!important;color:#efc65d!important;font:500 clamp(26px,8vw,56px)/.98 ui-serif,"Times New Roman","Yu Mincho",serif!important;letter-spacing:.055em!important;text-shadow:0 3px 18px rgba(0,0,0,.5),0 0 24px rgba(232,180,62,.08)!important}
+#gate .gate-card>h1 .rpp-road{display:block!important;font-size:.5em!important;letter-spacing:.16em!important;margin-bottom:.18em!important;color:#f0cf79!important}
+#gate .gate-card>h1 .rpp-peace{display:block!important;font-size:1.22em!important;letter-spacing:.025em!important}
+#gate .gate-card>.sub{position:absolute!important;z-index:4!important;display:block!important;left:10%!important;right:10%!important;top:27.1%!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;clip:auto!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;text-align:center!important;color:#e9c064!important;font:500 clamp(19px,5.6vw,36px)/1.42 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.055em!important;text-shadow:0 3px 16px rgba(0,0,0,.6)!important}
+#gate .gate-card>.gate-bridge{position:absolute!important;z-index:4!important;display:block!important;left:10%!important;right:10%!important;top:57.4%!important;width:auto!important;height:auto!important;margin:0!important;padding:0!important;clip:auto!important;clip-path:none!important;overflow:visible!important;white-space:normal!important;text-align:center!important;color:#e9bf62!important;font:600 clamp(12px,3.3vw,18px)/1.3 ui-serif,"Yu Mincho",serif!important;letter-spacing:.09em!important;text-shadow:0 2px 12px rgba(0,0,0,.7)!important}
+#rppPasswordLabel{position:absolute;z-index:5;left:18%;right:18%;top:65.7%;text-align:center;color:#e6c46f;font:600 clamp(12px,3.2vw,17px)/1.2 ui-serif,"Yu Mincho",serif;letter-spacing:.11em;pointer-events:none}
+#gate #pw{position:absolute!important;z-index:6!important;left:15.2%!important;top:69.0%!important;width:69.6%!important;height:5.2%!important;margin:0!important;padding:0 6%!important;border:1px solid rgba(215,164,55,.72)!important;border-radius:8px!important;background:rgba(2,13,31,.72)!important;color:#f5e7bd!important;font:500 clamp(12px,3.6vw,17px)/1 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.02em!important;box-shadow:inset 0 0 0 1px rgba(255,222,132,.04)!important;outline:none!important;backdrop-filter:blur(3px)!important}
+#gate #pw::placeholder{color:rgba(210,211,214,.43)!important}
+#gate #pw:focus{border-color:#efd17c!important;box-shadow:inset 0 0 0 1px rgba(255,236,176,.18),0 0 0 3px rgba(229,186,83,.13),0 0 28px rgba(224,171,58,.12)!important}
+#gate #unlock{position:absolute!important;z-index:7!important;left:19.2%!important;top:76.2%!important;width:61.6%!important;height:7.0%!important;margin:0!important;padding:0!important;border:1px solid #f1cd72!important;border-radius:8px!important;min-height:0!important;color:#171006!important;background:linear-gradient(105deg,#a96e16 0%,#dfa83a 18%,#ffe792 50%,#d39a2b 82%,#925911 100%)!important;box-shadow:inset 0 0 0 2px rgba(255,244,195,.26),0 0 0 1px rgba(80,49,5,.45),0 10px 24px rgba(0,0,0,.28),0 0 26px rgba(238,185,55,.12)!important;font:600 clamp(19px,5.1vw,28px)/1 ui-serif,"Yu Mincho",serif!important;letter-spacing:.08em!important;text-align:center!important}
+#gate #gateAuthorLink{position:absolute!important;z-index:7!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;left:19.2%!important;top:88.3%!important;width:61.6%!important;height:7.0%!important;margin:0!important;padding:0!important;border:1px solid rgba(223,176,67,.78)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(9,24,49,.9),rgba(3,13,31,.96))!important;color:#ecc86e!important;text-decoration:none!important;box-shadow:inset 0 0 0 2px rgba(241,197,91,.07),0 0 22px rgba(222,169,52,.08)!important;overflow:hidden!important;text-align:center!important}
+#gate #gateAuthorLink .rpp-ja{display:block;font:600 clamp(16px,4.3vw,24px)/1.08 ui-serif,"Yu Mincho",serif;letter-spacing:.08em}
+#gate #gateAuthorLink .rpp-en{display:block;margin-top:.42em;font:600 clamp(8px,2.35vw,12px)/1 ui-serif,"Times New Roman",serif;letter-spacing:.16em;color:#dfbd67}
 #gate #unlock:focus-visible,#gate #gateAuthorLink:focus-visible{outline:2px solid #fff0ad!important;outline-offset:3px!important}
-#gate #gateAuthorLink{position:absolute!important;z-index:6!important;display:block!important;left:25.5%!important;top:88.65%!important;width:49%!important;height:4.1%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;color:transparent!important;overflow:hidden!important}
-#gate #msg{position:absolute!important;z-index:7!important;left:18%!important;top:74.65%!important;width:64%!important;min-height:0!important;margin:0!important;padding:2px 5px!important;border-radius:5px!important;background:rgba(35,6,11,.7)!important;color:#ffd7d7!important;font:600 10px/1.25 ui-sans-serif,system-ui!important;text-align:center!important}
-#gate #msg:empty{display:none!important}
-#gate #demoHint{display:none!important}
-.preview{pointer-events:none!important;background:rgba(4,14,32,.92)!important;color:#dfc477!important;border-top:1px solid rgba(215,177,83,.34)!important;font-weight:600!important}
-@media(min-width:721px){#gate:not(.hidden){padding:18px 0!important}#gate .gate-card{box-shadow:0 24px 90px rgba(0,0,0,.42)!important}}
+#gate #msg{position:absolute!important;z-index:8!important;left:15%!important;top:74.5%!important;width:70%!important;min-height:0!important;margin:0!important;padding:3px 6px!important;border-radius:5px!important;background:rgba(35,6,11,.8)!important;color:#ffd7d7!important;font:600 10px/1.25 ui-sans-serif,system-ui!important;text-align:center!important}
+#gate #msg:empty{display:none!important}#gate #demoHint{display:none!important}
+.rpp-sparkles{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}.rpp-sparkles i{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff1ae;box-shadow:0 0 8px 2px rgba(255,218,102,.48);animation:rppTwinkle var(--d,3.2s) ease-in-out infinite;animation-delay:var(--l,0s);opacity:.15}.rpp-sparkles i:before,.rpp-sparkles i:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(90deg,transparent,#ffe8a2,transparent)}.rpp-sparkles i:before{width:18px;height:1px}.rpp-sparkles i:after{width:1px;height:18px;background:linear-gradient(180deg,transparent,#ffe8a2,transparent)}
+@keyframes rppTwinkle{0%,100%{opacity:.1;transform:scale(.55) rotate(0)}42%{opacity:.9;transform:scale(1.05) rotate(12deg)}65%{opacity:.35;transform:scale(.72) rotate(20deg)}}
+.preview{pointer-events:none!important;background:rgba(4,14,32,.94)!important;color:#dfc477!important;border-top:1px solid rgba(215,177,83,.34)!important;font-weight:600!important}
+@media(min-width:721px) and (max-width:899px){#gate:not(.hidden){padding:18px 0!important}#gate .gate-card{box-shadow:0 24px 90px rgba(0,0,0,.42)!important}}
+@media(prefers-reduced-motion:reduce){.rpp-sparkles i{animation:none!important;opacity:.4!important}}
 </style>
 <script>
 (()=>{
- const pw=document.querySelector('#pw'),open=document.querySelector('#unlock'),author=document.querySelector('#gateAuthorLink');
+ const card=document.querySelector('#gate .gate-card'),pw=document.querySelector('#pw'),open=document.querySelector('#unlock'),author=document.querySelector('#gateAuthorLink');
+ if(card){
+   const h1=card.querySelector('h1');if(h1)h1.innerHTML='<span class="rpp-road">ROAD TO</span><span class="rpp-peace">PEACE PRIDE</span>';
+   const sub=card.querySelector('.sub');if(sub)sub.textContent='9.12までの\n挑戦と誓いの記録';
+   const bridge=card.querySelector('.gate-bridge');if(bridge)bridge.textContent='✦ そして、11.15、11.18へ ✦';
+   if(!document.querySelector('#rppPasswordLabel')){const l=document.createElement('div');l.id='rppPasswordLabel';l.textContent='閲覧パスワード';card.appendChild(l)}
+   if(!document.querySelector('.rpp-sparkles')){const s=document.createElement('div');s.className='rpp-sparkles';const pts=[[11,13,2.7,-.2],[79,15,3.7,-1.4],[20,32,3.2,-.8],[72,29,2.9,-1.9],[36,40,4.1,-2.2],[84,43,3.3,-.4],[14,55,3.8,-2.8],[76,53,2.6,-1.1],[25,61,4.3,-3.1],[68,59,3.5,-.7],[17,79,3.0,-2],[83,79,4,-1.5],[14,91,3.6,-.4],[87,91,2.8,-2.4]];for(const [x,y,d,l] of pts){const i=document.createElement('i');i.style.left=x+'%';i.style.top=y+'%';i.style.setProperty('--d',d+'s');i.style.setProperty('--l',l+'s');s.appendChild(i)}card.appendChild(s)}
+ }
  if(pw){pw.setAttribute('aria-label','閲覧パスワード');pw.setAttribute('placeholder','パスワードを入力してください')}
- if(open)open.setAttribute('aria-label','文集をひらく');
- if(author)author.setAttribute('aria-label','原稿を書く / EDIT MY STORY');
+ if(open){open.setAttribute('aria-label','記録をひらく');open.textContent='記録をひらく'}
+ if(author){author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>'}
 })();
 </script>`;
 
-function appendStyle(response){
-  return new HTMLRewriter().on('body',{element(el){el.append(TOP_STYLE,{html:true})}}).transform(response);
-}
-
-export default {
-  async fetch(request,env,ctx){
-    const response=await uiWorker.fetch(request,env,ctx);
-    const path=new URL(request.url).pathname.replace(/\/$/,'')||'/';
-    const type=response.headers.get('content-type')||'';
-    if(type.includes('text/html')&&(path==='/'||path==='/index.html'))return appendStyle(response);
-    return response;
-  }
-};
+function appendStyle(response){return new HTMLRewriter().on('body',{element(el){el.append(TOP_STYLE,{html:true})}}).transform(response)}
+export default {async fetch(request,env,ctx){const response=await uiWorker.fetch(request,env,ctx);const path=new URL(request.url).pathname.replace(/\/$/,'')||'/';const type=response.headers.get('content-type')||'';if(type.includes('text/html')&&(path==='/'||path==='/index.html'))return appendStyle(response);return response}};
