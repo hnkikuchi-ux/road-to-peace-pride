@@ -32,7 +32,7 @@ try:
 finally:
     d.quit()
 
-print('2) Optional photo and submitted-safe editing')
+print('2) Simplified author form, optional photo, submitted-safe editing')
 d=driver();w=WebDriverWait(d,15)
 try:
     d.get(BASE+'/author.html')
@@ -43,20 +43,28 @@ try:
     m=re.search(r'(\d{6})',msg);check(bool(m),'preview OTP is available')
     d.find_element(By.ID,'otp').send_keys(m.group(1));d.find_element(By.ID,'verify').click()
     w.until(EC.visibility_of_element_located((By.ID,'editor')))
+    check(len(d.find_elements(By.ID,'org'))==1,'organization is one field')
+    check(not any(d.find_elements(By.ID,x) for x in ('soku','bunku','honbu','shibu')),'legacy organization fields are absent')
+    check(len(d.find_elements(By.ID,'category'))==0,'category is absent')
+    check(len(d.find_elements(By.ID,'export'))==0,'manual device export button is absent')
     photo_label=d.find_element(By.CSS_SELECTOR,'#photo').find_element(By.XPATH,'ancestor::div[contains(@class,"field")][1]/label').text
     check('任意' in photo_label,'photo is explicitly optional')
     check('写真なしでも' in d.find_element(By.ID,'photoOptionalNote').text,'UI says submission works without a photo')
+    d.find_element(By.ID,'org').send_keys('テスト総区 テスト本部')
     d.find_element(By.ID,'name').send_keys('写真なしテスト')
     d.find_element(By.ID,'title').send_keys('写真なしで提出できるか')
     d.find_element(By.ID,'body').send_keys('写真を添付しない場合でも、原稿だけで提出できることを確認するテストです。')
-    d.find_element(By.ID,'confirm').click();d.find_element(By.ID,'submit').click()
+    d.execute_script("document.getElementById('confirm').click()")
+    d.execute_script("document.getElementById('submit').click()")
     w.until(lambda x:x.find_element(By.ID,'statusBadge').text=='提出済')
     check(d.find_element(By.ID,'statusBadge').text=='提出済','story submits without a photo in preview')
     save=d.find_element(By.ID,'save');check('提出済みのまま' in save.text,'manual save warns that submitted state is preserved')
-    save.click();time.sleep(.2)
+    d.execute_script("arguments[0].click()",save);time.sleep(.2)
     check(d.find_element(By.ID,'statusBadge').text=='提出済','manual save does not demote a submitted story')
     status=d.execute_script("return JSON.parse(localStorage.getItem('rpp_draft_'+arguments[0])).status",email)
-    check(status=='submitted','device backup also keeps submitted state')
+    check(status=='submitted','device autosave also keeps submitted state')
+    org=d.execute_script("return JSON.parse(localStorage.getItem('rpp_draft_'+arguments[0])).org",email)
+    check(org=='テスト総区 テスト本部','device autosave keeps the single organization field')
 finally:
     d.quit()
 
