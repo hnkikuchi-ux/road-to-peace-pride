@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "giin-home-cloud-pilot",
+  "name": "road-to-peace-pride",
   "main": "src/touch-safety.js",
   "compatibility_date": "2026-08-05",
   "assets": {
