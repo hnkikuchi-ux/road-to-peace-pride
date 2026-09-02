@@ -28,7 +28,18 @@ jobs:
           test -f public/admin.html
           test -f public/status.html
           test -f public/version.json
+          test -f scripts/smoke-live.sh
       - name: Verify security worker is active
         run: node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/secure-worker.js') process.exit(1); console.log('secure-worker active')"
       - name: Validate Cloudflare Worker bundle
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
+
+  live-smoke:
+    if: github.event_name == 'push'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise deployed Cloudflare site end to end
+        run: bash scripts/smoke-live.sh
