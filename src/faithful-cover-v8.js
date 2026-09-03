@@ -23,7 +23,7 @@ body.rpp-faithful-v7 #gate .gate-card.orn:after{
 /* bridge and lower panel — keep every border completely inside the card */
 #rppFaithfulV7 .v7-bridge{top:65.15%!important;left:8.5%!important;right:8.5%!important;font-size:clamp(14px,3.55vw,18px)!important;letter-spacing:.065em!important;text-shadow:0 2px 10px rgba(0,0,0,.98),0 0 10px rgba(241,190,63,.22)!important}
 #rppFaithfulV7 .v7-panel{
-  left:7.35%!important;right:7.35%!important;top:68.15%!important;bottom:1.85%!important;
+  left:7.35%!important;right:7.35%!important;top:68.15%!important;bottom:.95%!important;
   clip-path:none!important;border:1.45px solid rgba(226,174,68,.96)!important;border-radius:0!important;
   background:linear-gradient(180deg,rgba(3,22,50,.90),rgba(1,10,27,.985))!important;
   box-shadow:inset 0 0 0 1px rgba(255,234,164,.07),inset 0 0 34px rgba(0,0,0,.18),0 16px 38px rgba(0,0,0,.28)!important;
