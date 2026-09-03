@@ -45,9 +45,10 @@ try:
     author=visible(driver,'#gateAuthorLink')
     if author.get_attribute('aria-label')!='私の記録を綴る / WRITE YOUR STORY': fail('single bilingual story CTA aria label missing')
     if author.tag_name.lower()!='a': fail('story CTA is not a single interactive button/link')
-    if len(author.find_elements(By.CSS_SELECTOR,'.rpp-ja'))!=1 or len(author.find_elements(By.CSS_SELECTOR,'.rpp-en'))!=1: fail('story CTA is not one two-line button')
-    if author.find_element(By.CSS_SELECTOR,'.rpp-ja').text.strip()!='私の記録を綴る': fail('Japanese story CTA line is wrong')
-    if author.find_element(By.CSS_SELECTOR,'.rpp-en').text.strip()!='WRITE YOUR STORY': fail('English story CTA line is wrong')
+    pseudo=driver.execute_script("const e=arguments[0];return [getComputedStyle(e,'::before').content,getComputedStyle(e,'::after').content,getComputedStyle(e,'::before').top,getComputedStyle(e,'::after').top]",author)
+    if '私の記録を綴る' not in pseudo[0]: fail('Japanese story CTA line is not rendered')
+    if 'WRITE YOUR STORY' not in pseudo[1]: fail('English story CTA line is not rendered')
+    if pseudo[2]==pseudo[3]: fail('story CTA lines are not vertically separated')
     unlock=visible(driver,'#unlock')
     if unlock.get_attribute('aria-label')!='記録をひらく': fail('open CTA aria label missing')
     ratio=card.rect['height']/card.rect['width']
