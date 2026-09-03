@@ -28,6 +28,7 @@ jobs:
           node --check src/final-polish-v2.js
           node --check src/touch-safety.js
           node --check src/exact-cover.js
+          node --check src/exact-cover-avif.js
           node --check public/zip-store.js
       - name: Verify required public files
         run: |
@@ -42,6 +43,11 @@ jobs:
           test -f public/assets/top-master/01.txt
           test -f public/assets/top-master/02.txt
           test -f public/assets/top-master/03.txt
+          for n in 001 002 003 004 005 006 007 008 009; do test -f "public/assets/top-master-avif/$n.txt"; done
+          test "$(wc -c < public/assets/top-master-avif/001.txt)" -eq 20000
+          test "$(wc -c < public/assets/top-master-avif/007.txt)" -eq 20000
+          test "$(wc -c < public/assets/top-master-avif/008.txt)" -eq 19999
+          test "$(wc -c < public/assets/top-master-avif/009.txt)" -eq 13940
           test -f scripts/smoke-live.sh
           test -f scripts/browser_smoke.py
           test -f scripts/ux_regression.py
@@ -55,6 +61,11 @@ jobs:
           grep -Fq '記録をひらく' src/exact-cover.js
           grep -Fq 'rpp-exact-sparkles' src/exact-cover.js
           grep -Fq '941/1672' src/exact-cover.js
+          grep -Fq "import app from './exact-cover.js'" src/exact-cover-avif.js
+          grep -Fq '/assets/top-master-avif/' src/exact-cover-avif.js
+          grep -Fq "parts[7].slice(0,10036)+'G'+parts[7].slice(10036)" src/exact-cover-avif.js
+          grep -Fq 'approved-avif-941x1672' src/exact-cover-avif.js
+          grep -Fq "b64.length!==173940" src/exact-cover-avif.js
       - name: Verify premium motion and polish system
         run: |
           grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
@@ -75,7 +86,7 @@ jobs:
           node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
       - name: Verify security and UI enhancer routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/exact-cover.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + exact approved cover + touch-safe wrapper active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/exact-cover-avif.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + high-resolution exact approved AVIF cover + touch-safe wrapper active')"
           grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
           grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
           grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
