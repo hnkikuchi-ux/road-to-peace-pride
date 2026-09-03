@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "road-to-peace-pride",
-  "main": "src/viewer-logout.js",
+  "main": "src/premium-v6-polish.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
