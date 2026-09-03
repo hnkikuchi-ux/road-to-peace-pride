@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: memorial-app-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -29,6 +33,7 @@ jobs:
           node --check src/touch-safety.js
           node --check src/exact-cover.js
           node --check src/exact-cover-avif.js
+          node --check src/visual-final.js
           node --check public/zip-store.js
       - name: Verify required public files
         run: |
@@ -65,6 +70,9 @@ jobs:
           grep -Fq '私の記録を綴る / WRITE YOUR STORY' src/exact-cover-avif.js
           grep -Fq 'WRITE YOUR STORY' src/exact-cover-avif.js
           grep -Fq 'prefers-reduced-motion' src/exact-cover-avif.js
+          grep -Fq "import app from './exact-cover-avif.js'" src/visual-final.js
+          grep -Fq 'visualFinal' src/visual-final.js
+          grep -Fq 'white-space:nowrap' src/visual-final.js
       - name: Verify premium motion and polish system
         run: |
           grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
@@ -85,7 +93,7 @@ jobs:
           node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
       - name: Verify security and UI enhancer routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/exact-cover-avif.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + crisp vector live cover + touch-safe wrapper active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/visual-final.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + final visual polish + crisp vector live cover active')"
           grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
           grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
           grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
