@@ -57,7 +57,7 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock:after{content:""!importan
 /* author button: full rounded double frame and enough height for two lines */
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
-  left:15.65%!important;top:91.15%!important;width:68.7%!important;height:6.35%!important;
+  left:15.65%!important;top:91.80%!important;width:68.7%!important;height:6.35%!important;
   border:2px solid #e8bd57!important;border-radius:999px!important;overflow:visible!important;
   background:radial-gradient(circle at 50% 10%,rgba(255,255,255,.12),transparent 31%),linear-gradient(180deg,#0b2c5c 0%,#061e46 38%,#020d25 100%)!important;
   box-shadow:inset 0 0 0 2px rgba(94,55,9,.90),inset 0 0 0 5px rgba(244,204,105,.14),0 10px 25px rgba(0,0,0,.30),0 0 24px rgba(225,171,55,.11)!important;
