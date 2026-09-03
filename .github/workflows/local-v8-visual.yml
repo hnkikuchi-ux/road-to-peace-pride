@@ -1,0 +1,56 @@
+name: Local faithful v8 visual QA
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-v8-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install browser test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+          fc-cache -f
+          python -m pip install --disable-pip-version-check selenium==4.35.0
+      - name: Start current Worker locally
+        run: |
+          nohup npx --yes wrangler@4 dev --local --ip 127.0.0.1 --port 8787 >/tmp/rpp-wrangler.log 2>&1 &
+          echo $! >/tmp/rpp-wrangler.pid
+          for i in $(seq 1 45); do
+            if curl -fsS --max-time 3 http://127.0.0.1:8787/version.json >/dev/null 2>&1; then
+              echo 'Local Worker is ready.'
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/rpp-wrangler.log || true
+          exit 1
+      - name: Verify faithful v8 geometry and capture mobile screenshot
+        env:
+          RPP_BASE_URL: http://127.0.0.1:8787
+        run: python scripts/faithful_v8_smoke.py
+      - name: Show Worker log on failure
+        if: failure()
+        run: cat /tmp/rpp-wrangler.log || true
+      - name: Upload local v8 screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-faithful-v8-visual
+          path: artifacts/screens
+          if-no-files-found: warn
+          retention-days: 7
