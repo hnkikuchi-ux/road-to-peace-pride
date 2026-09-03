@@ -21,11 +21,14 @@ d=webdriver.Chrome(options=opt)
 try:
     d.set_window_size(390,844);d.get(BASE+'/')
     card=wait_visible(d,'#gate .gate-card')
-    WebDriverWait(d,25).until(lambda x:x.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-master')=='vector-live-941x1672')
-    assert card.get_attribute('data-master-format')=='svg+html'
-    assert card.get_attribute('data-master-pixels')=='vector'
+    WebDriverWait(d,25).until(lambda x:x.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-artwork-version')=='premium-v4-layered')
     bg=d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card'),'::before').backgroundImage")
-    assert 'mobile-dawn.svg' in bg, bg
+    frame=d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card'),'::after').backgroundImage")
+    assert 'premium-v4-bg.webp' in bg, bg
+    assert 'premium-v4-frame.webp' in frame, frame
+    title=wait_visible(d,'#rppCrispCopy .title')
+    assert 'ROAD TO' in title.text and 'PEACE PRIDE' in title.text
+    assert d.find_elements(By.CSS_SELECTOR,'.rpp-title-divider')
     unlock=wait_visible(d,'#unlock')
     assert unlock.get_attribute('aria-label')=='記録をひらく'
     assert 'rpp-action' in (unlock.get_attribute('class') or '')
@@ -35,7 +38,9 @@ try:
     assert '私の記録を綴る' in pseudo[0]
     assert 'WRITE YOUR STORY' in pseudo[1]
     assert 'rppAuthorSheen' in pseudo[2]
-    ok('crisp vector top and unified two-line story CTA are motion-enabled')
+    art_animation=d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card'),'::before').animationName")
+    assert 'rppArtworkBreath' in art_animation
+    ok('premium layered top and unified two-line story CTA are motion-enabled')
     d.execute_script("const e=arguments[0],r=e.getBoundingClientRect();e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:1}));",unlock)
     WebDriverWait(d,3).until(lambda x:'rpp-pressed' in (x.find_element(By.ID,'unlock').get_attribute('class') or ''))
     ok('pointerdown gives immediate pressed state')
@@ -45,8 +50,7 @@ try:
     d.save_screenshot(str(OUT/'05-mobile-motion-top.png'))
 
     d.set_window_size(1440,900);d.get(BASE+'/');card=wait_visible(d,'#gate .gate-card')
-    WebDriverWait(d,25).until(lambda x:x.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-master')=='vector-live-941x1672')
-    assert card.get_attribute('data-master-format')=='svg+html'
+    WebDriverWait(d,25).until(lambda x:x.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-artwork-version')=='premium-v4-layered')
     rect=card.rect
     ratio=rect['height']/rect['width']
     assert abs(ratio-(1672/941))<.03, ('desktop master ratio changed',ratio,rect)
@@ -61,8 +65,8 @@ try:
     assert author.get_attribute('aria-label')=='私の記録を綴る / WRITE YOUR STORY'
     desktop_pseudo=d.execute_script("const e=arguments[0];return [getComputedStyle(e,'::before').content,getComputedStyle(e,'::after').content]",author)
     assert '私の記録を綴る' in desktop_pseudo[0] and 'WRITE YOUR STORY' in desktop_pseudo[1]
-    ok('desktop preserves the crisp portrait composition and aligned live controls')
+    ok('desktop preserves the premium portrait composition and aligned live controls')
     d.save_screenshot(str(OUT/'06-desktop-exact-login.png'))
-    print('MOTION / CRISP VECTOR COVER QA PASSED',flush=True)
+    print('MOTION / PREMIUM ARTWORK COVER QA PASSED',flush=True)
 finally:
     d.quit()
