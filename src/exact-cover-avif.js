@@ -2,21 +2,12 @@ import app from './exact-cover.js';
 
 const CRISP_LIVE_COVER = `
 <style>
-/*
- * Crisp live cover.
- * The 941x1672 SVG is vector artwork, so the landscape/frame stay sharp at every scale.
- * Typography and controls remain real HTML instead of being baked into a raster cover.
- */
 body.rpp-gate-active .wrap{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
 #gate:not(.hidden){display:grid!important;place-items:center!important;width:100%!important;min-height:100svh!important;padding:10px!important;background:radial-gradient(circle at 50% 44%,#10285a 0%,#06152f 35%,#020817 72%,#01040b 100%)!important;overflow:hidden!important}
 #gate.hidden{display:none!important}
 #gate .gate-card{position:relative!important;width:min(100vw,56.28svh,941px)!important;max-width:none!important;height:auto!important;aspect-ratio:941/1672!important;margin:0 auto!important;padding:0!important;border:0!important;border-radius:0!important;box-shadow:0 34px 110px rgba(0,0,0,.62),0 0 70px rgba(207,164,73,.08)!important;background:#020817!important;overflow:hidden!important;isolation:isolate!important;opacity:1!important;filter:none!important;transform:translateZ(0)!important}
-
-/* Vector artwork always sits above any legacy raster background loaded by older layers. */
 #gate .gate-card.orn:before{content:""!important;display:block!important;position:absolute!important;inset:0!important;z-index:0!important;width:auto!important;height:auto!important;left:0!important;top:0!important;background:url('/assets/mobile-dawn.svg') center/100% 100% no-repeat!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important;opacity:1!important;pointer-events:none!important;animation:rppCoverBreath 12s ease-in-out infinite!important}
 #gate .gate-card.orn:after{content:""!important;display:block!important;position:absolute!important;inset:0!important;z-index:1!important;left:0!important;right:0!important;top:0!important;bottom:0!important;width:auto!important;height:auto!important;background:linear-gradient(180deg,rgba(1,7,19,.20) 0%,rgba(1,7,19,.03) 37%,rgba(1,7,19,.02) 50%,rgba(1,7,19,.17) 66%,rgba(1,7,19,.46) 100%),radial-gradient(circle at 50% 50%,transparent 48%,rgba(0,0,0,.24) 100%)!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important;pointer-events:none!important}
-
-/* Old baked-copy elements stay hidden; this live layer is the source of truth. */
 #gate .gate-card>.eyebrow,#gate .gate-card>h1,#gate .gate-card>.sub,#gate .gate-card>.gate-bridge,#gate .gate-card>.rule,#rppPasswordLabel,#rppDesktopCopy,#gate .rpp-sparkles{display:none!important}
 #rppCrispCopy{position:absolute;z-index:6;left:8.2%;right:8.2%;top:6.2%;text-align:center;pointer-events:none;color:#f8f1df;text-shadow:0 4px 22px rgba(0,0,0,.58)}
 #rppCrispCopy .private{font:700 clamp(7px,1.8vw,11px)/1.35 ui-sans-serif,system-ui;letter-spacing:.34em;color:#d6bd78;opacity:.92;animation:rppFineRise .9s cubic-bezier(.16,1,.3,1) both}
@@ -27,118 +18,46 @@ body.rpp-gate-active .wrap{width:100%!important;max-width:none!important;margin:
 #rppCrispCopy .bridge{margin-top:3.2%;font:600 clamp(10px,2.65vw,15px)/1.55 ui-serif,"Yu Mincho",serif;letter-spacing:.10em;color:#e3c56f;animation:rppFineRise 1s .46s cubic-bezier(.16,1,.3,1) both}
 #rppCrispCopy .vow{margin-top:2.3%;font:600 clamp(8px,2.15vw,12px)/1.35 ui-serif,"Times New Roman",serif;letter-spacing:.22em;color:rgba(239,224,183,.88);animation:rppFineRise 1s .55s cubic-bezier(.16,1,.3,1) both}
 #rppAuthLabel{position:absolute;z-index:8;left:14%;right:14%;top:58.85%;text-align:left;color:#dcc37e;font:600 clamp(9px,2.3vw,13px)/1.3 ui-serif,"Yu Mincho",serif;letter-spacing:.13em;text-shadow:0 2px 10px rgba(0,0,0,.7)}
-
-/* Crisp live password field. */
 #gate #pw{position:absolute!important;z-index:12!important;left:13.5%!important;top:61.55%!important;width:73%!important;height:5.75%!important;margin:0!important;padding:0 5%!important;border:1px solid rgba(225,188,99,.72)!important;border-radius:10px!important;background:linear-gradient(180deg,rgba(3,14,35,.80),rgba(2,10,26,.70))!important;color:#f9efd3!important;caret-color:#f8d77d!important;font:500 clamp(13px,3.2vw,19px)/1 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.03em!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 9px 24px rgba(0,0,0,.28),0 0 28px rgba(211,167,70,.08)!important;outline:none!important;backdrop-filter:none!important;transition:border-color .24s ease,box-shadow .24s ease,background .24s ease!important}
 #gate #pw::placeholder{color:rgba(232,226,211,.48)!important}
 #gate #pw:focus,#gate #pw.rpp-has-value{background:rgba(2,13,31,.90)!important;color:#fff4d5!important;border-color:#f0cd70!important;box-shadow:0 0 0 3px rgba(236,188,76,.11),0 12px 30px rgba(0,0,0,.34),inset 0 0 20px rgba(233,197,109,.035)!important}
-
-/* Primary open button. */
 html body #gate #unlock.rpp-action,#gate #unlock{position:absolute!important;z-index:13!important;left:17.2%!important;top:70.05%!important;width:65.6%!important;height:6.9%!important;margin:0!important;padding:0 8%!important;border:1px solid rgba(255,229,151,.72)!important;border-radius:11px!important;background:linear-gradient(105deg,#9f6517 0%,#d5a341 19%,#f5dc86 50%,#c88a27 81%,#925912 100%)!important;color:#1b1104!important;text-indent:0!important;text-shadow:0 1px 0 rgba(255,255,255,.26)!important;box-shadow:0 12px 32px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.36),0 0 30px rgba(227,178,64,.15)!important;font:800 clamp(14px,3.55vw,20px)/1 ui-serif,"Yu Mincho",serif!important;letter-spacing:.12em!important;overflow:hidden!important;visibility:visible!important;opacity:1!important;transform:none!important;filter:none!important;transition:transform .18s ease,box-shadow .25s ease,filter .25s ease!important}
 #gate #unlock:hover,#gate #unlock:focus-visible{filter:brightness(1.06)!important;box-shadow:0 14px 38px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.42),0 0 42px rgba(237,194,85,.23)!important}
 #gate #unlock:active{transform:translateY(1px) scale(.995)!important}
-
-/* One unified two-line author button. */
 html body #gate #gateAuthorLink.rpp-action,#gate #gateAuthorLink{position:absolute!important;z-index:13!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;left:18.2%!important;top:80.55%!important;width:63.6%!important;height:8.0%!important;margin:0!important;padding:0 6%!important;border:1px solid rgba(220,182,91,.74)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(6,21,48,.78),rgba(2,11,28,.88))!important;color:#f3e4b8!important;text-decoration:none!important;text-indent:0!important;text-shadow:0 2px 12px rgba(0,0,0,.55)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 9px 28px rgba(0,0,0,.24),0 0 26px rgba(208,164,63,.07)!important;overflow:hidden!important;visibility:visible!important;opacity:1!important;transform:none!important;filter:none!important;transition:border-color .22s ease,background .22s ease,box-shadow .24s ease,transform .18s ease!important}
 html body #gate #gateAuthorLink *{visibility:visible!important}
 #gate #gateAuthorLink.rpp-action .rpp-ja{display:block!important;font:600 clamp(13px,3.35vw,19px)/1.05 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.10em!important;color:#f4ead0!important;white-space:nowrap!important}
 #gate #gateAuthorLink.rpp-action .rpp-en{display:block!important;margin-top:.62em!important;font:700 clamp(7px,1.95vw,10px)/1 ui-serif,"Times New Roman",serif!important;letter-spacing:.23em!important;color:#ddb85f!important;white-space:nowrap!important}
 #gate #gateAuthorLink:hover,#gate #gateAuthorLink:focus-visible{border-color:#f0cf78!important;background:linear-gradient(180deg,rgba(10,31,65,.88),rgba(3,14,34,.94))!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 12px 32px rgba(0,0,0,.31),0 0 38px rgba(224,179,72,.15)!important}
 #gate #gateAuthorLink:active{transform:translateY(1px) scale(.995)!important}
-
-/* Shared refined light sweep. */
 #gate #unlock::before,#gate #gateAuthorLink::before{content:""!important;display:block!important;position:absolute!important;inset:-20% -30%!important;z-index:1!important;background:linear-gradient(105deg,transparent 35%,rgba(255,248,216,.38) 50%,transparent 65%)!important;transform:translateX(-125%)!important;opacity:.0!important;pointer-events:none!important;animation:rppQuietSweep 5.8s 1.8s ease-in-out infinite!important}
 #gate #unlock::after,#gate #gateAuthorLink::after{display:none!important}
-
 #gate #msg{position:absolute!important;z-index:15!important;left:15%!important;top:67.65%!important;width:70%!important;min-height:0!important;margin:0!important;padding:4px 8px!important;border:1px solid rgba(255,176,176,.14)!important;border-radius:5px!important;background:rgba(60,8,15,.86)!important;color:#ffe6e6!important;font:700 10px/1.3 ui-sans-serif,system-ui!important;text-align:center!important;box-shadow:0 6px 18px rgba(0,0,0,.22)!important}
 #gate #msg:empty{display:none!important}#gate #demoHint{display:none!important}
-
-/* Sparkles sit above the SVG, but remain sparse and quiet. */
 .rpp-crisp-sparkles{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden}.rpp-crisp-sparkles i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff5c2;box-shadow:0 0 8px 2px rgba(255,218,115,.48);opacity:.1;animation:rppCrispTwinkle var(--d,4s) ease-in-out infinite;animation-delay:var(--l,0s)}.rpp-crisp-sparkles i:before,.rpp-crisp-sparkles i:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(90deg,transparent,#ffe9a5,transparent)}.rpp-crisp-sparkles i:before{width:14px;height:1px}.rpp-crisp-sparkles i:after{width:1px;height:14px;background:linear-gradient(180deg,transparent,#ffe9a5,transparent)}
-
 @keyframes rppCoverBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.006)}}
 @keyframes rppTitleRise{0%{opacity:0;transform:translateY(16px);letter-spacing:.08em}100%{opacity:1;transform:none;letter-spacing:.035em}}
 @keyframes rppFineRise{0%{opacity:0;transform:translateY(7px)}100%{opacity:1;transform:none}}
 @keyframes rppRuleOpen{0%{opacity:0;transform:scaleX(.08)}100%{opacity:1;transform:scaleX(1)}}
 @keyframes rppQuietSweep{0%,68%{transform:translateX(-125%);opacity:0}73%{opacity:.58}82%{transform:translateX(125%);opacity:0}100%{transform:translateX(125%);opacity:0}}
 @keyframes rppCrispTwinkle{0%,100%{opacity:.08;transform:scale(.55) rotate(0)}45%{opacity:.82;transform:scale(1.02) rotate(10deg)}68%{opacity:.24;transform:scale(.74) rotate(18deg)}}
-
 @media(min-width:900px){#gate:not(.hidden){padding:14px!important}#gate .gate-card{width:min(52.9svh,560px)!important;box-shadow:0 38px 125px rgba(0,0,0,.65),0 0 90px rgba(210,169,71,.08)!important}}
 @media(max-width:600px){#gate:not(.hidden){padding:0!important}#gate .gate-card{width:100vw!important;box-shadow:none!important}}
 @media(prefers-reduced-motion:reduce){#gate .gate-card.orn:before,.rpp-crisp-sparkles i,#gate #unlock::before,#gate #gateAuthorLink::before{animation:none!important}#rppCrispCopy *{animation:none!important}}
 </style>
 <script>
 (()=>{
-  const card=document.querySelector('#gate .gate-card');
-  if(!card)return;
-
-  // The live copy reproduces the approved top composition while staying perfectly sharp.
-  if(!document.querySelector('#rppCrispCopy')){
-    const copy=document.createElement('div');
-    copy.id='rppCrispCopy';
-    copy.innerHTML='<div class="private">PRIVATE ONLINE BOOK</div><div class="collection">MEMORIAL COLLECTION 2026</div><div class="title">ROAD TO<br>PEACE PRIDE</div><div class="jp">9.12までの挑戦と誓いの記録</div><div class="goldRule"></div><div class="bridge">そして、11.15、11.18へ</div><div class="vow">OUR VOW, OUR JOURNEY</div>';
-    card.appendChild(copy);
-  }
-
-  if(!document.querySelector('#rppAuthLabel')){
-    const label=document.createElement('div');label.id='rppAuthLabel';label.textContent='閲覧パスワード';card.appendChild(label);
-  }
-
-  const pw=document.querySelector('#pw');
-  if(pw){
-    pw.setAttribute('aria-label','閲覧パスワード');
-    pw.setAttribute('placeholder','パスワードを入力してください');
-    const sync=()=>pw.classList.toggle('rpp-has-value',pw.value.length>0);
-    pw.addEventListener('input',sync);sync();
-  }
-
-  const unlock=document.querySelector('#unlock');
-  if(unlock){unlock.textContent='記録をひらく';unlock.setAttribute('aria-label','記録をひらく');unlock.setAttribute('title','記録をひらく')}
-
-  const syncAuthor=()=>{
-    const author=document.querySelector('#gateAuthorLink');
-    if(!author)return;
-    author.classList.add('rpp-action');
-    author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');
-    author.setAttribute('title','私の記録を綴る / WRITE YOUR STORY');
-    const ja=author.querySelector('.rpp-ja'),en=author.querySelector('.rpp-en');
-    if(!ja||!en||ja.textContent.trim()!=='私の記録を綴る'||en.textContent.trim()!=='WRITE YOUR STORY'){
-      author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>';
-    }
-  };
-  syncAuthor();
-  let authorQueued=false;
-  new MutationObserver(()=>{
-    if(authorQueued)return;
-    authorQueued=true;
-    queueMicrotask(()=>{authorQueued=false;syncAuthor()});
-  }).observe(card,{childList:true,subtree:true});
-
-  if(!card.querySelector('.rpp-crisp-sparkles')){
-    const s=document.createElement('div');s.className='rpp-crisp-sparkles';
-    for(const [x,y,d,l] of [[11,13,4.2,-.4],[77,12,5.1,-1.8],[22,25,4.7,-.9],[86,28,4.1,-2.1],[14,44,5.4,-2.8],[79,45,4.6,-.5],[29,52,4.1,-1.6],[84,55,5,-2.3],[10,76,4.4,-1.2],[89,77,4.7,-2.7]]){
-      const i=document.createElement('i');i.style.left=x+'%';i.style.top=y+'%';i.style.setProperty('--d',d+'s');i.style.setProperty('--l',l+'s');s.appendChild(i)
-    }
-    card.appendChild(s);
-  }
-
-  card.dataset.master='vector-live-941x1672';
-  card.dataset.masterFormat='svg+html';
-  card.dataset.masterPixels='vector';
-  card.classList.add('rpp-master-ready','rpp-crisp-master-ready');
+  const card=document.querySelector('#gate .gate-card');if(!card)return;
+  if(!document.querySelector('#rppCrispCopy')){const copy=document.createElement('div');copy.id='rppCrispCopy';copy.innerHTML='<div class="private">PRIVATE ONLINE BOOK</div><div class="collection">MEMORIAL COLLECTION 2026</div><div class="title">ROAD TO<br>PEACE PRIDE</div><div class="jp">9.12までの挑戦と誓いの記録</div><div class="goldRule"></div><div class="bridge">そして、11.15、11.18へ</div><div class="vow">OUR VOW, OUR JOURNEY</div>';card.appendChild(copy)}
+  if(!document.querySelector('#rppAuthLabel')){const label=document.createElement('div');label.id='rppAuthLabel';label.textContent='閲覧パスワード';card.appendChild(label)}
+  const pw=document.querySelector('#pw');if(pw){pw.setAttribute('aria-label','閲覧パスワード');pw.setAttribute('placeholder','パスワードを入力してください');const sync=()=>pw.classList.toggle('rpp-has-value',pw.value.length>0);pw.addEventListener('input',sync);sync()}
+  const unlock=document.querySelector('#unlock');if(unlock){unlock.textContent='記録をひらく';unlock.setAttribute('aria-label','記録をひらく');unlock.setAttribute('title','記録をひらく')}
+  const syncAuthor=()=>{const author=document.querySelector('#gateAuthorLink');if(!author)return;author.classList.add('rpp-action');author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');author.setAttribute('title','私の記録を綴る / WRITE YOUR STORY');const ja=author.querySelector('.rpp-ja'),en=author.querySelector('.rpp-en');if(!ja||!en||ja.textContent.trim()!=='私の記録を綴る'||en.textContent.trim()!=='WRITE YOUR STORY')author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>'};
+  syncAuthor();setTimeout(syncAuthor,0);setTimeout(syncAuthor,80);setTimeout(syncAuthor,240);
+  if(!card.querySelector('.rpp-crisp-sparkles')){const s=document.createElement('div');s.className='rpp-crisp-sparkles';for(const [x,y,d,l] of [[11,13,4.2,-.4],[77,12,5.1,-1.8],[22,25,4.7,-.9],[86,28,4.1,-2.1],[14,44,5.4,-2.8],[79,45,4.6,-.5],[29,52,4.1,-1.6],[84,55,5,-2.3],[10,76,4.4,-1.2],[89,77,4.7,-2.7]]){const i=document.createElement('i');i.style.left=x+'%';i.style.top=y+'%';i.style.setProperty('--d',d+'s');i.style.setProperty('--l',l+'s');s.appendChild(i)}card.appendChild(s)}
+  card.dataset.master='vector-live-941x1672';card.dataset.masterFormat='svg+html';card.dataset.masterPixels='vector';card.classList.add('rpp-master-ready','rpp-crisp-master-ready');
 })();
 </script>`;
 
-function apply(response){
-  return new HTMLRewriter().on('body',{element(el){el.append(CRISP_LIVE_COVER,{html:true})}}).transform(response);
-}
-
-export default {
-  async fetch(request,env,ctx){
-    const response=await app.fetch(request,env,ctx);
-    const type=response.headers.get('content-type')||'';
-    const path=new URL(request.url).pathname.replace(/\/$/,'')||'/';
-    if(type.includes('text/html')&&(path==='/'||path==='/index.html'))return apply(response);
-    return response;
-  }
-};
+function apply(response){return new HTMLRewriter().on('body',{element(el){el.append(CRISP_LIVE_COVER,{html:true})}}).transform(response)}
+export default {async fetch(request,env,ctx){const response=await app.fetch(request,env,ctx);const type=response.headers.get('content-type')||'';const path=new URL(request.url).pathname.replace(/\/$/,'')||'/';if(type.includes('text/html')&&(path==='/'||path==='/index.html'))return apply(response);return response}};
