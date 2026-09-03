@@ -23,7 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
-          node --check src/faithful-cover-v7.js
+          node --check src/faithful-cover-v7b.js
           node --check src/premium-v6-polish.js
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
@@ -36,14 +36,14 @@ jobs:
       - name: Verify faithful v7 cover and existing safety wiring
         run: |
           test -s public/assets/premium-v5-bg.webp
-          grep -Fq "import app from './premium-v6-polish.js'" src/faithful-cover-v7.js
-          grep -Fq 'faithful-v7-9x16' src/faithful-cover-v7.js
-          grep -Fq 'ROAD TO' src/faithful-cover-v7.js
-          grep -Fq 'PEACE PRIDE' src/faithful-cover-v7.js
-          grep -Fq 'そして、11.15、11.18へ' src/faithful-cover-v7.js
-          grep -Fq 'v7-lock' src/faithful-cover-v7.js
-          grep -Fq '記録をひらく' src/faithful-cover-v7.js
-          grep -Fq 'WRITE YOUR STORY' src/faithful-cover-v7.js
+          grep -Fq "import app from './premium-v6-polish.js'" src/faithful-cover-v7b.js
+          grep -Fq 'faithful-v7-9x16' src/faithful-cover-v7b.js
+          grep -Fq 'ROAD TO' src/faithful-cover-v7b.js
+          grep -Fq 'PEACE PRIDE' src/faithful-cover-v7b.js
+          grep -Fq 'そして、11.15、11.18へ' src/faithful-cover-v7b.js
+          grep -Fq 'v7-lock' src/faithful-cover-v7b.js
+          grep -Fq '記録をひらく' src/faithful-cover-v7b.js
+          grep -Fq 'WRITE YOUR STORY' src/faithful-cover-v7b.js
           grep -Fq "import app from './viewer-logout.js'" src/premium-v6-polish.js
           grep -Fq "import app from './cache-refresh.js'" src/viewer-logout.js
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
@@ -52,7 +52,7 @@ jobs:
           grep -Fq "'/refresh'" src/cache-refresh.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v7.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v7 + logout + cache-refresh route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v7b.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v7b + logout + cache-refresh route active')"
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
