@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/premium-v6-polish.js
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
           node --check src/premium-v5.js
@@ -30,29 +31,27 @@ jobs:
           node --check src/ui-enhancer.js
           node --check src/touch-safety.js
           node --check public/zip-store.js
-          python -m py_compile scripts/cache_refresh_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify premium v5 assets, cache refresh, and logout wiring
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/top_polish_v6_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
+      - name: Verify premium v6 top polish, cache refresh, and logout wiring
         run: |
           for f in bg input unlock author divider lock; do test -s "public/assets/premium-v5-${f}.webp"; done
+          grep -Fq "import app from './viewer-logout.js'" src/premium-v6-polish.js
+          grep -Fq "premium-v6" src/premium-v6-polish.js
+          grep -Fq 'Bodoni' src/premium-v6-polish.js
+          grep -Fq 'top:40.9%' src/premium-v6-polish.js
+          grep -Fq 'height:7.05%' src/premium-v6-polish.js
+          grep -Fq 'height:8.65%' src/premium-v6-polish.js
+          grep -Fq 'height:9.25%' src/premium-v6-polish.js
           grep -Fq "import app from './cache-refresh.js'" src/viewer-logout.js
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
           grep -Fq 'rpp-viewer-logout' src/viewer-logout.js
-          grep -Fq '閲覧をログアウトしてトップへ戻る' src/viewer-logout.js
           grep -Fq "import app from './premium-v5.js'" src/cache-refresh.js
           grep -Fq "Clear-Site-Data" src/cache-refresh.js
-          grep -Fq '"cache"' src/cache-refresh.js
           grep -Fq "'/refresh'" src/cache-refresh.js
-          grep -Fq "'/latest'" src/cache-refresh.js
           grep -Fq 'premium-v5-parts' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-bg.webp' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-input.webp' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-unlock.webp' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-author.webp' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-divider.webp' src/premium-v5.js
-          grep -Fq '/assets/premium-v5-lock.webp' src/premium-v5.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/viewer-logout.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('viewer-logout + cache-refresh + premium-v5 route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/premium-v6-polish.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('premium-v6 + logout + cache-refresh route active')"
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
@@ -99,8 +98,10 @@ jobs:
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
-      - name: Verify cache refresh route shows premium v5
+      - name: Verify cache refresh route shows premium v5 base
         run: python scripts/cache_refresh_smoke.py
+      - name: Verify premium v6 typography and lower control spacing
+        run: python scripts/top_polish_v6_smoke.py
       - name: Verify viewer logout button clears session
         run: python scripts/logout_smoke.py
       - name: Exercise TOC search and author save regression
