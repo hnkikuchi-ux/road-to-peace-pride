@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
 BASE=os.environ.get('RPP_BASE_URL','https://road-to-peace-pride.hn-kikuchi.workers.dev')
-WAIT=20
+WAIT=25
 SHOT_DIR=Path(os.environ.get('RPP_SCREENSHOT_DIR','artifacts/screens'))
 SHOT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -34,9 +34,11 @@ try:
     print('1) Viewer mobile journey', flush=True)
     driver.get(BASE+'/'); visible(driver,'#gate'); visible(driver,'#pw')
     card=visible(driver,'#gate .gate-card')
-    WebDriverWait(driver,WAIT).until(lambda d:d.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-master')=='approved-941x1672')
+    WebDriverWait(driver,WAIT).until(lambda d:d.find_element(By.CSS_SELECTOR,'#gate .gate-card').get_attribute('data-master')=='approved-avif-941x1672')
+    if card.get_attribute('data-master-format')!='avif': fail('high-resolution AVIF master is not active')
+    if card.get_attribute('data-master-pixels')!='941x1672': fail('AVIF master pixel dimensions marker is missing')
     bg=driver.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card')).backgroundImage")
-    if not bg.startswith('url("blob:') and not bg.startswith("url('blob:") and 'blob:' not in bg: fail('approved master artwork blob is not active')
+    if not bg.startswith('url("blob:') and not bg.startswith("url('blob:") and 'blob:' not in bg: fail('approved AVIF master artwork blob is not active')
     if len(driver.find_elements(By.CSS_SELECTOR,'.rpp-exact-sparkles i')) < 8: fail('exact sparkle layer is missing')
     author=visible(driver,'#gateAuthorLink')
     if author.get_attribute('aria-label')!='私の記録を綴る / WRITE YOUR STORY': fail('single bilingual story CTA aria label missing')
@@ -45,7 +47,7 @@ try:
     if unlock.get_attribute('aria-label')!='記録をひらく': fail('open CTA aria label missing')
     ratio=card.rect['height']/card.rect['width']
     if abs(ratio-(1672/941))>.03: fail(f'approved cover aspect ratio changed: {ratio}')
-    ok('approved 941x1672 master artwork + sparkle layer + aligned live controls are active')
+    ok('high-resolution 941x1672 AVIF master + sparkle layer + aligned live controls are active')
     shot(driver,'01-top-cover.png')
     pw=driver.find_element(By.ID,'pw'); pw.send_keys('demo'); click(driver,'#unlock')
     visible(driver,'#cover:not(.hidden)'); ok('viewer password opens cover')
