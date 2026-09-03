@@ -20,20 +20,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install browser test dependencies
+      - name: Install Worker and browser test dependencies
         run: |
+          npm install --no-audit --no-fund
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
       - name: Start current Worker locally
         run: |
-          nohup npx --yes wrangler@4 dev --local --ip 127.0.0.1 --port 8787 >/tmp/rpp-wrangler.log 2>&1 &
+          nohup ./node_modules/.bin/wrangler dev --local --ip 127.0.0.1 --port 8787 >/tmp/rpp-wrangler.log 2>&1 &
           echo $! >/tmp/rpp-wrangler.pid
           for i in $(seq 1 45); do
             if curl -fsS --max-time 3 http://127.0.0.1:8787/version.json >/dev/null 2>&1; then
               echo 'Local Worker is ready.'
               exit 0
+            fi
+            if ! kill -0 "$(cat /tmp/rpp-wrangler.pid)" 2>/dev/null; then
+              echo 'Wrangler exited before becoming ready.'
+              cat /tmp/rpp-wrangler.log || true
+              exit 1
             fi
             sleep 2
           done
