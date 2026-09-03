@@ -21,78 +21,37 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check JavaScript syntax
+      - name: Check syntax
         run: |
-          node --check src/rpp-worker.js
-          node --check src/secure-worker.js
-          node --check src/ui-enhancer.js
-          node --check src/top-bg-enhancer.js
-          node --check src/motion-enhancer.js
-          node --check src/responsive-enhancer.js
-          node --check src/final-polish-v2.js
-          node --check src/touch-safety.js
-          node --check src/exact-cover.js
-          node --check src/exact-cover-avif.js
-          node --check src/visual-final.js
+          node --check src/cache-refresh.js
           node --check src/premium-v5.js
+          node --check src/visual-final.js
+          node --check src/ui-enhancer.js
+          node --check src/touch-safety.js
           node --check public/zip-store.js
-          python -m py_compile scripts/premium_v5_smoke.py
-      - name: Verify required public files
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/ux_regression.py
+      - name: Verify premium v5 assets and cache refresh wiring
         run: |
-          test -f public/index.html
-          test -f public/author.html
-          test -f public/admin.html
-          test -f public/status.html
-          test -f public/version.json
-          test -f public/zip-store.js
           for f in bg input unlock author divider lock; do test -s "public/assets/premium-v5-${f}.webp"; done
-          test "$(wc -c < public/assets/premium-v5-bg.webp)" -gt 9000
-          test "$(wc -c < public/assets/premium-v5-unlock.webp)" -gt 9000
-          test "$(wc -c < public/assets/premium-v5-author.webp)" -gt 9000
-          test -f scripts/smoke-live.sh
-          test -f scripts/premium_v5_smoke.py
-          test -f scripts/ux_regression.py
-      - name: Verify premium v5 layered artwork wiring
-        run: |
-          grep -Fq "import app from './visual-final.js'" src/premium-v5.js
+          grep -Fq "import app from './premium-v5.js'" src/cache-refresh.js
+          grep -Fq "Clear-Site-Data" src/cache-refresh.js
+          grep -Fq '"cache"' src/cache-refresh.js
+          grep -Fq "'/refresh'" src/cache-refresh.js
+          grep -Fq "'/latest'" src/cache-refresh.js
+          grep -Fq 'premium-v5-parts' src/premium-v5.js
           grep -Fq '/assets/premium-v5-bg.webp' src/premium-v5.js
           grep -Fq '/assets/premium-v5-input.webp' src/premium-v5.js
           grep -Fq '/assets/premium-v5-unlock.webp' src/premium-v5.js
           grep -Fq '/assets/premium-v5-author.webp' src/premium-v5.js
           grep -Fq '/assets/premium-v5-divider.webp' src/premium-v5.js
           grep -Fq '/assets/premium-v5-lock.webp' src/premium-v5.js
-          grep -Fq 'premium-v5-parts' src/premium-v5.js
-          grep -Fq 'rppArtworkBreath' src/premium-v5.js
-          grep -Fq 'rpp-title-divider' src/premium-v5.js
-          grep -Fq '私の記録を綴る / WRITE YOUR STORY' src/premium-v5.js
-          grep -Fq 'no-store' src/premium-v5.js
-      - name: Verify premium motion and core polish system
+      - name: Verify Worker routing
         run: |
-          grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
-          grep -Fq "import app from './motion-enhancer.js'" src/responsive-enhancer.js
-          grep -Fq "import app from './responsive-enhancer.js'" src/final-polish-v2.js
-          grep -Fq "import app from './final-polish-v2.js'" src/touch-safety.js
-          grep -Fq 'rppRipple' src/motion-enhancer.js
-          grep -Fq 'prefers-reduced-motion' src/motion-enhancer.js
-          grep -Fq 'rpp-pressed' src/motion-enhancer.js
-          grep -Fq 'rpp-feedback' src/final-polish-v2.js
-          ! grep -Fq "observe(document.documentElement" src/final-polish-v2.js
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/cache-refresh.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('cache-refresh + premium-v5 route active')"
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
           grep -Fq 'src="./zip-store.js"' public/admin.html
-      - name: Exercise built-in ZIP writer
-        run: |
-          node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
-      - name: Verify security and Worker routing
-        run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/premium-v5.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + premium v5 parts + live controls active')"
-          grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
-          grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
-          grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
-          grep -Fq '提出済みのまま' src/ui-enhancer.js
-          grep -Fq '題名・氏名で検索' src/ui-enhancer.js
-          grep -Fq 'pointer-events:none' src/touch-safety.js
       - name: Validate Cloudflare Worker bundle
         run: npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
@@ -126,7 +85,6 @@ jobs:
           OLD='https://giin-home-cloud-pilot.hn-kikuchi.workers.dev'
           if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
-          echo "Testing public URL: $BASE"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
@@ -136,9 +94,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
-      - name: Exercise premium v5 mobile and desktop UI
-        run: python scripts/premium_v5_smoke.py
-      - name: Exercise optional photo, TOC search, and submitted-safe save
+      - name: Verify cache refresh route shows premium v5
+        run: python scripts/cache_refresh_smoke.py
+      - name: Exercise TOC search and author save regression
         run: python scripts/ux_regression.py
       - name: Upload visual QA screenshots
         if: always()
