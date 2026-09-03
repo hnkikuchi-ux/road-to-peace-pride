@@ -2,14 +2,14 @@ import app from './viewer-logout.js';
 
 const PREMIUM_V6 = `
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&display=swap');
+@font-face{font-family:"Cormorant Garamond";src:url("https://raw.githubusercontent.com/CatharsisFonts/Cormorant/master/fonts/webfonts/CormorantGaramond-Regular.woff2") format("woff2");font-style:normal;font-weight:400;font-display:swap}
 /* ROAD TO PEACE PRIDE — premium v6 refined top polish */
 /* Legacy CI markers only: premium-v6 | Bodoni | top:40.9% | height:7.05% | height:8.65% | height:9.25% */
 #rppCrispCopy .rpp-road{
   top:auto!important;
   margin-bottom:1.7%!important;
   font-family:"Cormorant Garamond",Baskerville,"Iowan Old Style","Palatino Linotype",Georgia,serif!important;
-  font-weight:500!important;
+  font-weight:400!important;
   font-size:clamp(20px,5.65vw,29px)!important;
   letter-spacing:.19em!important;
   line-height:1!important;
