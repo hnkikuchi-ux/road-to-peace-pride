@@ -34,6 +34,13 @@ const VISUAL_FINAL = `
 #toc>h2{margin:0!important;text-align:center!important;color:#fff1cf!important;font:500 clamp(34px,8vw,48px)/1.25 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.10em!important;text-shadow:0 8px 30px rgba(0,0,0,.34)!important}
 #toc>h2:after{content:"";display:block;width:min(220px,58%);height:1px;margin:17px auto 13px;background:linear-gradient(90deg,transparent,#d6a94c,transparent);box-shadow:0 0 14px rgba(222,177,75,.28)}
 #toc>p.note{text-align:center!important;color:rgba(226,220,204,.72)!important;font:12px/1.7 ui-serif,"Yu Mincho",serif!important;margin:0 auto 24px!important}
+.toc-search{position:relative!important;width:min(100%,640px)!important;margin:0 auto 16px!important;padding-bottom:22px!important}
+.toc-search:before{content:"";position:absolute!important;z-index:2!important;left:17px!important;top:16px!important;width:10px!important;height:10px!important;border:1.5px solid #d7b75e!important;border-radius:50%!important;pointer-events:none!important;opacity:.9!important}
+.toc-search:after{content:"";position:absolute!important;z-index:2!important;left:27px!important;top:27px!important;width:7px!important;height:1.5px!important;background:#d7b75e!important;transform:rotate(45deg)!important;transform-origin:left center!important;pointer-events:none!important;opacity:.9!important}
+#tocSearch{width:100%!important;min-height:45px!important;border:1px solid rgba(214,172,72,.44)!important;border-radius:999px!important;background:linear-gradient(180deg,rgba(7,27,58,.86),rgba(2,13,31,.88))!important;color:#f6ead0!important;box-shadow:inset 0 1px 10px rgba(0,0,0,.20),0 7px 20px rgba(0,0,0,.10)!important;padding:11px 17px 11px 43px!important;font:13px/1.4 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;letter-spacing:.025em!important;outline:none!important;transition:border-color .22s ease,box-shadow .22s ease,background .22s ease!important}
+#tocSearch::placeholder{color:rgba(228,218,193,.54)!important}
+#tocSearch:focus{border-color:#e3c56e!important;background:linear-gradient(180deg,rgba(10,35,72,.94),rgba(3,16,37,.96))!important;box-shadow:0 0 0 3px rgba(218,177,79,.09),inset 0 1px 10px rgba(0,0,0,.18),0 10px 26px rgba(0,0,0,.16)!important}
+#tocSearchMeta{position:absolute!important;right:8px!important;bottom:0!important;min-height:17px!important;color:#bfae7b!important;font:10px/1.4 ui-sans-serif,system-ui!important;letter-spacing:.06em!important;text-align:right!important;opacity:.88!important}
 #tocList{display:grid!important;gap:10px!important;padding-bottom:40px!important}
 #tocList .toc-item{border:1px solid rgba(214,172,72,.27)!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(11,34,72,.73),rgba(3,16,37,.82))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 12px 30px rgba(0,0,0,.18)!important;overflow:hidden!important;opacity:0;transform:translateY(9px);animation:rppContentsEnter .62s cubic-bezier(.16,1,.3,1) forwards!important}
 #tocList .toc-item:nth-child(2){animation-delay:.045s!important}#tocList .toc-item:nth-child(3){animation-delay:.09s!important}#tocList .toc-item:nth-child(4){animation-delay:.135s!important}#tocList .toc-item:nth-child(5){animation-delay:.18s!important}#tocList .toc-item:nth-child(n+6){animation-delay:.21s!important}
@@ -44,7 +51,6 @@ const VISUAL_FINAL = `
 #tocList .toc-name{color:#c9b986!important;font:11px/1.4 ui-sans-serif,system-ui!important;letter-spacing:.04em!important}
 #tocList .toc-item button>div:last-child{color:#ddb85b!important;font:300 29px/1 ui-serif,"Times New Roman",serif!important;opacity:.82!important;transform:translateX(0)!important;transition:transform .2s ease,opacity .2s ease!important}
 #tocList .toc-item button:hover>div:last-child{transform:translateX(3px)!important;opacity:1!important}
-#toc input[type="search"],#toc input[type="text"],#rppTocSearch{border:1px solid rgba(214,172,72,.40)!important;border-radius:999px!important;background:rgba(3,15,35,.72)!important;color:#f4ead0!important;box-shadow:inset 0 1px 8px rgba(0,0,0,.18)!important;padding:12px 16px!important;outline:none!important}
 
 /* ---------- reader ---------- */
 #reader{max-width:760px!important;margin:auto!important;padding-top:18px!important}
