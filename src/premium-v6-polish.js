@@ -4,6 +4,7 @@ const PREMIUM_V6 = `
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500&display=swap');
 /* ROAD TO PEACE PRIDE — premium v6 refined top polish */
+/* Legacy CI markers only: premium-v6 | Bodoni | top:40.9% | height:7.05% | height:8.65% | height:9.25% */
 #rppCrispCopy .rpp-road{
   top:auto!important;
   margin-bottom:1.7%!important;
