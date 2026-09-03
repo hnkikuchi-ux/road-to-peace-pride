@@ -95,13 +95,24 @@ html body #gate #gateAuthorLink *{visibility:visible!important}
   const unlock=document.querySelector('#unlock');
   if(unlock){unlock.textContent='記録をひらく';unlock.setAttribute('aria-label','記録をひらく');unlock.setAttribute('title','記録をひらく')}
 
-  const author=document.querySelector('#gateAuthorLink');
-  if(author){
+  const syncAuthor=()=>{
+    const author=document.querySelector('#gateAuthorLink');
+    if(!author)return;
     author.classList.add('rpp-action');
     author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');
     author.setAttribute('title','私の記録を綴る / WRITE YOUR STORY');
-    author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>';
-  }
+    const ja=author.querySelector('.rpp-ja'),en=author.querySelector('.rpp-en');
+    if(!ja||!en||ja.textContent.trim()!=='私の記録を綴る'||en.textContent.trim()!=='WRITE YOUR STORY'){
+      author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>';
+    }
+  };
+  syncAuthor();
+  let authorQueued=false;
+  new MutationObserver(()=>{
+    if(authorQueued)return;
+    authorQueued=true;
+    queueMicrotask(()=>{authorQueued=false;syncAuthor()});
+  }).observe(card,{childList:true,subtree:true});
 
   if(!card.querySelector('.rpp-crisp-sparkles')){
     const s=document.createElement('div');s.className='rpp-crisp-sparkles';
