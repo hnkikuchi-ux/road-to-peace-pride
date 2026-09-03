@@ -39,6 +39,7 @@ jobs:
           grep -Fq 'approved-center-horizon' src/faithful-cover-v8.js
           grep -Fq 'v8-road' src/faithful-cover-v8.js
           grep -Fq 'clip-path:none' src/faithful-cover-v8.js
+          grep -Fq '2026.09.04-faithful-v8-approved' public/version.json
           grep -Fq "import app from './viewer-logout.js'" src/premium-v6-polish.js
           grep -Fq "import app from './cache-refresh.js'" src/viewer-logout.js
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
@@ -79,7 +80,7 @@ jobs:
     if: github.event_name == 'push'
     needs: [validate, deploy]
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - name: Resolve public URL
@@ -89,6 +90,18 @@ jobs:
           if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
           echo "Testing public URL: $BASE"
+      - name: Wait for faithful v8 public deployment
+        run: |
+          for i in $(seq 1 36); do
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v8=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.04-faithful-v8-approved'; then
+              echo "Faithful v8 public build detected on attempt $i"
+              exit 0
+            fi
+            echo "Waiting for Cloudflare Git deployment ($i/36)..."
+            sleep 10
+          done
+          echo 'Faithful v8 public build did not appear within six minutes.' >&2
+          exit 1
       - name: Exercise deployed Cloudflare site end to end
         run: bash scripts/smoke-live.sh
 
