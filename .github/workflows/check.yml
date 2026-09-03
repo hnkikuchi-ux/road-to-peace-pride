@@ -34,8 +34,9 @@ jobs:
           node --check src/exact-cover.js
           node --check src/exact-cover-avif.js
           node --check src/visual-final.js
-          node --check src/artwork-final.js
+          node --check src/premium-v5.js
           node --check public/zip-store.js
+          python -m py_compile scripts/premium_v5_smoke.py
       - name: Verify required public files
         run: |
           test -f public/index.html
@@ -44,46 +45,28 @@ jobs:
           test -f public/status.html
           test -f public/version.json
           test -f public/zip-store.js
-          test -f public/assets/mobile-dawn.svg
-          test -f public/assets/desktop-dawn.svg
-          test -f public/assets/premium-v4-bg.webp
-          test -f public/assets/premium-v4-frame.webp
-          test -f public/assets/premium-v4-divider.webp
-          test -f public/assets/top-master/01.txt
-          test -f public/assets/top-master/02.txt
-          test -f public/assets/top-master/03.txt
-          for n in 001 002 003 004 005 006 007 008 009; do test -f "public/assets/top-master-avif/$n.txt"; done
-          test "$(wc -c < public/assets/top-master-avif/001.txt)" -eq 20000
-          test "$(wc -c < public/assets/top-master-avif/007.txt)" -eq 20000
-          test "$(wc -c < public/assets/top-master-avif/008.txt)" -eq 19999
-          test "$(wc -c < public/assets/top-master-avif/009.txt)" -eq 13940
+          for f in bg input unlock author divider lock; do test -s "public/assets/premium-v5-${f}.webp"; done
+          test "$(wc -c < public/assets/premium-v5-bg.webp)" -gt 9000
+          test "$(wc -c < public/assets/premium-v5-unlock.webp)" -gt 9000
+          test "$(wc -c < public/assets/premium-v5-author.webp)" -gt 9000
           test -f scripts/smoke-live.sh
-          test -f scripts/browser_smoke.py
+          test -f scripts/premium_v5_smoke.py
           test -f scripts/ux_regression.py
-          test -f scripts/motion_smoke.py
-      - name: Verify crisp vector and layered artwork wiring
+      - name: Verify premium v5 layered artwork wiring
         run: |
-          grep -Fq "import app from './touch-safety.js'" src/exact-cover.js
-          grep -Fq '941/1672' src/exact-cover.js
-          grep -Fq '記録をひらく' src/exact-cover.js
-          grep -Fq "import app from './exact-cover.js'" src/exact-cover-avif.js
-          grep -Fq "/assets/mobile-dawn.svg" src/exact-cover-avif.js
-          grep -Fq 'rppCrispCopy' src/exact-cover-avif.js
-          grep -Fq 'vector-live-941x1672' src/exact-cover-avif.js
-          grep -Fq '私の記録を綴る / WRITE YOUR STORY' src/exact-cover-avif.js
-          grep -Fq 'WRITE YOUR STORY' src/exact-cover-avif.js
-          grep -Fq 'prefers-reduced-motion' src/exact-cover-avif.js
-          grep -Fq "import app from './exact-cover-avif.js'" src/visual-final.js
-          grep -Fq 'visualFinal' src/visual-final.js
-          grep -Fq "import app from './visual-final.js'" src/artwork-final.js
-          grep -Fq '/assets/premium-v4-bg.webp' src/artwork-final.js
-          grep -Fq '/assets/premium-v4-frame.webp' src/artwork-final.js
-          grep -Fq '/assets/premium-v4-divider.webp' src/artwork-final.js
-          grep -Fq 'premium-v4-layered' src/artwork-final.js
-          grep -Fq 'rpp-road' src/artwork-final.js
-          grep -Fq 'rpp-pride' src/artwork-final.js
-          grep -Fq 'no-store' src/artwork-final.js
-      - name: Verify premium motion and polish system
+          grep -Fq "import app from './visual-final.js'" src/premium-v5.js
+          grep -Fq '/assets/premium-v5-bg.webp' src/premium-v5.js
+          grep -Fq '/assets/premium-v5-input.webp' src/premium-v5.js
+          grep -Fq '/assets/premium-v5-unlock.webp' src/premium-v5.js
+          grep -Fq '/assets/premium-v5-author.webp' src/premium-v5.js
+          grep -Fq '/assets/premium-v5-divider.webp' src/premium-v5.js
+          grep -Fq '/assets/premium-v5-lock.webp' src/premium-v5.js
+          grep -Fq 'premium-v5-parts' src/premium-v5.js
+          grep -Fq 'rppArtworkBreath' src/premium-v5.js
+          grep -Fq 'rpp-title-divider' src/premium-v5.js
+          grep -Fq '私の記録を綴る / WRITE YOUR STORY' src/premium-v5.js
+          grep -Fq 'no-store' src/premium-v5.js
+      - name: Verify premium motion and core polish system
         run: |
           grep -Fq "import app from './top-bg-enhancer.js'" src/motion-enhancer.js
           grep -Fq "import app from './motion-enhancer.js'" src/responsive-enhancer.js
@@ -93,8 +76,6 @@ jobs:
           grep -Fq 'prefers-reduced-motion' src/motion-enhancer.js
           grep -Fq 'rpp-pressed' src/motion-enhancer.js
           grep -Fq 'rpp-feedback' src/final-polish-v2.js
-          grep -Fq 'rppArtworkBreath' src/artwork-final.js
-          grep -Fq 'rppArtworkSweep' src/artwork-final.js
           ! grep -Fq "observe(document.documentElement" src/final-polish-v2.js
       - name: Verify admin has no third-party JavaScript
         run: |
@@ -103,9 +84,9 @@ jobs:
       - name: Exercise built-in ZIP writer
         run: |
           node -e "import('./public/zip-store.js').then(async()=>{const b=await globalThis.RppZip.makeZip([{name:'test.txt',data:'ok'}]);const u=new Uint8Array(await b.arrayBuffer());if(u[0]!==0x50||u[1]!==0x4b||u[2]!==0x03||u[3]!==0x04)process.exit(1);console.log('ZIP writer OK',u.length)})"
-      - name: Verify security and UI enhancer routing
+      - name: Verify security and Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/artwork-final.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + layered premium artwork + live controls active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/premium-v5.js') process.exit(1); for(const p of ['/', '/index.html', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('road-to-peace-pride + premium v5 parts + live controls active')"
           grep -Fq "path==='/author'||path==='/author.html'" src/ui-enhancer.js
           grep -Fq '写真（任意・1枚まで）' src/ui-enhancer.js
           grep -Fq 'この端末に、クラウドより新しい下書きがあります' src/ui-enhancer.js
@@ -155,13 +136,11 @@ jobs:
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
-      - name: Exercise mobile UI in headless Chrome
-        run: python scripts/browser_smoke.py
+      - name: Exercise premium v5 mobile and desktop UI
+        run: python scripts/premium_v5_smoke.py
       - name: Exercise optional photo, TOC search, and submitted-safe save
         run: python scripts/ux_regression.py
-      - name: Exercise exact cover motion and desktop preservation
-        run: python scripts/motion_smoke.py
-      - name: Upload mobile and desktop visual QA screenshots
+      - name: Upload visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
