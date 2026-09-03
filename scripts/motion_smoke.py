@@ -31,8 +31,10 @@ try:
     assert 'rpp-action' in (unlock.get_attribute('class') or '')
     author=wait_visible(d,'#gateAuthorLink')
     assert author.get_attribute('aria-label')=='私の記録を綴る / WRITE YOUR STORY'
-    assert author.find_element(By.CSS_SELECTOR,'.rpp-ja').text.strip()=='私の記録を綴る'
-    assert author.find_element(By.CSS_SELECTOR,'.rpp-en').text.strip()=='WRITE YOUR STORY'
+    pseudo=d.execute_script("const e=arguments[0];return [getComputedStyle(e,'::before').content,getComputedStyle(e,'::after').content,getComputedStyle(e).animationName]",author)
+    assert '私の記録を綴る' in pseudo[0]
+    assert 'WRITE YOUR STORY' in pseudo[1]
+    assert 'rppAuthorSheen' in pseudo[2]
     ok('crisp vector top and unified two-line story CTA are motion-enabled')
     d.execute_script("const e=arguments[0],r=e.getBoundingClientRect();e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2,pointerId:1}));",unlock)
     WebDriverWait(d,3).until(lambda x:'rpp-pressed' in (x.find_element(By.ID,'unlock').get_attribute('class') or ''))
@@ -57,6 +59,8 @@ try:
     title=wait_visible(d,'#rppCrispCopy .title')
     assert 'PEACE PRIDE' in title.text
     assert author.get_attribute('aria-label')=='私の記録を綴る / WRITE YOUR STORY'
+    desktop_pseudo=d.execute_script("const e=arguments[0];return [getComputedStyle(e,'::before').content,getComputedStyle(e,'::after').content]",author)
+    assert '私の記録を綴る' in desktop_pseudo[0] and 'WRITE YOUR STORY' in desktop_pseudo[1]
     ok('desktop preserves the crisp portrait composition and aligned live controls')
     d.save_screenshot(str(OUT/'06-desktop-exact-login.png'))
     print('MOTION / CRISP VECTOR COVER QA PASSED',flush=True)
