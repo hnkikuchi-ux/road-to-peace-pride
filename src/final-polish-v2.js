@@ -47,7 +47,7 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
   const unlock=document.querySelector('#unlock');
   if(unlock&&unlock.textContent.trim()!=='記録をひらく')unlock.textContent='記録をひらく';
   const author=document.querySelector('#gateAuthorLink');
-  if(author&&author.textContent.trim()!=='私の記録を綴る ／ WRITE YOUR STORY')author.textContent='私の記録を綴る ／ WRITE YOUR STORY';
+  if(author){author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');author.innerHTML='<span class="rpp-ja">私の記録を綴る</span><span class="rpp-en">WRITE YOUR STORY</span>';}
 
   const gate=document.querySelector('#gate');
   const syncGate=()=>document.body.classList.toggle('rpp-gate-active',Boolean(gate&&!gate.classList.contains('hidden')));
