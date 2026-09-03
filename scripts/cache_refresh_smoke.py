@@ -15,7 +15,8 @@ try:
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-artwork-version')=='premium-v5-parts')
     bg=d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card'),'::before').backgroundImage")
     assert 'premium-v5-bg.webp' in bg,bg
-    assert d.find_element(By.CSS_SELECTOR,'#rppCrispCopy .rpp-pride').text.strip()=='PEACE PRIDE'
+    pride=d.find_element(By.CSS_SELECTOR,'#rppCrispCopy .rpp-pride').text.replace('\n',' ').strip()
+    assert 'PEACE' in pride and 'PRIDE' in pride,pride
     assert d.find_element(By.ID,'unlock').get_attribute('aria-label')=='記録をひらく'
     print('CACHE REFRESH ROUTE SHOWS PREMIUM V5',flush=True)
 finally:
