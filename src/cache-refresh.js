@@ -17,7 +17,7 @@ export default {
     if(url.pathname==='/refresh'||url.pathname==='/latest'){
       const root=new URL(url);
       root.pathname='/';
-      root.searchParams.set('fresh','20260903-v5');
+      root.searchParams.set('fresh','20260903-v6-refined');
       const forwarded=new Request(root.toString(),request);
       const response=await app.fetch(forwarded,env,ctx);
       return cacheHeaders(response,true);
