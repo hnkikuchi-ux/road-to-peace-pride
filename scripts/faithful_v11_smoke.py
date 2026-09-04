@@ -15,13 +15,13 @@ d=webdriver.Chrome(options=opt)
 try:
   for w,h in SIZES:
     d.set_window_size(w,h)
-    d.get(BASE+'/refresh?v11r3='+str(int(time.time()*1000)))
+    d.get(BASE+'/refresh?v11r4='+str(int(time.time()*1000)))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-v11-layout')=='reference-frame-stars')
-    WebDriverWait(d,10).until(lambda x: card.get_attribute('data-v11-lock')=='artdeco-r3')
-    assert card.get_attribute('data-v11-frame')=='full-rectangle'
+    WebDriverWait(d,10).until(lambda x: card.get_attribute('data-v11-lock')=='artdeco-compact-r4')
+    assert card.get_attribute('data-v11-frame')=='uniform-double-frame'
     assert card.get_attribute('data-v11-button')=='refined-gold-r2'
-    assert card.get_attribute('data-v11-revision')=='r3'
+    assert card.get_attribute('data-v11-revision')=='r4'
     assert card.get_attribute('data-v11-stars')=='animated'
     cr=card.rect
     assert abs(cr['width']/cr['height']-9/16)<.015,(w,cr)
@@ -51,7 +51,21 @@ try:
     assert 'lock-artdeco-v11-r3.svg' in lock_bg,(w,lock_bg)
     assert d.execute_script("return parseInt(getComputedStyle(arguments[0]).fontWeight)",unlock_el)>=800,(w,'unlock text not bold')
     assert float(d.execute_script("return parseFloat(getComputedStyle(arguments[0]).top)",title_rule))>0,(w,'title divider missing')
-    assert lock['width']>=20 and lock['height']>=28,(w,lock)
+
+    # Compact lock: visibly smaller than r3 and fully inside the password field.
+    assert 17<=lock['width']<=23,(w,lock)
+    assert 24<=lock['height']<=33,(w,lock)
+    assert lock['x']>=pw['x']+7,(w,pw,lock)
+    assert lock['x']+lock['width']<=pw['x']+pw['width']-7,(w,pw,lock)
+    assert lock['y']>=pw['y']+3,(w,pw,lock)
+    assert lock['y']+lock['height']<=pw['y']+pw['height']-3,(w,pw,lock)
+
+    # Inner frame inset must be equal on the vertical and horizontal axes.
+    inner_top=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').top)",panel_el))
+    inner_left=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').left)",panel_el))
+    assert abs(inner_top-inner_left)<=.6,(w,inner_top,inner_left)
+    assert d.execute_script("return getComputedStyle(arguments[0],'::after').display",panel_el)=='none',(w,'legacy uneven frame still visible')
+
     assert panel['x']>=outer['x']+3 and panel['x']+panel['width']<=outer['x']+outer['width']-3,(w,outer,panel)
     assert panel['y']+8<=pw['y'],(w,panel,pw)
     assert pw['y']+pw['height']<=helper['y']+5,(w,pw,helper)
@@ -60,8 +74,8 @@ try:
     assert panel['y']+panel['height']+7<=author['y'],(w,panel,author)
     assert author['y']+author['height']<=outer['y']+outer['height']-6,(w,outer,author)
     assert d.execute_script('return document.documentElement.scrollWidth <= window.innerWidth + 1')
-    d.save_screenshot(str(out/f'62-faithful-v11-r3-{w}.png'))
-    print(f'  ✓ {w}x{h} v11 r3 generated Art Deco lock + refined CTA + stars',flush=True)
-  print('FAITHFUL V11 R3 ART DECO LOCK + FRAME + BUTTON + SHOOTING STARS OK',flush=True)
+    d.save_screenshot(str(out/f'63-faithful-v11-r4-{w}.png'))
+    print(f'  ✓ {w}x{h} v11 r4 compact lock + uniform double frame + stars',flush=True)
+  print('FAITHFUL V11 R4 COMPACT LOCK + UNIFORM FRAME + BUTTON + SHOOTING STARS OK',flush=True)
 finally:
   d.quit()
