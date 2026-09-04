@@ -32,36 +32,48 @@ body.rpp-faithful-v7 #gate .gate-card{
   font-size:.62em!important;opacity:.9!important
 }
 
-/* Lower control panel: always remain inside both outer gold frames. */
+/* Lower control panel: lifted clear of the outer bottom frame. */
 #rppFaithfulV7 .v7-panel{
-  left:7.8%!important;right:7.8%!important;top:68.45%!important;bottom:2.85%!important;
+  left:7.8%!important;right:7.8%!important;top:66.7%!important;bottom:4.75%!important;
   clip-path:none!important;border:1.35px solid rgba(226,174,68,.94)!important;border-radius:0!important;
   overflow:hidden!important;
 }
 #rppFaithfulV7 .v7-panel:before{inset:2.45%!important;clip-path:none!important}
 #rppFaithfulV7 .v7-panel:after{inset:0!important}
-#rppFaithfulV7 .v7-panel-top{top:67.95%!important;left:11.5%!important;right:11.5%!important}
-#rppFaithfulV7 .v7-label{top:70.7%!important}
+#rppFaithfulV7 .v7-panel-top{top:66.2%!important;left:11.5%!important;right:11.5%!important}
+#rppFaithfulV7 .v7-label{top:69.0%!important}
 
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{
-  left:13.2%!important;top:73.55%!important;width:73.6%!important;height:6.25%!important;
+  left:13.2%!important;top:71.8%!important;width:73.6%!important;height:6.25%!important;
   padding-left:13.5%!important;border-radius:15px!important;
 }
-#rppFaithfulV7 .v7-lock{left:16.2%!important;top:74.25%!important;width:5.35%!important}
+#rppFaithfulV7 .v7-lock{left:16.2%!important;top:72.5%!important;width:5.35%!important}
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #msg{
-  top:80.15%!important;left:14%!important;right:14%!important
+  top:78.35%!important;left:14%!important;right:14%!important
 }
 
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{
-  left:15.8%!important;top:82.0%!important;width:68.4%!important;height:6.75%!important;
+  left:15.8%!important;top:80.2%!important;width:68.4%!important;height:6.75%!important;
   min-height:0!important;max-height:none!important;box-sizing:border-box!important;
-  border-radius:5px!important;clip-path:none!important;overflow:hidden!important;
+  border:0!important;border-radius:6px!important;clip-path:none!important;overflow:hidden!important;
+  background:url('/assets/unlock-luxury-v10.svg') center/100% 100% no-repeat!important;
+  color:#1b1003!important;text-shadow:0 1px 0 rgba(255,248,212,.5),0 2px 8px rgba(79,42,0,.15)!important;
+  font-weight:800!important;
+  box-shadow:0 12px 30px rgba(0,0,0,.34),0 0 28px rgba(228,177,62,.14)!important;
   transition:transform .14s ease,filter .18s ease,box-shadow .18s ease!important;
 }
+html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock::before,
+html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock::after{display:none!important}
+html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock:hover,
+html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock:focus-visible{
+  filter:brightness(1.045) saturate(1.04)!important;
+  box-shadow:0 14px 34px rgba(0,0,0,.38),0 0 34px rgba(235,188,76,.2)!important
+}
+
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
-  left:15.9%!important;top:89.8%!important;width:68.2%!important;height:6.4%!important;
+  left:15.9%!important;top:88.1%!important;width:68.2%!important;height:6.4%!important;
   min-height:0!important;max-height:none!important;box-sizing:border-box!important;
   overflow:hidden!important;
   transition:transform .14s ease,filter .18s ease,box-shadow .18s ease!important;
@@ -73,16 +85,16 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::after{
   top:60%!important;font-size:clamp(7px,2.05vw,10.5px)!important
 }
 
-/* Independent light overlays: never alter the legacy button DOM. */
+/* Independent light overlays: preserve the current shine animation unchanged. */
 #rppFaithfulV7 .v9-shine-layer{
   position:absolute!important;z-index:16!important;pointer-events:none!important;overflow:hidden!important;
   opacity:1!important;display:block!important
 }
 #rppFaithfulV7 .v9-shine-layer.unlock{
-  left:15.8%!important;top:82.0%!important;width:68.4%!important;height:6.75%!important;border-radius:5px!important
+  left:15.8%!important;top:80.2%!important;width:68.4%!important;height:6.75%!important;border-radius:6px!important
 }
 #rppFaithfulV7 .v9-shine-layer.author{
-  left:15.9%!important;top:89.8%!important;width:68.2%!important;height:6.4%!important;border-radius:999px!important
+  left:15.9%!important;top:88.1%!important;width:68.2%!important;height:6.4%!important;border-radius:999px!important
 }
 #rppFaithfulV7 .v9-shine-layer:after{
   content:''!important;position:absolute!important;top:-38%!important;left:-32%!important;
@@ -106,13 +118,12 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:active{
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock:focus-visible,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
   outline:2px solid rgba(255,226,139,.76)!important;outline-offset:3px!important;
-  box-shadow:0 0 0 1px rgba(255,246,205,.24),0 10px 28px rgba(0,0,0,.30),0 0 24px rgba(238,186,72,.22)!important
 }
 
 /* Narrow phones: keep all controls and shine overlays inside the frame. */
 @media(max-width:380px){
   #rppFaithfulV7 .v7-bridge{top:38.15%!important;font-size:10.5px!important;gap:7px!important}
-  #rppFaithfulV7 .v7-panel{left:7.4%!important;right:7.4%!important;bottom:2.75%!important}
+  #rppFaithfulV7 .v7-panel{left:7.4%!important;right:7.4%!important;bottom:4.6%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{left:12.7%!important;width:74.6%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{left:15.1%!important;width:69.8%!important}
@@ -136,6 +147,7 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
     card.dataset.topPolish='faithful-v9';
     card.dataset.v9Layout='responsive-premium';
     card.dataset.v9Road='base-art-only';
+    card.dataset.v9UnlockArt='luxury-v10';
     let unlock=document.getElementById('unlock'),author=document.getElementById('gateAuthorLink');
     if(!unlock||!author)return false;
     let uLayer=base.querySelector('.v9-shine-layer.unlock');
