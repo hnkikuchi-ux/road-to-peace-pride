@@ -4,6 +4,9 @@ const V11 = `
 <style>
 /* ROAD TO PEACE PRIDE — faithful v11 reference match */
 
+/* Slightly lower the upper title divider to match the approved reference. */
+#rppFaithfulV7 .v7-deco.top{top:9.18%!important}
+
 /* Full rectangular gate card: never clip or lose corners. */
 #rppFaithfulV7 .v7-panel{
   left:6.5%!important;right:6.5%!important;
@@ -52,18 +55,21 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{
 #rppFaithfulV7 .v10-helper{top:72.85%!important;color:#e2bd61!important}
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #msg{top:72.65%!important}
 
-/* Reference-match primary button. */
+/* Refined primary button: fewer frame layers, stronger legibility. */
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{
   left:13.75%!important;top:75.45%!important;width:72.5%!important;height:7.95%!important;
   min-height:0!important;max-height:none!important;border:0!important;border-radius:0!important;
-  clip-path:none!important;overflow:hidden!important;padding:0 8%!important;
-  background:url('/assets/unlock-luxury-v11.svg') center/100% 100% no-repeat!important;
-  color:#1a0d02!important;
-  font:800 clamp(21px,5.15vw,29px)/1 ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif!important;
-  letter-spacing:.075em!important;
-  text-shadow:0 1px 0 rgba(255,250,220,.55),0 2px 8px rgba(71,34,0,.16)!important;
-  box-shadow:0 13px 32px rgba(0,0,0,.35),0 0 32px rgba(234,182,61,.15)!important;
+  clip-path:none!important;overflow:hidden!important;padding:0 7.5%!important;
+  background:url('/assets/unlock-luxury-v11.svg?v=11r2') center/100% 100% no-repeat!important;
+  color:#160b01!important;
+  font-family:"Yu Mincho","Hiragino Mincho ProN","Noto Serif JP",serif!important;
+  font-size:clamp(22px,5.35vw,30px)!important;
+  font-weight:900!important;line-height:1!important;
+  letter-spacing:.055em!important;
+  -webkit-text-stroke:.18px rgba(28,14,1,.68)!important;
+  text-shadow:0 1px 0 rgba(255,252,225,.72),0 2px 7px rgba(69,31,0,.18)!important;
+  box-shadow:0 12px 28px rgba(0,0,0,.33),0 0 25px rgba(234,182,61,.12)!important;
 }
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock::before,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock::after{display:none!important}
@@ -103,7 +109,7 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{left:14.5%!important;width:71%!important}
   #rppFaithfulV7 .v7-lock{left:17.1%!important;width:6.5%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
-  html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{left:13%!important;width:74%!important}
+  html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{left:13%!important;width:74%!important;font-size:clamp(21px,5.7vw,27px)!important}
   #rppFaithfulV7 .v9-shine-layer.unlock{left:13%!important;width:74%!important}
 }
 @media(prefers-reduced-motion:reduce){
@@ -117,7 +123,8 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
    const card=document.querySelector('#gate .gate-card'),base=document.getElementById('rppFaithfulV7');if(!card||!base)return false;
    card.dataset.v11Layout='reference-frame-stars';
    card.dataset.v11Frame='full-rectangle';
-   card.dataset.v11Button='ornate-gold';
+   card.dataset.v11Button='refined-gold-r2';
+   card.dataset.v11Revision='r2';
    card.dataset.v11Stars='animated';
    const lock=base.querySelector('.v7-lock');if(lock)lock.innerHTML=LOCK;
    if(!base.querySelector('.v11-corners')){const c=document.createElement('div');c.className='v11-corners';c.innerHTML='<i class="tl"></i><i class="tr"></i><i class="br"></i><i class="bl"></i>';base.appendChild(c)}
