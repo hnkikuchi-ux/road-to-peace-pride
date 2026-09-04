@@ -55,12 +55,14 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #msg{
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{
   left:15.8%!important;top:82.0%!important;width:68.4%!important;height:6.75%!important;
+  min-height:0!important;max-height:none!important;box-sizing:border-box!important;
   border-radius:5px!important;clip-path:none!important;overflow:hidden!important;
   transition:transform .14s ease,filter .18s ease,box-shadow .18s ease!important;
 }
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
   left:15.9%!important;top:90.15%!important;width:68.2%!important;height:5.95%!important;
+  min-height:0!important;max-height:none!important;box-sizing:border-box!important;
   overflow:hidden!important;
   transition:transform .14s ease,filter .18s ease,box-shadow .18s ease!important;
 }
