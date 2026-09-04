@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r3.js
           node --check src/faithful-cover-v11.js
           node --check src/faithful-cover-v10.js
           node --check src/faithful-cover-v9.js
@@ -32,21 +33,22 @@ jobs:
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify faithful v11 r2 wiring
+      - name: Verify faithful v11 r3 wiring
         run: |
           test -s public/assets/premium-v5-bg.webp
           test -s public/assets/unlock-luxury-v11.svg
-          grep -Fq "import app from './faithful-cover-v10.js'" src/faithful-cover-v11.js
-          grep -Fq "full-rectangle" src/faithful-cover-v11.js
+          test -s public/assets/lock-artdeco-v11-r3.svg
+          grep -Fq "import app from './faithful-cover-v11.js'" src/faithful-cover-v11-r3.js
+          grep -Fq "lock-artdeco-v11-r3.svg" src/faithful-cover-v11-r3.js
+          grep -Fq "artdeco-r3" src/faithful-cover-v11-r3.js
           grep -Fq "refined-gold-r2" src/faithful-cover-v11.js
           grep -Fq "v11ShootA" src/faithful-cover-v11.js
-          grep -Fq "unlock-luxury-v11.svg?v=11r2" src/faithful-cover-v11.js
-          grep -Fq '2026.09.05-faithful-v11-r2-polish' public/version.json
+          grep -Fq '2026.09.05-faithful-v11-r3-artdeco-lock' public/version.json
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
           grep -Fq 'Clear-Site-Data' src/cache-refresh.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v11.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v11 r2 route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v11-r3.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v11 r3 Art Deco lock route active')"
       - name: Optional Cloudflare Worker dry-run
         run: |
           timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static Worker checks passed.'
@@ -82,11 +84,11 @@ jobs:
         run: |
           BASE='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r2 public deployment
+      - name: Wait for faithful v11 r3 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r2=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r2-polish'; then
-              echo "Faithful v11 r2 public build detected on attempt $i"; exit 0
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r3=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r3-artdeco-lock'; then
+              echo "Faithful v11 r3 public build detected on attempt $i"; exit 0
             fi
             sleep 10
           done
@@ -113,7 +115,7 @@ jobs:
           python -m pip install --disable-pip-version-check selenium==4.35.0
       - name: Verify refresh route
         run: python scripts/cache_refresh_smoke.py
-      - name: Verify faithful v11 across three phone sizes
+      - name: Verify faithful v11 r3 across three phone sizes
         run: python scripts/faithful_v11_smoke.py
       - name: Verify viewer logout
         run: python scripts/logout_smoke.py
