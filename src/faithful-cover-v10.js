@@ -6,7 +6,8 @@ const V10 = `
 
 /* Remove the extra lower headings/diamonds so the interaction reads instantly. */
 #rppFaithfulV7 .v7-label,
-#rppFaithfulV7 .v7-panel-top{display:none!important}
+#rppFaithfulV7 .v7-panel-top,
+#rppFaithfulV7 .v7-btn-deco{display:none!important}
 
 /* Main interaction card: password + open button only. */
 #rppFaithfulV7 .v7-panel{
