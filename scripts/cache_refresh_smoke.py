@@ -12,13 +12,14 @@ try:
     d.set_window_size(390,844)
     d.get(BASE+'/refresh?qa='+str(int(time.time())))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
-    WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v8')
+    WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v8' and card.get_attribute('data-v8-revision')=='r3')
     root=d.find_element(By.ID,'rppFaithfulV8')
     assert root.get_attribute('data-layout')=='faithful-v8-approved'
     assert card.get_attribute('data-light-path')=='approved-center-horizon'
+    assert card.get_attribute('data-v8-revision')=='r3'
     bg=d.execute_script("return getComputedStyle(document.querySelector('#gate .gate-card'),'::before').backgroundImage")
     assert 'premium-v5-bg.webp' in bg,bg
     assert d.find_element(By.ID,'unlock').get_attribute('aria-label')=='記録をひらく'
-    print('CACHE REFRESH ROUTE SHOWS FAITHFUL V8',flush=True)
+    print('CACHE REFRESH ROUTE SHOWS FAITHFUL V8 R3',flush=True)
 finally:
     d.quit()
