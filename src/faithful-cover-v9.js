@@ -73,18 +73,27 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::after{
   top:59%!important;font-size:clamp(7px,2.05vw,10.5px)!important
 }
 
-/* Elegant click / focus animation. The shine is a real child so existing pseudo text stays intact. */
-#rppFaithfulV7 #unlock .v9-shine,#rppFaithfulV7 #gateAuthorLink .v9-shine{
-  position:absolute!important;z-index:40!important;top:-38%!important;left:-45%!important;
-  width:24%!important;height:176%!important;pointer-events:none!important;opacity:0!important;
-  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.06) 30%,rgba(255,249,220,.68) 50%,rgba(255,255,255,.08) 70%,transparent 100%)!important;
-  transform:translateX(-220%) skewX(-17deg)!important;
-  filter:blur(.25px)!important;
+/* Independent light overlays: never alter the legacy button DOM. */
+#rppFaithfulV7 .v9-shine-layer{
+  position:absolute!important;z-index:16!important;pointer-events:none!important;overflow:hidden!important;
+  opacity:1!important;display:block!important
 }
-#rppFaithfulV7 #gateAuthorLink .v9-shine{background:linear-gradient(105deg,transparent 0%,rgba(255,231,153,.04) 30%,rgba(255,226,137,.48) 50%,rgba(255,231,153,.05) 70%,transparent 100%)!important}
-#rppFaithfulV7 #unlock.v9-flash .v9-shine,#rppFaithfulV7 #gateAuthorLink.v9-flash .v9-shine{
-  animation:v9ShineSweep .72s cubic-bezier(.22,.74,.28,1) both!important
+#rppFaithfulV7 .v9-shine-layer.unlock{
+  left:15.8%!important;top:82.0%!important;width:68.4%!important;height:6.75%!important;border-radius:5px!important
 }
+#rppFaithfulV7 .v9-shine-layer.author{
+  left:15.9%!important;top:90.15%!important;width:68.2%!important;height:5.95%!important;border-radius:999px!important
+}
+#rppFaithfulV7 .v9-shine-layer:after{
+  content:''!important;position:absolute!important;top:-38%!important;left:-32%!important;
+  width:24%!important;height:176%!important;opacity:0!important;pointer-events:none!important;
+  background:linear-gradient(105deg,transparent 0%,rgba(255,255,255,.05) 30%,rgba(255,249,220,.67) 50%,rgba(255,255,255,.07) 70%,transparent 100%)!important;
+  transform:translateX(-220%) skewX(-17deg)!important;filter:blur(.25px)!important
+}
+#rppFaithfulV7 .v9-shine-layer.author:after{
+  background:linear-gradient(105deg,transparent 0%,rgba(255,231,153,.03) 30%,rgba(255,226,137,.47) 50%,rgba(255,231,153,.04) 70%,transparent 100%)!important
+}
+#rppFaithfulV7 .v9-shine-layer.flash:after{animation:v9ShineSweep .72s cubic-bezier(.22,.74,.28,1) both!important}
 @keyframes v9ShineSweep{
   0%{transform:translateX(-220%) skewX(-17deg);opacity:0}
   14%{opacity:.92}
@@ -100,17 +109,19 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
   box-shadow:0 0 0 1px rgba(255,246,205,.24),0 10px 28px rgba(0,0,0,.30),0 0 24px rgba(238,186,72,.22)!important
 }
 
-/* Narrow phones: keep all controls inside the frame without crowding. */
+/* Narrow phones: keep all controls and shine overlays inside the frame. */
 @media(max-width:380px){
   #rppFaithfulV7 .v7-bridge{top:38.15%!important;font-size:10.5px!important;gap:7px!important}
   #rppFaithfulV7 .v7-panel{left:7.4%!important;right:7.4%!important;bottom:2.75%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{left:12.7%!important;width:74.6%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{left:15.1%!important;width:69.8%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{left:15.2%!important;width:69.6%!important}
+  #rppFaithfulV7 .v9-shine-layer.unlock{left:15.1%!important;width:69.8%!important}
+  #rppFaithfulV7 .v9-shine-layer.author{left:15.2%!important;width:69.6%!important}
 }
 @media(prefers-reduced-motion:reduce){
   #rppFaithfulV7 #unlock,#rppFaithfulV7 #gateAuthorLink{transition:none!important}
-  #rppFaithfulV7 #unlock .v9-shine,#rppFaithfulV7 #gateAuthorLink .v9-shine{display:none!important}
+  #rppFaithfulV7 .v9-shine-layer{display:none!important}
   #rppFaithfulV7 #unlock:active,#rppFaithfulV7 #gateAuthorLink:active{transform:none!important}
 }
 </style>
@@ -123,20 +134,21 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
     card.dataset.topPolish='faithful-v9';
     card.dataset.v9Layout='responsive-premium';
     card.dataset.v9Road='base-art-only';
-    const controls=[document.getElementById('unlock'),document.getElementById('gateAuthorLink')];
-    let ready=true;
-    for(const el of controls){
-      if(!el){ready=false;continue}
-      if(!el.querySelector('.v9-shine')){
-        const shine=document.createElement('span');shine.className='v9-shine';shine.setAttribute('aria-hidden','true');el.appendChild(shine);
-      }
-      if(el.dataset.v9Armed==='1')continue;
-      el.dataset.v9Armed='1';
-      const flash=()=>{el.classList.remove('v9-flash');void el.offsetWidth;el.classList.add('v9-flash');setTimeout(()=>el.classList.remove('v9-flash'),760)};
+    let unlock=document.getElementById('unlock'),author=document.getElementById('gateAuthorLink');
+    if(!unlock||!author)return false;
+    let uLayer=base.querySelector('.v9-shine-layer.unlock');
+    if(!uLayer){uLayer=document.createElement('span');uLayer.className='v9-shine-layer unlock';uLayer.setAttribute('aria-hidden','true');base.appendChild(uLayer)}
+    let aLayer=base.querySelector('.v9-shine-layer.author');
+    if(!aLayer){aLayer=document.createElement('span');aLayer.className='v9-shine-layer author';aLayer.setAttribute('aria-hidden','true');base.appendChild(aLayer)}
+    const bind=(el,layer,key)=>{
+      if(el.dataset[key]==='1')return;
+      el.dataset[key]='1';
+      const flash=()=>{layer.classList.remove('flash');void layer.offsetWidth;layer.classList.add('flash');setTimeout(()=>layer.classList.remove('flash'),760)};
       el.addEventListener('pointerdown',flash,{passive:true});
       el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){flash()}});
-    }
-    return ready;
+    };
+    bind(unlock,uLayer,'v9ShineArmed');bind(author,aLayer,'v9ShineArmed');
+    return true;
   };
   const retry=()=>{if(arm())return;setTimeout(retry,80)};
   retry();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry,{once:true});setTimeout(retry,180);setTimeout(retry,520);
