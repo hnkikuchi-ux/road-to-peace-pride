@@ -15,12 +15,13 @@ d=webdriver.Chrome(options=opt)
 try:
   for w,h in SIZES:
     d.set_window_size(w,h)
-    d.get(BASE+'/refresh?v11r2='+str(int(time.time()*1000)))
+    d.get(BASE+'/refresh?v11r3='+str(int(time.time()*1000)))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-v11-layout')=='reference-frame-stars')
+    WebDriverWait(d,10).until(lambda x: card.get_attribute('data-v11-lock')=='artdeco-r3')
     assert card.get_attribute('data-v11-frame')=='full-rectangle'
     assert card.get_attribute('data-v11-button')=='refined-gold-r2'
-    assert card.get_attribute('data-v11-revision')=='r2'
+    assert card.get_attribute('data-v11-revision')=='r3'
     assert card.get_attribute('data-v11-stars')=='animated'
     cr=card.rect
     assert abs(cr['width']/cr['height']-9/16)<.015,(w,cr)
@@ -34,7 +35,8 @@ try:
     unlock_el=d.find_element(By.ID,'unlock')
     unlock=unlock_el.rect
     author=d.find_element(By.ID,'gateAuthorLink').rect
-    lock=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-lock').rect
+    lock_el=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-lock')
+    lock=lock_el.rect
     corners=d.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v11-corners i')
     stars=d.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v11-star')
     title_rule=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-deco.top')
@@ -45,9 +47,11 @@ try:
     assert all('v11Shoot' in d.execute_script("return getComputedStyle(arguments[0]).animationName",s) for s in stars),(w,'star animation missing')
     bg=d.execute_script("return getComputedStyle(arguments[0]).backgroundImage",unlock_el)
     assert 'unlock-luxury-v11.svg' in bg,(w,bg)
+    lock_bg=d.execute_script("return getComputedStyle(arguments[0]).backgroundImage",lock_el)
+    assert 'lock-artdeco-v11-r3.svg' in lock_bg,(w,lock_bg)
     assert d.execute_script("return parseInt(getComputedStyle(arguments[0]).fontWeight)",unlock_el)>=800,(w,'unlock text not bold')
     assert float(d.execute_script("return parseFloat(getComputedStyle(arguments[0]).top)",title_rule))>0,(w,'title divider missing')
-    assert lock['width']>=20 and lock['height']>=20,(w,lock)
+    assert lock['width']>=20 and lock['height']>=28,(w,lock)
     assert panel['x']>=outer['x']+3 and panel['x']+panel['width']<=outer['x']+outer['width']-3,(w,outer,panel)
     assert panel['y']+8<=pw['y'],(w,panel,pw)
     assert pw['y']+pw['height']<=helper['y']+5,(w,pw,helper)
@@ -56,8 +60,8 @@ try:
     assert panel['y']+panel['height']+7<=author['y'],(w,panel,author)
     assert author['y']+author['height']<=outer['y']+outer['height']-6,(w,outer,author)
     assert d.execute_script('return document.documentElement.scrollWidth <= window.innerWidth + 1')
-    d.save_screenshot(str(out/f'61-faithful-v11-r2-{w}.png'))
-    print(f'  ✓ {w}x{h} v11 r2 refined CTA + full frame + stars',flush=True)
-  print('FAITHFUL V11 R2 POLISH + FRAME + LOCK + SHOOTING STARS OK',flush=True)
+    d.save_screenshot(str(out/f'62-faithful-v11-r3-{w}.png'))
+    print(f'  ✓ {w}x{h} v11 r3 generated Art Deco lock + refined CTA + stars',flush=True)
+  print('FAITHFUL V11 R3 ART DECO LOCK + FRAME + BUTTON + SHOOTING STARS OK',flush=True)
 finally:
   d.quit()
