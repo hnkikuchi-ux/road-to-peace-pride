@@ -25,10 +25,9 @@ try:
     assert abs(cr['width']/cr['height']-9/16)<.015,(w,cr)
     assert cr['width']<=w+1,(w,cr)
 
-    label=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-label')
-    assert d.execute_script('return getComputedStyle(arguments[0]).display',label)=='none'
-    panel_top=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-panel-top')
-    assert d.execute_script('return getComputedStyle(arguments[0]).display',panel_top)=='none'
+    for selector in ['#rppFaithfulV7 .v7-label','#rppFaithfulV7 .v7-panel-top','#rppFaithfulV7 .v7-btn-deco']:
+      el=d.find_element(By.CSS_SELECTOR,selector)
+      assert d.execute_script('return getComputedStyle(arguments[0]).display',el)=='none',(w,selector)
 
     panel=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-panel').rect
     outer=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-frame-outer').rect
