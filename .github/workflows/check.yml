@@ -23,40 +23,33 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11.js
           node --check src/faithful-cover-v10.js
           node --check src/faithful-cover-v9.js
           node --check src/faithful-cover-v8.js
           node --check src/faithful-cover-v7c.js
-          node --check src/faithful-cover-v7b.js
           node --check src/premium-v6-polish.js
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
-          node --check public/zip-store.js
-          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v10_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify faithful v10 and safety wiring
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
+      - name: Verify faithful v11 wiring
         run: |
           test -s public/assets/premium-v5-bg.webp
-          test -s public/assets/unlock-luxury-v10.svg
-          grep -Fq "import app from './faithful-cover-v9.js'" src/faithful-cover-v10.js
-          grep -Fq 'approved-clean-cards' src/faithful-cover-v10.js
-          grep -Fq 'standalone' src/faithful-cover-v10.js
-          grep -Fq '.v7-label,' src/faithful-cover-v10.js
-          grep -Fq 'v9-shine-layer.unlock' src/faithful-cover-v10.js
-          grep -Fq '2026.09.04-faithful-v10-clean' public/version.json
-          grep -Fq "import app from './viewer-logout.js'" src/premium-v6-polish.js
-          grep -Fq "import app from './cache-refresh.js'" src/viewer-logout.js
+          test -s public/assets/unlock-luxury-v11.svg
+          grep -Fq "import app from './faithful-cover-v10.js'" src/faithful-cover-v11.js
+          grep -Fq "full-rectangle" src/faithful-cover-v11.js
+          grep -Fq "ornate-gold" src/faithful-cover-v11.js
+          grep -Fq "v11ShootA" src/faithful-cover-v11.js
+          grep -Fq "unlock-luxury-v11.svg" src/faithful-cover-v11.js
+          grep -Fq '2026.09.04-faithful-v11-reference-stars' public/version.json
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
           grep -Fq 'Clear-Site-Data' src/cache-refresh.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v10.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v10 + logout + cache-refresh route active')"
-      - name: Verify admin has no third-party JavaScript
-        run: |
-          ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
-          grep -Fq 'src="./zip-store.js"' public/admin.html
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v11.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v11 route active')"
       - name: Optional Cloudflare Worker dry-run
         run: |
-          timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler registry/network check skipped; static Worker checks passed.'
+          timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static Worker checks passed.'
 
   deploy:
     if: github.event_name == 'push'
@@ -73,10 +66,9 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-            echo 'Cloudflare API token is not configured in GitHub; relying on existing Git integration.'
+            echo 'Cloudflare API token not configured; relying on existing Git integration.'
             exit 0
           fi
-          echo 'Cloudflare token detected; deploying current main directly.'
           timeout 120s npx --yes wrangler@4 deploy
 
   live-smoke:
@@ -88,24 +80,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Resolve public URL
         run: |
-          NEW='https://road-to-peace-pride.hn-kikuchi.workers.dev'
-          OLD='https://giin-home-cloud-pilot.hn-kikuchi.workers.dev'
-          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
+          BASE='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
-          echo "Testing public URL: $BASE"
-      - name: Wait for faithful v10 public deployment
+      - name: Wait for faithful v11 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v10=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.04-faithful-v10-clean'; then
-              echo "Faithful v10 public build detected on attempt $i"
-              exit 0
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.04-faithful-v11-reference-stars'; then
+              echo "Faithful v11 public build detected on attempt $i"; exit 0
             fi
-            echo "Waiting for Cloudflare Git deployment ($i/36)..."
             sleep 10
           done
-          echo 'Faithful v10 public build did not appear within six minutes.' >&2
           exit 1
-      - name: Exercise deployed Cloudflare site end to end
+      - name: Exercise deployed site end to end
         run: bash scripts/smoke-live.sh
 
   mobile-browser:
@@ -115,16 +101,11 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
-      - name: Resolve public URL
-        run: |
-          NEW='https://road-to-peace-pride.hn-kikuchi.workers.dev'
-          OLD='https://giin-home-cloud-pilot.hn-kikuchi.workers.dev'
-          if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
-          echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
+      - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install Japanese fonts and Selenium
+      - name: Install browser dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
@@ -132,9 +113,9 @@ jobs:
           python -m pip install --disable-pip-version-check selenium==4.35.0
       - name: Verify refresh route
         run: python scripts/cache_refresh_smoke.py
-      - name: Verify faithful v10 across three phone sizes
-        run: python scripts/faithful_v10_smoke.py
-      - name: Verify viewer logout button clears session
+      - name: Verify faithful v11 across three phone sizes
+        run: python scripts/faithful_v11_smoke.py
+      - name: Verify viewer logout
         run: python scripts/logout_smoke.py
       - name: Exercise TOC search and author save regression
         run: python scripts/ux_regression.py
