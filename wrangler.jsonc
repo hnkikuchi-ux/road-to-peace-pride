@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "road-to-peace-pride",
-  "main": "src/faithful-cover-v8.js",
+  "main": "src/faithful-cover-v9.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
