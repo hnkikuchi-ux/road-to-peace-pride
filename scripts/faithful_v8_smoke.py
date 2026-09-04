@@ -13,9 +13,10 @@ try:
     d.set_window_size(390,844)
     d.get(BASE+'/refresh?v8='+str(int(time.time())))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
-    WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v8')
+    WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v8' and card.get_attribute('data-v8-revision')=='r3')
     root=d.find_element(By.ID,'rppFaithfulV8'); assert root.get_attribute('data-layout')=='faithful-v8-approved'
     assert card.get_attribute('data-light-path')=='approved-center-horizon'
+    assert card.get_attribute('data-v8-revision')=='r3'
     cr=card.rect; ratio=cr['width']/cr['height']; assert abs(ratio-9/16)<.015,ratio
     road=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV8 .v8-road'); rr=road.rect
     top=(rr['y']-cr['y'])/cr['height']; bottom=(rr['y']+rr['height']-cr['y'])/cr['height']
@@ -31,6 +32,6 @@ try:
     assert clip in ('none',''),clip
     assert d.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-lock svg')
     out=Path('artifacts/screens');out.mkdir(parents=True,exist_ok=True);d.save_screenshot(str(out/'30-faithful-v8-top.png'))
-    print('FAITHFUL V8 APPROVED BALANCE OK',flush=True)
+    print('FAITHFUL V8 R3 APPROVED BALANCE OK',flush=True)
 finally:
     d.quit()
