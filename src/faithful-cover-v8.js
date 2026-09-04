@@ -78,7 +78,7 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::after{top:60%!im
    const card=document.querySelector('#gate .gate-card'),base=document.getElementById('rppFaithfulV7');if(!card||!base)return;
    if(!document.getElementById('rppFaithfulV8'))base.insertAdjacentHTML('beforeend',ROAD);
    const lock=base.querySelector('.v7-lock');if(lock)lock.innerHTML=LOCK;
-   card.dataset.topPolish='faithful-v8';card.dataset.lightPath='approved-center-horizon';
+   card.dataset.topPolish='faithful-v8';card.dataset.lightPath='approved-center-horizon';card.dataset.v8Revision='r3';
  };
  build();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build,{once:true});setTimeout(build,80);setTimeout(build,260);
 })();
