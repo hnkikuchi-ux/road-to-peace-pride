@@ -114,7 +114,9 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
   #rppFaithfulV7 .v7-bridge{top:38.15%!important;font-size:10.5px!important;gap:7px!important}
   #rppFaithfulV7 .v7-panel{left:7.4%!important;right:7.4%!important;bottom:2.75%!important}
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #pw{left:12.7%!important;width:74.6%!important}
+  html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock.rpp-action,
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{left:15.1%!important;width:69.8%!important}
+  html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink.rpp-action,
   html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{left:15.2%!important;width:69.6%!important}
   #rppFaithfulV7 .v9-shine-layer.unlock{left:15.1%!important;width:69.8%!important}
   #rppFaithfulV7 .v9-shine-layer.author{left:15.2%!important;width:69.6%!important}
