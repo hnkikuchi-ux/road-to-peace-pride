@@ -61,16 +61,16 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #unlock{
 }
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink.rpp-action,
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink{
-  left:15.9%!important;top:90.15%!important;width:68.2%!important;height:5.95%!important;
+  left:15.9%!important;top:89.8%!important;width:68.2%!important;height:6.4%!important;
   min-height:0!important;max-height:none!important;box-sizing:border-box!important;
   overflow:hidden!important;
   transition:transform .14s ease,filter .18s ease,box-shadow .18s ease!important;
 }
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::before{
-  top:17%!important;font-size:clamp(13px,3.55vw,19px)!important
+  top:18%!important;font-size:clamp(13px,3.55vw,19px)!important
 }
 html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::after{
-  top:59%!important;font-size:clamp(7px,2.05vw,10.5px)!important
+  top:60%!important;font-size:clamp(7px,2.05vw,10.5px)!important
 }
 
 /* Independent light overlays: never alter the legacy button DOM. */
@@ -82,7 +82,7 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink::after{
   left:15.8%!important;top:82.0%!important;width:68.4%!important;height:6.75%!important;border-radius:5px!important
 }
 #rppFaithfulV7 .v9-shine-layer.author{
-  left:15.9%!important;top:90.15%!important;width:68.2%!important;height:5.95%!important;border-radius:999px!important
+  left:15.9%!important;top:89.8%!important;width:68.2%!important;height:6.4%!important;border-radius:999px!important
 }
 #rppFaithfulV7 .v9-shine-layer:after{
   content:''!important;position:absolute!important;top:-38%!important;left:-32%!important;
