@@ -1,4 +1,4 @@
-name: Local faithful v8 visual QA
+name: Local faithful v9 visual QA
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  local-v8-visual:
+  local-v9-visual:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -45,18 +45,18 @@ jobs:
           done
           cat /tmp/rpp-wrangler.log || true
           exit 1
-      - name: Verify faithful v8 geometry and capture mobile screenshot
+      - name: Verify faithful v9 responsive geometry and capture phone screenshots
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
-        run: python scripts/faithful_v8_smoke.py
+        run: python scripts/faithful_v9_smoke.py
       - name: Show Worker log on failure
         if: failure()
         run: cat /tmp/rpp-wrangler.log || true
-      - name: Upload local v8 screenshot
+      - name: Upload local v9 screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: local-faithful-v8-visual
+          name: local-faithful-v9-visual
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
