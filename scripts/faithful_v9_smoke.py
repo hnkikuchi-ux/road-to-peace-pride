@@ -18,6 +18,7 @@ try:
         d.get(BASE+'/refresh?v9='+str(int(time.time()*1000)))
         card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
         WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v9')
+        WebDriverWait(d,3).until(lambda x: len(x.find_elements(By.CSS_SELECTOR,'#unlock .v9-shine'))==1 and len(x.find_elements(By.CSS_SELECTOR,'#gateAuthorLink .v9-shine'))==1)
         assert card.get_attribute('data-v9-layout')=='responsive-premium'
         assert card.get_attribute('data-v9-road')=='base-art-only'
         cr=card.rect
