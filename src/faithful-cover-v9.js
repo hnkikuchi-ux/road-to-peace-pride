@@ -119,12 +119,14 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
   const arm=()=>{
     const card=document.querySelector('#gate .gate-card');
     const base=document.getElementById('rppFaithfulV7');
-    if(!card||!base)return;
+    if(!card||!base)return false;
     card.dataset.topPolish='faithful-v9';
     card.dataset.v9Layout='responsive-premium';
     card.dataset.v9Road='base-art-only';
-    for(const el of [base.querySelector('#unlock'),base.querySelector('#gateAuthorLink')]){
-      if(!el)continue;
+    const controls=[document.getElementById('unlock'),document.getElementById('gateAuthorLink')];
+    let ready=true;
+    for(const el of controls){
+      if(!el){ready=false;continue}
       if(!el.querySelector('.v9-shine')){
         const shine=document.createElement('span');shine.className='v9-shine';shine.setAttribute('aria-hidden','true');el.appendChild(shine);
       }
@@ -134,8 +136,10 @@ html body.rpp-faithful-v7 #gate #rppFaithfulV7 #gateAuthorLink:focus-visible{
       el.addEventListener('pointerdown',flash,{passive:true});
       el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){flash()}});
     }
+    return ready;
   };
-  arm();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',arm,{once:true});setTimeout(arm,90);setTimeout(arm,300);
+  const retry=()=>{if(arm())return;setTimeout(retry,80)};
+  retry();if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',retry,{once:true});setTimeout(retry,180);setTimeout(retry,520);
 })();
 </script>`;
 
