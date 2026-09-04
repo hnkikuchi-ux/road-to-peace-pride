@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v10.js
           node --check src/faithful-cover-v9.js
           node --check src/faithful-cover-v8.js
           node --check src/faithful-cover-v7c.js
@@ -31,23 +32,24 @@ jobs:
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
           node --check public/zip-store.js
-          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v9_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify faithful v9 and safety wiring
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v10_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
+      - name: Verify faithful v10 and safety wiring
         run: |
           test -s public/assets/premium-v5-bg.webp
-          grep -Fq "import app from './faithful-cover-v8.js'" src/faithful-cover-v9.js
-          grep -Fq 'responsive-premium' src/faithful-cover-v9.js
-          grep -Fq 'base-art-only' src/faithful-cover-v9.js
-          grep -Fq '#rppFaithfulV8 .v8-road{display:none!important}' src/faithful-cover-v9.js
-          grep -Fq 'v9ShineSweep' src/faithful-cover-v9.js
-          grep -Fq '2026.09.04-faithful-v9-responsive' public/version.json
+          test -s public/assets/unlock-luxury-v10.svg
+          grep -Fq "import app from './faithful-cover-v9.js'" src/faithful-cover-v10.js
+          grep -Fq 'approved-clean-cards' src/faithful-cover-v10.js
+          grep -Fq 'standalone' src/faithful-cover-v10.js
+          grep -Fq '.v7-label,' src/faithful-cover-v10.js
+          grep -Fq 'v9-shine-layer.unlock' src/faithful-cover-v10.js
+          grep -Fq '2026.09.04-faithful-v10-clean' public/version.json
           grep -Fq "import app from './viewer-logout.js'" src/premium-v6-polish.js
           grep -Fq "import app from './cache-refresh.js'" src/viewer-logout.js
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
           grep -Fq 'Clear-Site-Data' src/cache-refresh.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v9.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v9 + logout + cache-refresh route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v10.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v10 + logout + cache-refresh route active')"
       - name: Verify admin has no third-party JavaScript
         run: |
           ! grep -Eiq '<script[^>]+src=["'\'']https?://' public/admin.html
@@ -91,17 +93,17 @@ jobs:
           if curl -fsS --max-time 8 "$NEW/version.json?probe=${GITHUB_RUN_ID}" >/dev/null 2>&1; then BASE="$NEW"; else BASE="$OLD"; fi
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
           echo "Testing public URL: $BASE"
-      - name: Wait for faithful v9 public deployment
+      - name: Wait for faithful v10 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v9=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.04-faithful-v9-responsive'; then
-              echo "Faithful v9 public build detected on attempt $i"
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v10=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.04-faithful-v10-clean'; then
+              echo "Faithful v10 public build detected on attempt $i"
               exit 0
             fi
             echo "Waiting for Cloudflare Git deployment ($i/36)..."
             sleep 10
           done
-          echo 'Faithful v9 public build did not appear within six minutes.' >&2
+          echo 'Faithful v10 public build did not appear within six minutes.' >&2
           exit 1
       - name: Exercise deployed Cloudflare site end to end
         run: bash scripts/smoke-live.sh
@@ -128,10 +130,10 @@ jobs:
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
-      - name: Verify refresh route shows faithful v9
+      - name: Verify refresh route
         run: python scripts/cache_refresh_smoke.py
-      - name: Verify faithful v9 across three phone sizes
-        run: python scripts/faithful_v9_smoke.py
+      - name: Verify faithful v10 across three phone sizes
+        run: python scripts/faithful_v10_smoke.py
       - name: Verify viewer logout button clears session
         run: python scripts/logout_smoke.py
       - name: Exercise TOC search and author save regression
