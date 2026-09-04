@@ -18,7 +18,7 @@ try:
         d.get(BASE+'/refresh?v9='+str(int(time.time()*1000)))
         card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
         WebDriverWait(d,25).until(lambda x: card.get_attribute('data-top-polish')=='faithful-v9')
-        WebDriverWait(d,3).until(lambda x: len(x.find_elements(By.CSS_SELECTOR,'#unlock .v9-shine'))==1 and len(x.find_elements(By.CSS_SELECTOR,'#gateAuthorLink .v9-shine'))==1)
+        WebDriverWait(d,3).until(lambda x: len(x.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v9-shine-layer.unlock'))==1 and len(x.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v9-shine-layer.author'))==1)
         assert card.get_attribute('data-v9-layout')=='responsive-premium'
         assert card.get_attribute('data-v9-road')=='base-art-only'
         cr=card.rect
@@ -35,6 +35,8 @@ try:
         pw=d.find_element(By.ID,'pw').rect
         unlock=d.find_element(By.ID,'unlock').rect
         author=d.find_element(By.ID,'gateAuthorLink').rect
+        u_shine=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v9-shine-layer.unlock').rect
+        a_shine=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v9-shine-layer.author').rect
 
         assert main['y']+main['height'] < bridge['y'],(w,main,bridge)
         assert bridge['y']+bridge['height'] < panel['y'],(w,bridge,panel)
@@ -43,8 +45,8 @@ try:
         assert panel['y']+8 <= pw['y'] and pw['y']+pw['height']+7 <= unlock['y'],(w,panel,pw,unlock)
         assert unlock['y']+unlock['height']+6 <= author['y'],(w,unlock,author)
         assert author['y']+author['height'] <= panel['y']+panel['height']-4,(w,panel,author)
-        assert d.find_elements(By.CSS_SELECTOR,'#unlock .v9-shine')
-        assert d.find_elements(By.CSS_SELECTOR,'#gateAuthorLink .v9-shine')
+        assert abs(u_shine['x']-unlock['x'])<2 and abs(u_shine['y']-unlock['y'])<2,(w,unlock,u_shine)
+        assert abs(a_shine['x']-author['x'])<2 and abs(a_shine['y']-author['y'])<2,(w,author,a_shine)
         assert d.execute_script("return document.documentElement.scrollWidth <= window.innerWidth + 1")
         d.save_screenshot(str(out/f'40-faithful-v9-{w}.png'))
         print(f'  ✓ {w}x{h} responsive geometry',flush=True)
