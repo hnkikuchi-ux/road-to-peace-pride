@@ -21,28 +21,36 @@ body.rpp-consent-open{overflow:hidden!important}
 (()=>{
  const KEY='rpp_viewer_consent_v1';
  const box=()=>document.getElementById('rppViewerConsent');
- let resolveConsent=null;
+ let resolveConsent=null,busy=false;
  function accepted(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
  function save(){try{localStorage.setItem(KEY,'1')}catch(e){}}
  function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
  function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
  function waitForConsent(){if(accepted())return Promise.resolve();showNow();return new Promise(resolve=>{resolveConsent=resolve})}
+ async function openViewer(){
+   if(busy)return;busy=true;
+   const unlock=document.getElementById('unlock'),msg=document.getElementById('msg'),pw=document.getElementById('pw');
+   if(unlock)unlock.disabled=true;if(msg)msg.textContent='';
+   try{
+     const r=await fetch('/api/viewer/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({password:pw?.value||''})});
+     const d=await r.json();
+     if(!r.ok){if(msg)msg.textContent=d.error||'パスワードを確認してください。';return}
+     await waitForConsent();
+     const s=await fetch('/api/stories',{credentials:'same-origin',cache:'no-store'}),data=await s.json();
+     if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
+     stories=data.stories||[];updateResume();show('cover');
+     try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}
+   }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
+ }
  function install(){
    const check=document.getElementById('rppConsentCheck'),accept=document.getElementById('rppConsentAccept');
    if(check&&accept){
      check.addEventListener('change',()=>{accept.disabled=!check.checked});
      accept.addEventListener('click',()=>{if(!check.checked)return;save();hide();const done=resolveConsent;resolveConsent=null;if(done)done()})
    }
-   if(!window.__rppConsentFetch){
-     window.__rppConsentFetch=true;
-     const native=window.fetch.bind(window);
-     window.fetch=async(input,init)=>{
-       const response=await native(input,init);
-       const u=typeof input==='string'?input:(input&&input.url)||'';
-       if(u.includes('/api/viewer/login')&&response.ok&&!accepted())await waitForConsent();
-       return response
-     }
-   }
+   const unlock=document.getElementById('unlock');if(unlock){unlock.onclick=openViewer}
+   const pw=document.getElementById('pw');if(pw&&!pw.dataset.r14Enter){pw.dataset.r14Enter='1';pw.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();openViewer()}})}
+   const cover=document.getElementById('cover');if(cover&&!cover.dataset.r14ResumeConsent){cover.dataset.r14ResumeConsent='1';new MutationObserver(()=>{if(!cover.classList.contains('hidden')&&!accepted())showNow()}).observe(cover,{attributes:true,attributeFilter:['class']})}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
