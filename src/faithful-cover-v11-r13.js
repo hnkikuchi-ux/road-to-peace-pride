@@ -29,8 +29,10 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
   const pruneCover=()=>{
     const cover=document.getElementById('cover');if(!cover)return;
     const forbidden=['そして、11.15、11.18へ','OUR VOW, OUR JOURNEY','STORIES ↓','続きから読む','WRITE YOUR STORY｜私の記録を綴る','WRITE YOUR STORY｜原稿を書く','ログアウト'];
-    cover.querySelectorAll('*').forEach(el=>{const t=(el.textContent||'').replace(/\s+/g,' ').trim();if(forbidden.some(x=>t.includes(x)))el.remove()});
-    cover.querySelectorAll('.eyebrow').forEach(el=>{const t=(el.textContent||'').replace(/\s+/g,' ').trim();if(!t.includes('MEMORIAL COLLECTION 2026'))el.remove()});
+    const walker=document.createTreeWalker(cover,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+    nodes.forEach(n=>{let v=n.nodeValue||'';for(const x of forbidden)v=v.split(x).join('');if(v!==n.nodeValue)n.nodeValue=v});
+    cover.querySelectorAll('*').forEach(el=>{const t=(el.textContent||'').replace(/\s+/g,' ').trim();if(forbidden.some(x=>t===x))el.remove()});
+    cover.querySelectorAll('.eyebrow').forEach(el=>{const t=(el.textContent||'').replace(/\s+/g,' ').trim();if(t&&!t.includes('MEMORIAL COLLECTION 2026'))el.remove()});
     const resume=document.getElementById('resumeNote');if(resume)resume.remove();
   };
   const applyPublic=()=>{
@@ -46,7 +48,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     const cover=document.getElementById('cover');if(!cover)return false;
     if(!cover.dataset.r13Observed){
       cover.dataset.r13Observed='1';
-      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class'],childList:true,subtree:true,characterData:true});
       const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(applyPublic,80);setTimeout(applyPublic,320);setTimeout(applyPublic,900)})
     }
     applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);setTimeout(applyPublic,1200);return true;
