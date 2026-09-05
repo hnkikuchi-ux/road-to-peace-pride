@@ -41,7 +41,7 @@ jobs:
           grep -Fq "on('#cover .bridge'" src/faithful-cover-v11-r13.js
           grep -Fq "on('#cover .actions'" src/faithful-cover-v11-r13.js
           grep -Fq "on('#toc .top-actions .eyebrow'" src/faithful-cover-v11-r13.js
-          grep -Fq '2026.09.06-faithful-v11-r15-author-org-fix' public/version.json
+          grep -Fq '2026.09.06-faithful-v11-r15.1-author-org-fix' public/version.json
       - name: Verify simplified author flow
         run: |
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
@@ -50,6 +50,7 @@ jobs:
           grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
           grep -Fq 'rppOrgDetail' src/faithful-cover-v11-r15.js
           grep -Fq 'r15-legacy-org' src/faithful-cover-v11-r15.js
+          grep -Fq "observe(editor,{childList:true,subtree:true})" src/faithful-cover-v11-r15.js
       - name: Verify six-digit author code and production hardening
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
@@ -62,7 +63,7 @@ jobs:
           grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r15.js') process.exit(1); console.log('faithful-v11 r15 author-org-fix active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r15.js') process.exit(1); console.log('faithful-v11 r15.1 author-org-fix active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -91,10 +92,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r15 public deployment
+      - name: Wait for faithful v11 r15.1 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r15=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.06-faithful-v11-r15-author-org-fix'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r151=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.06-faithful-v11-r15.1-author-org-fix'; then exit 0; fi
             sleep 10
           done
           exit 1
