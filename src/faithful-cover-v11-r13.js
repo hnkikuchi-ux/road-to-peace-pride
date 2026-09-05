@@ -20,6 +20,7 @@ body.rpp-cover-direct #toc .top-actions .eyebrow{display:none!important}
 .rpp-form-section{display:contents!important}
 .rpp-section-head{display:none!important}
 body.rpp-author-clean .rpp-author-steps{display:none!important}
+body.rpp-author-clean .rpp-meta-note{display:none!important}
 body.rpp-author-clean .rpp-hidden-org-detail{display:none!important}
 body.rpp-author-clean .rpp-org-detail-field{margin-top:10px!important}
 body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
@@ -76,6 +77,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     document.querySelectorAll('.rpp-form-section').forEach(sec=>{if(!sec.querySelector('.field,button,input,textarea,select,label'))sec.remove()});
   };
   const hideHelperText=()=>{
+    document.querySelectorAll('.rpp-meta-note').forEach(el=>el.remove());
     const exact=['アップロード前に最大1600pxへ圧縮し、JPEG再生成で通常の位置情報等のメタデータを除去します。'];
     document.querySelectorAll('p,div,small,span').forEach(el=>{
       const t=(el.textContent||'').replace(/\s+/g,' ').trim();
