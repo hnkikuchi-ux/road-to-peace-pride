@@ -46,7 +46,7 @@ jobs:
           grep -Fq 'WRITE YOUR STORY｜私の記録を綴る' src/faithful-cover-v11-r13.js
           grep -Fq 'ログアウト' src/faithful-cover-v11-r13.js
           grep -Fq '前回：' src/faithful-cover-v11-r13.js
-          grep -Fq '2026.09.05-faithful-v11-r13-direct-contents' public/version.json
+          grep -Fq '2026.09.05-faithful-v11-r13.1-qa-stabilized' public/version.json
       - name: Verify faithful v11 r12 simplified author flow
         run: |
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
@@ -58,6 +58,8 @@ jobs:
           grep -Fq 'rppHonbu' src/faithful-cover-v11-r12.js
           grep -Fq 'rppShibu' src/faithful-cover-v11-r12.js
           grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
+          grep -Fq "form.dataset.r12Ordered" src/faithful-cover-v11-r12.js
+          grep -Fq "savedStatus==='submitted'" src/faithful-cover-v11-r12.js
       - name: Verify six-digit author code retained
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
@@ -73,7 +75,7 @@ jobs:
           grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13 direct contents active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.1 stabilized flow active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -102,10 +104,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r13 public deployment
+      - name: Wait for faithful v11 r13.1 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r13=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13-direct-contents'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r131=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.1-qa-stabilized'; then exit 0; fi
             sleep 10
           done
           exit 1
