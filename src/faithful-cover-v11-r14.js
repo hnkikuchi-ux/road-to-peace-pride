@@ -21,16 +21,22 @@ body.rpp-consent-open{overflow:hidden!important}
 (()=>{
  const KEY='rpp_viewer_consent_v1';
  const box=()=>document.getElementById('rppViewerConsent');
+ let loginSucceeded=false,pollTimer=null;
  function accepted(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
  function save(){try{localStorage.setItem(KEY,'1')}catch(e){}}
- function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
+ function coverReady(){const cover=document.getElementById('cover');return !!cover&&!cover.classList.contains('hidden')}
+ function showNow(){if(accepted()||!coverReady())return false;const el=box();if(!el)return false;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open');return true}
  function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
- function maybeShow(){const cover=document.getElementById('cover');if(cover&&!cover.classList.contains('hidden'))showNow()}
+ function maybeShow(){if(!accepted()&&coverReady())showNow()}
+ function waitForReady(){
+   if(accepted())return;
+   let n=0;clearInterval(pollTimer);pollTimer=setInterval(()=>{n++;if(showNow()||n>=240){clearInterval(pollTimer);pollTimer=null}},50)
+ }
  function install(){
    const check=document.getElementById('rppConsentCheck'),accept=document.getElementById('rppConsentAccept');
    if(check&&accept){check.addEventListener('change',()=>{accept.disabled=!check.checked});accept.addEventListener('click',()=>{if(!check.checked)return;save();hide()})}
-   const cover=document.getElementById('cover');if(cover&&!cover.dataset.r14ConsentObserved){cover.dataset.r14ConsentObserved='1';new MutationObserver(maybeShow).observe(cover,{attributes:true,attributeFilter:['class']})}
-   if(!window.__rppConsentFetch){window.__rppConsentFetch=true;const native=window.fetch.bind(window);window.fetch=async(input,init)=>{const response=await native(input,init);const u=typeof input==='string'?input:(input&&input.url)||'';if(u.includes('/api/viewer/login')&&response.ok)setTimeout(showNow,0);return response}}
+   const cover=document.getElementById('cover');if(cover&&!cover.dataset.r14ConsentObserved){cover.dataset.r14ConsentObserved='1';new MutationObserver(()=>{if(loginSucceeded||coverReady())maybeShow()}).observe(cover,{attributes:true,attributeFilter:['class']})}
+   if(!window.__rppConsentFetch){window.__rppConsentFetch=true;const native=window.fetch.bind(window);window.fetch=async(input,init)=>{const response=await native(input,init);const u=typeof input==='string'?input:(input&&input.url)||'';if(u.includes('/api/viewer/login')&&response.ok){loginSucceeded=true;waitForReady()}return response}}
    maybeShow();setTimeout(maybeShow,250);setTimeout(maybeShow,900)
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
