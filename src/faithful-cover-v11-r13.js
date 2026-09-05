@@ -26,9 +26,16 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
 <script>
 (()=>{
   let renderedForOpen=false;
+  const pruneCover=()=>{
+    const cover=document.getElementById('cover');if(!cover)return;
+    const forbidden=['そして、11.15、11.18へ','OUR VOW, OUR JOURNEY','STORIES ↓','続きから読む','WRITE YOUR STORY｜私の記録を綴る','WRITE YOUR STORY｜原稿を書く','ログアウト'];
+    cover.querySelectorAll('*').forEach(el=>{const t=(el.textContent||'').trim();if(forbidden.includes(t))el.remove()});
+    const resume=document.getElementById('resumeNote');if(resume)resume.remove();
+  };
   const applyPublic=()=>{
     const cover=document.getElementById('cover'),toc=document.getElementById('toc');
     if(!cover||!toc)return false;
+    pruneCover();
     document.body.classList.add('rpp-cover-direct');
     const open=!cover.classList.contains('hidden');
     if(open){toc.classList.remove('hidden');if(!renderedForOpen){renderedForOpen=true;try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}}}else renderedForOpen=false;
