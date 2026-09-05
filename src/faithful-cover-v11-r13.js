@@ -4,6 +4,7 @@ const R13=`
 <style>
 /* r13 — cover flows directly into contents + simplified author form */
 html{max-width:100%;overflow-x:clip!important}
+#cover .eyebrow{display:none!important}
 body.rpp-cover-direct{max-width:100%;overflow-x:clip!important}
 body.rpp-cover-direct .wrap,
 body.rpp-cover-direct #cover,
@@ -11,7 +12,6 @@ body.rpp-cover-direct #toc,
 body.rpp-cover-direct #reader{max-width:100%;overflow-x:clip}
 body.rpp-cover-direct #cover{min-height:auto!important;padding-bottom:clamp(22px,5vw,38px)!important}
 body.rpp-cover-direct #cover .rule{margin-bottom:0!important}
-body.rpp-cover-direct #cover .eyebrow{display:none!important}
 body.rpp-cover-direct #toc:not(.hidden){margin-top:0!important;padding-top:clamp(24px,6vw,44px)!important}
 body.rpp-cover-direct #toc .top-actions #homeBtn{display:none!important}
 body.rpp-cover-direct #toc .top-actions .eyebrow{display:none!important}
@@ -86,6 +86,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
 
 function inject(response){
   return new HTMLRewriter()
+    .on('#cover .eyebrow',{element(el){el.remove()}})
     .on('#cover .bridge',{element(el){el.remove()}})
     .on('#cover .actions',{element(el){el.remove()}})
     .on('#cover #resumeNote',{element(el){el.remove()}})
