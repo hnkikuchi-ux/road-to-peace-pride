@@ -43,8 +43,12 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
   };
   const installPublic=()=>{
     const cover=document.getElementById('cover');if(!cover)return false;
-    if(!cover.dataset.r13Observed){cover.dataset.r13Observed='1';new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class']});const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(applyPublic,80);setTimeout(applyPublic,320)})}
-    applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);return true;
+    if(!cover.dataset.r13Observed){
+      cover.dataset.r13Observed='1';
+      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+      const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(applyPublic,80);setTimeout(applyPublic,320);setTimeout(applyPublic,900)})
+    }
+    applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);setTimeout(applyPublic,1200);return true;
   };
 
   const hideHelperText=()=>{
