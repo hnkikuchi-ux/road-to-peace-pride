@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r6.js
           node --check src/faithful-cover-v11-r5.js
           node --check src/faithful-cover-v11-r4.js
           node --check src/faithful-cover-v11-r3.js
@@ -35,11 +36,14 @@ jobs:
           node --check src/viewer-logout.js
           node --check src/cache-refresh.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify faithful v11 r5 wiring
+      - name: Verify faithful v11 r6 wiring
         run: |
           test -s public/assets/premium-v5-bg.webp
           test -s public/assets/unlock-luxury-v11.svg
           test -s public/assets/lock-artdeco-v11-r3.svg
+          grep -Fq "import app from './faithful-cover-v11-r5.js'" src/faithful-cover-v11-r6.js
+          grep -Fq "author-polish-r6" src/faithful-cover-v11-r6.js
+          grep -Fq "rpp-title-line" src/faithful-cover-v11-r6.js
           grep -Fq "import app from './faithful-cover-v11-r4.js'" src/faithful-cover-v11-r5.js
           grep -Fq "author-polish-r5" src/faithful-cover-v11-r5.js
           grep -Fq "rppCodeCheckpoint" src/faithful-cover-v11-r5.js
@@ -49,12 +53,12 @@ jobs:
           grep -Fq "lock-artdeco-v11-r3.svg?v=11r4" src/faithful-cover-v11-r4.js
           grep -Fq "refined-gold-r2" src/faithful-cover-v11.js
           grep -Fq "v11ShootA" src/faithful-cover-v11.js
-          grep -Fq '2026.09.05-faithful-v11-r5-author-polish' public/version.json
+          grep -Fq '2026.09.05-faithful-v11-r6-author-contrast' public/version.json
           grep -Fq '/api/viewer/logout' src/viewer-logout.js
           grep -Fq 'Clear-Site-Data' src/cache-refresh.js
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v11-r5.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v11 r5 author polish route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.name!=='road-to-peace-pride') process.exit(1); if(c.main!=='src/faithful-cover-v11-r6.js') process.exit(1); for(const p of ['/', '/index.html', '/refresh', '/latest', '/author', '/author.html', '/status']) if(!c.assets.run_worker_first.includes(p)) process.exit(1); console.log('faithful-v11 r6 author contrast route active')"
       - name: Optional Cloudflare Worker dry-run
         run: |
           timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static Worker checks passed.'
@@ -90,11 +94,11 @@ jobs:
         run: |
           BASE='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           echo "RPP_BASE_URL=$BASE" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r5 public deployment
+      - name: Wait for faithful v11 r6 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r5=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r5-author-polish'; then
-              echo "Faithful v11 r5 public build detected on attempt $i"; exit 0
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r6=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r6-author-contrast'; then
+              echo "Faithful v11 r6 public build detected on attempt $i"; exit 0
             fi
             sleep 10
           done
@@ -125,7 +129,7 @@ jobs:
         run: python scripts/faithful_v11_smoke.py
       - name: Verify viewer logout
         run: python scripts/logout_smoke.py
-      - name: Exercise TOC search and r5 author flow regression
+      - name: Exercise TOC search and r6 author flow regression
         run: python scripts/ux_regression.py
       - name: Upload visual QA screenshots
         if: always()
