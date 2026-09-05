@@ -2,7 +2,7 @@ import app from './faithful-cover-v11-r14.js';
 
 const R15=`
 <style>
-/* r15 — independent author organization-detail patch */
+/* r15 — independent author organization-detail + preview reliability patch */
 .r15-legacy-org{display:none!important}
 .rpp-org-detail-field{margin-top:10px!important}
 .rpp-org-detail-field input{min-height:48px}
@@ -46,15 +46,51 @@ const R15=`
     if(detail.value)sync();
     return true;
   }
+  function syncPreviewPhoto(){
+    const modal=document.getElementById('storyPreview');
+    const src=document.getElementById('photoPreview');
+    const body=document.getElementById('pBody');
+    if(!modal||!body)return false;
+    let img=modal.querySelector('.r12-preview-photo');
+    const ready=!!(src&&src.src&&!src.classList.contains('hidden'));
+    if(!ready){if(img)img.remove();return false}
+    if(!img){
+      img=document.createElement('img');
+      img.className='r12-preview-photo';
+      img.alt='掲載写真';
+      body.insertAdjacentElement('beforebegin',img);
+    }
+    if(img.src!==src.src)img.src=src.src;
+    return true;
+  }
+  function schedulePreviewPhoto(){
+    [0,40,120,300,700,1400].forEach(ms=>setTimeout(syncPreviewPhoto,ms));
+  }
+  function installPhotoSync(){
+    const src=document.getElementById('photoPreview');
+    if(src&&!src.dataset.r15PhotoObserved){
+      src.dataset.r15PhotoObserved='1';
+      src.addEventListener('load',schedulePreviewPhoto);
+      new MutationObserver(schedulePreviewPhoto).observe(src,{attributes:true,attributeFilter:['src','class']});
+    }
+    const input=document.getElementById('photo');
+    if(input&&!input.dataset.r15PhotoObserved){
+      input.dataset.r15PhotoObserved='1';
+      input.addEventListener('change',schedulePreviewPhoto);
+    }
+    syncPreviewPhoto();
+  }
   function boot(){
-    patch();
+    patch();installPhotoSync();
     let ticks=0;
-    const timer=setInterval(()=>{patch();ticks++;if(ticks>=48)clearInterval(timer)},125);
+    const timer=setInterval(()=>{patch();installPhotoSync();ticks++;if(ticks>=48)clearInterval(timer)},125);
     const editor=document.getElementById('editor');
-    if(editor)new MutationObserver(()=>patch()).observe(editor,{childList:true,subtree:true});
+    if(editor)new MutationObserver(()=>{patch();installPhotoSync()}).observe(editor,{childList:true,subtree:true});
     document.addEventListener('click',e=>{
       const btn=e.target&&e.target.closest?e.target.closest('button'):null;
-      if(btn&&['save','previewBtn','submit','submitPreview'].includes(btn.id))sync();
+      if(!btn)return;
+      if(['save','previewBtn','submit','submitPreview'].includes(btn.id))sync();
+      if(btn.id==='previewBtn')schedulePreviewPhoto();
     },true);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
