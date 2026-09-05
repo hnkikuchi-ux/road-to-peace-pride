@@ -32,6 +32,10 @@ async function ensureSafety(env){
   `);
   return safetyReady;
 }
+async function productionMode(env){
+  const row=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='site_mode'").first().catch(()=>null);
+  return String(row?.value||'preview')==='production';
+}
 async function session(env,request,kind,cookieName){
   const token=cookieMap(request)[cookieName];if(!token)return null;
   return env.DB.prepare('SELECT * FROM rpp_sessions WHERE token_hash=? AND kind=? AND expires_at>?').bind(await sha256(token),kind,new Date().toISOString()).first();
@@ -71,6 +75,7 @@ async function hardenedFetch(request,env,ctx){
   if(path.startsWith('/api/'))await ensureSafety(env);
 
   if(path==='/api/me/story'&&request.method==='PUT'){
+    if(!await productionMode(env))return app.fetch(request,env,ctx);
     let b;try{b=await request.clone().json()}catch{return json({error:'入力内容を確認してください。'},400)}
     const soku=String(b.soku||'').trim(),date=String(b.record_date||'').trim(),status=b.status==='submitted'?'submitted':'draft';
     if(soku&&!GROUPS.includes(soku))return json({error:'組織は一覧から選択してください。'},400);
@@ -86,6 +91,7 @@ async function hardenedFetch(request,env,ctx){
   }
 
   if(path==='/api/me/photo'&&request.method==='POST'){
+    if(!await productionMode(env))return app.fetch(request,env,ctx);
     const type=(request.headers.get('content-type')||'').toLowerCase();
     if(!type.startsWith('image/jpeg'))return json({error:'写真はJPEG形式で保存してください。'},400);
     const bytes=await request.arrayBuffer();
@@ -102,12 +108,10 @@ async function hardenedFetch(request,env,ctx){
 
   if(path==='/api/admin/export.json'&&request.method==='GET'){
     const response=await app.fetch(request,env,ctx);if(!response.ok)return response;
-    try{
-      const data=await response.json();
-      const revisions=(await env.DB.prepare('SELECT * FROM rpp_story_revisions ORDER BY snapshot_at DESC').all()).results||[];
-      data.revisions=revisions;data.revision_count=revisions.length;data.backup_schema='rpp-backup-v2';
-      return new Response(JSON.stringify(data,null,2),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="road-to-peace-pride-backup-v2.json"','Cache-Control':'no-store'}});
-    }catch{return response}
+    const data=await response.json();
+    const revisions=(await env.DB.prepare('SELECT * FROM rpp_story_revisions ORDER BY snapshot_at DESC').all()).results||[];
+    data.revisions=revisions;data.revision_count=revisions.length;data.backup_schema='rpp-backup-v2';
+    return new Response(JSON.stringify(data,null,2),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="road-to-peace-pride-backup-v2.json"','Cache-Control':'no-store'}});
   }
 
   return app.fetch(request,env,ctx);
