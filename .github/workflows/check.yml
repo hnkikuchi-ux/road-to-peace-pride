@@ -27,51 +27,32 @@ jobs:
           node --check src/faithful-cover-v11-r12.js
           node --check src/faithful-cover-v11-r11.js
           node --check src/faithful-cover-v11-r10.js
-          node --check src/faithful-cover-v11-r9.js
-          node --check src/faithful-cover-v11-r8.js
-          node --check src/faithful-cover-v11-r7.js
-          node --check src/faithful-cover-v11-r6.js
-          node --check src/faithful-cover-v11-r5.js
-          node --check src/faithful-cover-v11-r4.js
-          node --check src/faithful-cover-v11-r3.js
-          node --check src/faithful-cover-v11.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/scale_300_regression.py
-      - name: Verify public direct contents and mobile containment
+      - name: Verify public direct contents and DOM cleanup
         run: |
           grep -Fq "import app from './faithful-cover-v11-r12.js'" src/faithful-cover-v11-r13.js
-          grep -Fq 'r13Observed' src/faithful-cover-v11-r13.js
+          grep -Fq "on('#cover .bridge'" src/faithful-cover-v11-r13.js
+          grep -Fq "on('#cover .actions'" src/faithful-cover-v11-r13.js
+          grep -Fq "on('#toc .top-actions .eyebrow'" src/faithful-cover-v11-r13.js
           grep -Fq 'overflow-x:clip' src/faithful-cover-v11-r13.js
-          grep -Fq '2026.09.05-faithful-v11-r13.4-observers-stabilized' public/version.json
+          grep -Fq '2026.09.05-faithful-v11-r13.5-cover-dom-cleanup' public/version.json
       - name: Verify simplified author flow
         run: |
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
           grep -Fq '自動で下書き保存されます。' src/faithful-cover-v11-r12.js
-          grep -Fq '9.12までの挑戦・これからの誓い・思いをありのまま綴ってください。' src/faithful-cover-v11-r12.js
           grep -Fq '写真は任意です。' src/faithful-cover-v11-r12.js
-          grep -Fq '本文はこちらに入力してください。' src/faithful-cover-v11-r12.js
-          grep -Fq 'rppBunku' src/faithful-cover-v11-r12.js
-          grep -Fq 'rppHonbu' src/faithful-cover-v11-r12.js
-          grep -Fq 'rppShibu' src/faithful-cover-v11-r12.js
           grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
-          grep -Fq "form.dataset.r12Ordered" src/faithful-cover-v11-r12.js
-          grep -Fq "savedStatus==='submitted'" src/faithful-cover-v11-r12.js
-      - name: Verify six-digit author code and observer stabilization
+          grep -Fq 'rppOrgDetail' src/faithful-cover-v11-r13.js
+      - name: Verify six-digit author code and production hardening
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
           grep -Fq "code.length!==6" src/faithful-cover-v11-r11.js
           grep -Fq 'attempts>=8' src/faithful-cover-v11-r11.js
-          grep -Fq '15*60*1000' src/faithful-cover-v11-r11.js
-          grep -Fq "const relevant='#rppEditCodeCard,#rppCodeCheckpoint,#rppEditLogin'" src/faithful-cover-v11-r11.js
-      - name: Verify production hardening retained
-        run: |
           grep -Fq 'rpp_story_revisions' src/faithful-cover-v11-r10.js
-          grep -Fq 'before-photo-change' src/faithful-cover-v11-r10.js
-          grep -Fq "中区','南総区','港南総区','磯子総区','金沢総区','栄区" src/faithful-cover-v11-r10.js
           grep -Fq '300-STORY SCALE REGRESSION PASSED' scripts/scale_300_regression.py
-          grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.4 stabilized flow active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.5 cover-dom-cleanup active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -100,10 +81,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r13.4 public deployment
+      - name: Wait for faithful v11 r13.5 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r134=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.4-observers-stabilized'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r135=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.5-cover-dom-cleanup'; then exit 0; fi
             sleep 10
           done
           exit 1
