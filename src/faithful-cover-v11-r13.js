@@ -17,8 +17,8 @@ body.rpp-cover-direct #toc .top-actions #homeBtn{display:none!important}
 body.rpp-cover-direct #toc .top-actions .eyebrow{display:none!important}
 
 /* author cleanup */
-body.rpp-author-clean .rpp-form-section{display:contents!important}
-body.rpp-author-clean .rpp-section-head{display:none!important}
+.rpp-form-section{display:contents!important}
+.rpp-section-head{display:none!important}
 body.rpp-author-clean .rpp-author-steps{display:none!important}
 body.rpp-author-clean .rpp-hidden-org-detail{display:none!important}
 body.rpp-author-clean .rpp-org-detail-field{margin-top:10px!important}
@@ -71,6 +71,10 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);setTimeout(applyPublic,1200);return true;
   };
 
+  const removeLegacySectionHeads=()=>{
+    document.querySelectorAll('.rpp-section-head').forEach(el=>el.remove());
+    document.querySelectorAll('.rpp-form-section').forEach(sec=>{if(!sec.querySelector('.field,button,input,textarea,select,label'))sec.remove()});
+  };
   const hideHelperText=()=>{
     const targets=['皆さまの記録を、総区ごとの章に分けて掲載するために使用します。掲載したい総区を1つ選択してください。','アップロード前に最大1600pxへ圧縮し、JPEG再生成で通常の位置情報等のメタデータを除去します。'];
     document.querySelectorAll('p,div,small,span').forEach(el=>{const t=(el.textContent||'').trim();if(targets.includes(t))el.style.display='none'});
@@ -92,7 +96,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     if(!input.dataset.loaded){const vals=[b.value,h.value,s.value].filter(v=>String(v||'').trim());if(vals.length)input.value=vals.join('／');input.dataset.loaded='1'}
     return true;
   };
-  const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');hideHelperText();installOrgDetail();};
+  const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');removeLegacySectionHeads();hideHelperText();installOrgDetail();removeLegacySectionHeads();};
   const installAuthor=()=>{applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400)};
 
   const start=()=>{/\/author(?:\.html)?\/?$/.test(location.pathname)?installAuthor():installPublic()};
