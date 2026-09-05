@@ -34,6 +34,7 @@ body.rpp-cover-direct #toc .top-actions #homeBtn{display:none!important}
     'WRITE YOUR STORY｜原稿を書く',
     'ログアウト'
   ];
+  let renderedForOpen=false;
   const apply=()=>{
     const cover=document.getElementById('cover'),toc=document.getElementById('toc');
     if(!cover||!toc)return false;
@@ -44,15 +45,26 @@ body.rpp-cover-direct #toc .top-actions #homeBtn{display:none!important}
     });
     const eyes=[...cover.querySelectorAll('.eyebrow')];
     eyes.forEach((el,i)=>{if(i>0&&(el.textContent||'').includes('OUR VOW'))el.style.display='none'});
-    if(!cover.classList.contains('hidden')){
+    const open=!cover.classList.contains('hidden');
+    if(open){
       toc.classList.remove('hidden');
-      try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}
-    }
+      if(!renderedForOpen){
+        renderedForOpen=true;
+        try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}
+      }
+    }else renderedForOpen=false;
     return true;
   };
-  const run=()=>{apply();setTimeout(apply,100);setTimeout(apply,400);setTimeout(apply,900)};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-  new MutationObserver(()=>apply()).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  const install=()=>{
+    const cover=document.getElementById('cover');if(!cover)return false;
+    if(!cover.dataset.r13Observed){
+      cover.dataset.r13Observed='1';
+      new MutationObserver(()=>apply()).observe(cover,{attributes:true,attributeFilter:['class']});
+      const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(apply,80);setTimeout(apply,320)});
+    }
+    apply();setTimeout(apply,120);setTimeout(apply,500);return true;
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
 </script>`;
 
