@@ -56,10 +56,10 @@ const SIX_UI=`
     if(!code)return false;
     const old=sessionStorage.getItem('rpp_latest_edit_code');if(old&&!/^\\d{6}$/.test(old))sessionStorage.removeItem('rpp_latest_edit_code');
     code.maxLength=6;code.placeholder='6桁の承認コード';code.setAttribute('inputmode','numeric');
-    const field=code.closest('.field');const label=field&&field.querySelector('label');if(label)label.textContent='承認コード（6桁）';
-    const guide=document.querySelector('.rpp-author-guide');if(guide)guide.innerHTML='<b>🔑 6桁の承認コードについて</b><br>初回のメール認証後に、あなた専用の6桁コードを発行します。この同じコードを、提出後の再編集でも使います。スクリーンショットやメモで保存してください。';
-    const note=document.querySelector('#auth > .note');if(note)note.textContent='初回はメールに届く確認コードで本人確認します。認証後に、再編集にも使う固定6桁コードを発行します。';
-    const msg=document.querySelector('#rppEditLogin .rpp-code-note');if(msg)msg.textContent='この6桁コードは繰り返し使えます。紛失した場合は、登録メールアドレスで本人確認して新しい6桁コードを再発行できます。';
+    const field=code.closest('.field');const label=field&&field.querySelector('label');if(label&&label.textContent!=='承認コード（6桁）')label.textContent='承認コード（6桁）';
+    const guide=document.querySelector('.rpp-author-guide');const guideHtml='<b>🔑 6桁の承認コードについて</b><br>初回のメール認証後に、あなた専用の6桁コードを発行します。この同じコードを、提出後の再編集でも使います。スクリーンショットやメモで保存してください。';if(guide&&guide.innerHTML!==guideHtml)guide.innerHTML=guideHtml;
+    const note=document.querySelector('#auth > .note');const noteText='初回はメールに届く確認コードで本人確認します。認証後に、再編集にも使う固定6桁コードを発行します。';if(note&&note.textContent!==noteText)note.textContent=noteText;
+    const msg=document.querySelector('#rppEditLogin .rpp-code-note');const msgText='この6桁コードは繰り返し使えます。紛失した場合は、登録メールアドレスで本人確認して新しい6桁コードを再発行できます。';if(msg&&msg.textContent!==msgText)msg.textContent=msgText;
     const btn=document.getElementById('rppEditLoginBtn');
     if(btn&&!btn.dataset.sixBound){
       btn.dataset.sixBound='1';
@@ -77,12 +77,16 @@ const SIX_UI=`
         }catch(e){if(out)out.textContent='通信できませんでした。'}finally{btn.disabled=false}
       };
     }
-    document.querySelectorAll('.rpp-edit-code-value').forEach(el=>{const v=el.textContent.replace(/\\D/g,'');if(v.length===6)el.textContent=v.slice(0,3)+' '+v.slice(3)});
+    document.querySelectorAll('.rpp-edit-code-value').forEach(el=>{const v=el.textContent.replace(/\\D/g,'');const shown=v.length===6?v.slice(0,3)+' '+v.slice(3):'';if(shown&&el.textContent!==shown)el.textContent=shown});
     return true;
   };
   const run=()=>{apply();setTimeout(apply,120);setTimeout(apply,500);setTimeout(apply,1200)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-  new MutationObserver(()=>apply()).observe(document.documentElement,{subtree:true,childList:true});
+  const relevant='#rppEditCodeCard,#rppCodeCheckpoint,#rppEditLogin';
+  new MutationObserver(ms=>{
+    const hit=ms.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&(n.matches?.(relevant)||n.querySelector?.(relevant))));
+    if(hit)setTimeout(apply,0);
+  }).observe(document.body,{subtree:true,childList:true});
 })();
 </script>`;
 function inject(response){return new HTMLRewriter().on('body',{element(el){el.append(SIX_UI,{html:true})}}).transform(response)}
