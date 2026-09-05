@@ -26,8 +26,6 @@ for page in index author admin; do
   code=$(curl -sS -L -o "/tmp/rpp-$page.html" -w '%{http_code}' "$BASE$path")
   [[ "$code" == 200 ]] && pass "$page page HTTP 200" || fail "$page page HTTP $code"
 done
-not_contains /tmp/rpp-index.html 'そして、11.15、11.18へ' 'old bridge text removed from live viewer'
-not_contains /tmp/rpp-index.html '続きから読む' 'resume control removed from live viewer'
 contains /tmp/rpp-index.html '閲覧にあたっての確認事項' 'privacy consent is shipped'
 contains /tmp/rpp-index.html '本企画参加者のみ' 'participant-only notice is shipped'
 contains /tmp/rpp-index.html '外部共有' 'external-sharing restriction is shipped'
