@@ -42,6 +42,7 @@ body.rpp-consent-open{overflow:hidden!important}
  }
  function ensureDistrictSections(){
    const list=document.getElementById('tocList');if(!list)return false;
+   list.dataset.r14Managed='1';
    if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return true;
    let ss=[];try{ss=stories||[]}catch(e){return false}
    let flat=[...list.children].filter(x=>x.classList&&x.classList.contains('toc-item'));
