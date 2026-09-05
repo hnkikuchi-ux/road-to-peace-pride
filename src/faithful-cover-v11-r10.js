@@ -72,10 +72,10 @@ async function archiveCurrentPhoto(env,row){
 
 async function hardenedFetch(request,env,ctx){
   const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
-  if(path.startsWith('/api/'))await ensureSafety(env);
 
   if(path==='/api/me/story'&&request.method==='PUT'){
     if(!await productionMode(env))return app.fetch(request,env,ctx);
+    await ensureSafety(env);
     let b;try{b=await request.clone().json()}catch{return json({error:'入力内容を確認してください。'},400)}
     const soku=String(b.soku||'').trim(),date=String(b.record_date||'').trim(),status=b.status==='submitted'?'submitted':'draft';
     if(soku&&!GROUPS.includes(soku))return json({error:'組織は一覧から選択してください。'},400);
@@ -92,6 +92,7 @@ async function hardenedFetch(request,env,ctx){
 
   if(path==='/api/me/photo'&&request.method==='POST'){
     if(!await productionMode(env))return app.fetch(request,env,ctx);
+    await ensureSafety(env);
     const type=(request.headers.get('content-type')||'').toLowerCase();
     if(!type.startsWith('image/jpeg'))return json({error:'写真はJPEG形式で保存してください。'},400);
     const bytes=await request.arrayBuffer();
@@ -108,6 +109,7 @@ async function hardenedFetch(request,env,ctx){
 
   if(path==='/api/admin/export.json'&&request.method==='GET'){
     const response=await app.fetch(request,env,ctx);if(!response.ok)return response;
+    await ensureSafety(env);
     const data=await response.json();
     const revisions=(await env.DB.prepare('SELECT * FROM rpp_story_revisions ORDER BY snapshot_at DESC').all()).results||[];
     data.revisions=revisions;data.revision_count=revisions.length;data.backup_schema='rpp-backup-v2';
