@@ -19,8 +19,8 @@ body.rpp-cover-direct #toc .top-actions .eyebrow{display:none!important}
 /* author cleanup */
 .rpp-form-section{display:contents!important}
 .rpp-section-head{display:none!important}
+.rpp-meta-note{display:none!important}
 body.rpp-author-clean .rpp-author-steps{display:none!important}
-body.rpp-author-clean .rpp-meta-note{display:none!important}
 body.rpp-author-clean .rpp-hidden-org-detail{display:none!important}
 body.rpp-author-clean .rpp-org-detail-field{margin-top:10px!important}
 body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
