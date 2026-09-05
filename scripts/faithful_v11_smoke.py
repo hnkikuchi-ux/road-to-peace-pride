@@ -15,10 +15,18 @@ d=webdriver.Chrome(options=opt)
 try:
   for w,h in SIZES:
     d.set_window_size(w,h)
-    d.get(BASE+'/refresh?v11r4='+str(int(time.time()*1000)))
+    d.get(BASE+'/refresh?v11r5='+str(int(time.time()*1000)))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-v11-layout')=='reference-frame-stars')
-    WebDriverWait(d,10).until(lambda x: card.get_attribute('data-v11-lock')=='artdeco-compact-r4')
+    # The r4 refinement marks several data attributes from a deferred enhancer.
+    # Wait for the complete marker set so CI never reads the card mid-enhancement.
+    WebDriverWait(d,15).until(lambda x:
+      card.get_attribute('data-v11-lock')=='artdeco-compact-r4' and
+      card.get_attribute('data-v11-frame')=='uniform-double-frame' and
+      card.get_attribute('data-v11-revision')=='r4' and
+      card.get_attribute('data-v11-button')=='refined-gold-r2' and
+      card.get_attribute('data-v11-stars')=='animated'
+    )
     assert card.get_attribute('data-v11-frame')=='uniform-double-frame'
     assert card.get_attribute('data-v11-button')=='refined-gold-r2'
     assert card.get_attribute('data-v11-revision')=='r4'
