@@ -20,6 +20,7 @@ body.rpp-consent-open{overflow:hidden!important}
 <script>
 (()=>{
  const KEY='rpp_viewer_consent_v1';
+ const GROUPS=['中区','南総区','港南総区','磯子総区','金沢総区','栄区'];
  const box=()=>document.getElementById('rppViewerConsent');
  let resolveConsent=null,busy=false;
  function accepted(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
@@ -27,13 +28,33 @@ body.rpp-consent-open{overflow:hidden!important}
  function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
  function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
  function waitForConsent(){if(accepted())return Promise.resolve();showNow();return new Promise(resolve=>{resolveConsent=resolve})}
- function nudgeDistrictOrganizer(){
-   const list=document.getElementById('tocList');if(!list)return;
-   if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return;
-   const flat=list.querySelector('.toc-item');if(!flat)return;
-   const marker=document.createComment('rpp-organize');list.appendChild(marker);marker.remove();
+ function groupOf(s,i){
+   const raw=String((s&&((s.soku||s.org)))||'');
+   for(const g of GROUPS)if(raw===g||raw.includes(g))return g;
+   if(String(s&&s.id||'').startsWith('sample-'))return GROUPS[i%GROUPS.length];
+   return '未分類';
  }
- function settleContents(){[40,140,320,700,1300,2200].forEach(ms=>setTimeout(nudgeDistrictOrganizer,ms))}
+ function ensureDistrictSections(){
+   const list=document.getElementById('tocList');if(!list)return false;
+   if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return true;
+   const flat=[...list.children].filter(x=>x.classList&&x.classList.contains('toc-item'));
+   if(!flat.length)return false;
+   let ss=[];try{ss=stories||[]}catch(e){return false}
+   document.body.classList.add('rpp-district-book');
+   const buckets=new Map(GROUPS.map(g=>[g,[]]));buckets.set('未分類',[]);
+   flat.forEach((item,i)=>{const s=ss[i]||{},g=groupOf(s,i);item.dataset.rppGroup=g;item.dataset.rppSearch=((s.title||'')+' '+(s.name||'')).toLowerCase();buckets.get(g).push(item)});
+   list.textContent='';
+   [...GROUPS,'未分類'].forEach((g,gi)=>{
+     const items=buckets.get(g)||[];if(g==='未分類'&&!items.length)return;
+     const sec=document.createElement('section');sec.className='rpp-district-section'+(g==='未分類'?' rpp-legacy-section':'');if(g!=='未分類')sec.id='rppDistrict-'+gi;
+     const no=g==='未分類'?'ARCHIVE':'CHAPTER '+String(gi+1).padStart(2,'0');
+     sec.innerHTML='<div class="rpp-district-head"><div class="rpp-chapter-no">'+no+'</div><div class="rpp-district-name">'+g+'</div><div class="rpp-district-count">'+items.length+' RECORD'+(items.length===1?'':'S')+'</div></div>';
+     if(items.length)items.forEach(x=>sec.appendChild(x));else{const e=document.createElement('div');e.className='rpp-district-empty';e.textContent='この章の記録は、これから掲載されます。';sec.appendChild(e)}
+     list.appendChild(sec);
+   });
+   return document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length===6;
+ }
+ function settleContents(){[20,80,180,360,700,1300,2200].forEach(ms=>setTimeout(ensureDistrictSections,ms))}
  async function openViewer(){
    if(busy)return;busy=true;
    const unlock=document.getElementById('unlock'),msg=document.getElementById('msg'),pw=document.getElementById('pw');
