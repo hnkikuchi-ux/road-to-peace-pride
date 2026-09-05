@@ -86,28 +86,39 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
       if(t.startsWith('皆さまの記録を、総区ごとの章に分けて掲載するために使用します。')||exact.includes(t))el.remove();
     });
   };
-  const installOrgDetail=()=>{
+  const syncOrgDetail=()=>{
+    const input=document.getElementById('rppOrgDetail');if(!input)return;
     const b=document.getElementById('rppBunku'),h=document.getElementById('rppHonbu'),s=document.getElementById('rppShibu');
-    if(!b||!h||!s)return false;
+    if(b){b.value=input.value;b.dispatchEvent(new Event('input',{bubbles:true}))}
+    if(h)h.value='';if(s)s.value='';
+  };
+  const installOrgDetail=()=>{
+    const orgSelect=document.getElementById('rppOrgSelect');
+    const b=document.getElementById('rppBunku'),h=document.getElementById('rppHonbu'),s=document.getElementById('rppShibu');
     document.body.classList.add('rpp-author-clean');
-    [b,h,s].forEach(e=>e.closest('.field')?.classList.add('rpp-hidden-org-detail'));
+    [b,h,s].filter(Boolean).forEach(e=>e.closest('.field')?.classList.add('rpp-hidden-org-detail'));
     let input=document.getElementById('rppOrgDetail');
     if(!input){
-      const host=(document.getElementById('rppOrgSelect')?.closest('.field'))||b.closest('.field')?.parentElement;
+      const host=orgSelect?.closest('.field')||b?.closest('.field')?.parentElement;
       if(!host)return false;
       const f=document.createElement('div');f.className='field rpp-org-detail-field';
       f.innerHTML='<label>分区／本部／部</label><input id="rppOrgDetail" maxlength="240" placeholder="分区／本部／部を入力">';
       host.appendChild(f);input=f.querySelector('input');
-      input.addEventListener('input',()=>{b.value=input.value;h.value='';s.value='';b.dispatchEvent(new Event('input',{bubbles:true}))});
+      input.addEventListener('input',syncOrgDetail);
     }
-    if(!input.dataset.loaded){const vals=[b.value,h.value,s.value].filter(v=>String(v||'').trim());if(vals.length)input.value=vals.join('／');input.dataset.loaded='1'}
+    if(b&&h&&s&&!input.dataset.loadedLegacy){
+      const vals=[b.value,h.value,s.value].filter(v=>String(v||'').trim());
+      if(!input.value&&vals.length)input.value=vals.join('／');
+      input.dataset.loadedLegacy='1';
+      if(input.value)syncOrgDetail();
+    }
     return true;
   };
   let authorQueued=false;
   const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');removeLegacySectionHeads();hideHelperText();installOrgDetail();removeLegacySectionHeads();hideHelperText();};
   const queueAuthor=()=>{if(authorQueued)return;authorQueued=true;setTimeout(()=>{authorQueued=false;applyAuthor()},0)};
   const installAuthor=()=>{
-    applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400);
+    applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400);setTimeout(applyAuthor,2600);
     const editor=document.getElementById('editor');if(editor&&!editor.dataset.r13AuthorObserved){editor.dataset.r13AuthorObserved='1';new MutationObserver(queueAuthor).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
   };
 
