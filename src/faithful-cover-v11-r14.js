@@ -16,33 +16,22 @@ body.rpp-consent-open{overflow:hidden!important}
 #rppViewerConsent #rppConsentAccept:disabled{opacity:.38;cursor:not-allowed;filter:saturate(.55)}
 @media(max-width:520px){#rppViewerConsent{padding:10px}#rppViewerConsent .rpp-consent-card{padding:24px 16px 20px}}
 </style>
+<div id="rppViewerConsent" class="hidden" role="dialog" aria-modal="true" aria-labelledby="rppConsentTitle"><div class="rpp-consent-card"><div class="rpp-consent-kicker">PRIVACY NOTICE</div><h2 id="rppConsentTitle">閲覧にあたっての確認事項</h2><p class="rpp-consent-copy">本文集には、氏名・所属組織・写真・体験等の個人情報が含まれます。<br>掲載内容は原則として本企画参加者のみの閲覧を目的としており、本人の承諾なく転載・転送・SNS投稿・スクリーンショット等による外部共有はお控えください。</p><label class="rpp-consent-check"><input id="rppConsentCheck" type="checkbox"><span>上記の内容を確認し、同意します</span></label><button id="rppConsentAccept" type="button" disabled>同意して文集を閲覧する</button></div></div>
 <script>
 (()=>{
  const KEY='rpp_viewer_consent_v1';
+ const box=()=>document.getElementById('rppViewerConsent');
  function accepted(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
  function save(){try{localStorage.setItem(KEY,'1')}catch(e){}}
- function ensure(){
-   if(document.getElementById('rppViewerConsent'))return document.getElementById('rppViewerConsent');
-   const box=document.createElement('div');box.id='rppViewerConsent';box.className='hidden';box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-labelledby','rppConsentTitle');
-   box.innerHTML='<div class="rpp-consent-card"><div class="rpp-consent-kicker">PRIVACY NOTICE</div><h2 id="rppConsentTitle">閲覧にあたっての確認事項</h2><p class="rpp-consent-copy">本文集には、氏名・所属組織・写真・体験等の個人情報が含まれます。<br>掲載内容は原則として本企画参加者のみの閲覧を目的としており、本人の承諾なく転載・転送・SNS投稿・スクリーンショット等による外部共有はお控えください。</p><label class="rpp-consent-check"><input id="rppConsentCheck" type="checkbox"><span>上記の内容を確認し、同意します</span></label><button id="rppConsentAccept" type="button" disabled>同意して文集を閲覧する</button></div>';
-   document.body.appendChild(box);
-   const check=box.querySelector('#rppConsentCheck'),accept=box.querySelector('#rppConsentAccept');
-   check.addEventListener('change',()=>{accept.disabled=!check.checked});
-   accept.addEventListener('click',()=>{if(!check.checked)return;save();box.classList.add('hidden');document.body.classList.remove('rpp-consent-open')});
-   return box;
- }
- function maybeShow(){
-   if(accepted())return;
-   const cover=document.getElementById('cover');
-   if(!cover||cover.classList.contains('hidden'))return;
-   const box=ensure();box.classList.remove('hidden');document.body.classList.add('rpp-consent-open');
- }
+ function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
+ function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
+ function maybeShow(){const cover=document.getElementById('cover');if(cover&&!cover.classList.contains('hidden'))showNow()}
  function install(){
-   ensure();maybeShow();
-   const cover=document.getElementById('cover');
-   if(cover&&!cover.dataset.r14ConsentObserved){cover.dataset.r14ConsentObserved='1';new MutationObserver(maybeShow).observe(cover,{attributes:true,attributeFilter:['class']})}
-   const unlock=document.getElementById('unlock');if(unlock&&!unlock.dataset.r14ConsentBound){unlock.dataset.r14ConsentBound='1';unlock.addEventListener('click',()=>{setTimeout(maybeShow,120);setTimeout(maybeShow,420)})}
-   setTimeout(maybeShow,250);setTimeout(maybeShow,900)
+   const check=document.getElementById('rppConsentCheck'),accept=document.getElementById('rppConsentAccept');
+   if(check&&accept){check.addEventListener('change',()=>{accept.disabled=!check.checked});accept.addEventListener('click',()=>{if(!check.checked)return;save();hide()})}
+   const cover=document.getElementById('cover');if(cover&&!cover.dataset.r14ConsentObserved){cover.dataset.r14ConsentObserved='1';new MutationObserver(maybeShow).observe(cover,{attributes:true,attributeFilter:['class']})}
+   if(!window.__rppConsentFetch){window.__rppConsentFetch=true;const native=window.fetch.bind(window);window.fetch=async(input,init)=>{const response=await native(input,init);const u=typeof input==='string'?input:(input&&input.url)||'';if(u.includes('/api/viewer/login')&&response.ok)setTimeout(showNow,0);return response}}
+   maybeShow();setTimeout(maybeShow,250);setTimeout(maybeShow,900)
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
