@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r10.js
           node --check src/faithful-cover-v11-r9.js
           node --check src/faithful-cover-v11-r8.js
           node --check src/faithful-cover-v11-r7.js
@@ -31,16 +32,18 @@ jobs:
           node --check src/faithful-cover-v11-r4.js
           node --check src/faithful-cover-v11-r3.js
           node --check src/faithful-cover-v11.js
-          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py
-      - name: Verify faithful v11 r9 wiring
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py scripts/scale_300_regression.py
+      - name: Verify faithful v11 r10 production hardening
         run: |
-          grep -Fq "import app from './faithful-cover-v11-r8.js'" src/faithful-cover-v11-r9.js
-          grep -Fq "faithful v11-r9" src/faithful-cover-v11-r9.js
-          grep -Fq "Luxury accordion" scripts/ux_regression.py
-          grep -Fq '2026.09.05-faithful-v11-r9-luxury-accordion' public/version.json
+          grep -Fq "import app from './faithful-cover-v11-r9.js'" src/faithful-cover-v11-r10.js
+          grep -Fq 'rpp_story_revisions' src/faithful-cover-v11-r10.js
+          grep -Fq 'before-photo-change' src/faithful-cover-v11-r10.js
+          grep -Fq "中区','南総区','港南総区','磯子総区','金沢総区','栄区" src/faithful-cover-v11-r10.js
+          grep -Fq '300-STORY SCALE REGRESSION PASSED' scripts/scale_300_regression.py
+          grep -Fq '2026.09.05-faithful-v11-r10-production-hardening' public/version.json
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r9.js') process.exit(1); console.log('faithful-v11 r9 luxury accordion route active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r10.js') process.exit(1); console.log('faithful-v11 r10 production hardening active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -69,10 +72,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r9 public deployment
+      - name: Wait for faithful v11 r10 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r9=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r9-luxury-accordion'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r10=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r10-production-hardening'; then exit 0; fi
             sleep 10
           done
           exit 1
@@ -82,7 +85,7 @@ jobs:
     if: github.event_name == 'push'
     needs: live-smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
@@ -98,8 +101,10 @@ jobs:
       - run: python scripts/cache_refresh_smoke.py
       - run: python scripts/faithful_v11_smoke.py
       - run: python scripts/logout_smoke.py
-      - name: Exercise luxury accordion and author flow
+      - name: Exercise author and accordion flow
         run: python scripts/ux_regression.py
+      - name: Exercise 300-story scale
+        run: python scripts/scale_300_regression.py
       - name: Upload visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
