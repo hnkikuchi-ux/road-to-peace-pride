@@ -76,8 +76,11 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     document.querySelectorAll('.rpp-form-section').forEach(sec=>{if(!sec.querySelector('.field,button,input,textarea,select,label'))sec.remove()});
   };
   const hideHelperText=()=>{
-    const targets=['皆さまの記録を、総区ごとの章に分けて掲載するために使用します。掲載したい総区を1つ選択してください。','アップロード前に最大1600pxへ圧縮し、JPEG再生成で通常の位置情報等のメタデータを除去します。'];
-    document.querySelectorAll('p,div,small,span').forEach(el=>{const t=(el.textContent||'').trim();if(targets.includes(t))el.style.display='none'});
+    const exact=['アップロード前に最大1600pxへ圧縮し、JPEG再生成で通常の位置情報等のメタデータを除去します。'];
+    document.querySelectorAll('p,div,small,span').forEach(el=>{
+      const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(t.startsWith('皆さまの記録を、総区ごとの章に分けて掲載するために使用します。')||exact.includes(t))el.remove();
+    });
   };
   const installOrgDetail=()=>{
     const b=document.getElementById('rppBunku'),h=document.getElementById('rppHonbu'),s=document.getElementById('rppShibu');
@@ -96,8 +99,13 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     if(!input.dataset.loaded){const vals=[b.value,h.value,s.value].filter(v=>String(v||'').trim());if(vals.length)input.value=vals.join('／');input.dataset.loaded='1'}
     return true;
   };
-  const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');removeLegacySectionHeads();hideHelperText();installOrgDetail();removeLegacySectionHeads();};
-  const installAuthor=()=>{applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400)};
+  let authorQueued=false;
+  const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');removeLegacySectionHeads();hideHelperText();installOrgDetail();removeLegacySectionHeads();hideHelperText();};
+  const queueAuthor=()=>{if(authorQueued)return;authorQueued=true;setTimeout(()=>{authorQueued=false;applyAuthor()},0)};
+  const installAuthor=()=>{
+    applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400);
+    const editor=document.getElementById('editor');if(editor&&!editor.dataset.r13AuthorObserved){editor.dataset.r13AuthorObserved='1';new MutationObserver(queueAuthor).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
+  };
 
   const start=()=>{/\/author(?:\.html)?\/?$/.test(location.pathname)?installAuthor():installPublic()};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
