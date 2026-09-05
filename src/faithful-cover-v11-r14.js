@@ -27,6 +27,13 @@ body.rpp-consent-open{overflow:hidden!important}
  function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
  function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
  function waitForConsent(){if(accepted())return Promise.resolve();showNow();return new Promise(resolve=>{resolveConsent=resolve})}
+ function nudgeDistrictOrganizer(){
+   const list=document.getElementById('tocList');if(!list)return;
+   if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return;
+   const flat=list.querySelector('.toc-item');if(!flat)return;
+   const marker=document.createComment('rpp-organize');list.appendChild(marker);marker.remove();
+ }
+ function settleContents(){[40,140,320,700,1300,2200].forEach(ms=>setTimeout(nudgeDistrictOrganizer,ms))}
  async function openViewer(){
    if(busy)return;busy=true;
    const unlock=document.getElementById('unlock'),msg=document.getElementById('msg'),pw=document.getElementById('pw');
@@ -41,6 +48,7 @@ body.rpp-consent-open{overflow:hidden!important}
      if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
      stories=data.stories||[];updateResume();
      try{renderToc()}catch(e){try{if(typeof window.renderToc==='function')window.renderToc()}catch(_){}}
+     settleContents();
    }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
  }
  function install(){
