@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 BASE=os.environ.get('RPP_BASE_URL','https://giin-home-cloud-pilot.hn-kikuchi.workers.dev')
+os.makedirs('artifacts/screens',exist_ok=True)
 
 def check(ok,label):
     if not ok: raise AssertionError(label)
@@ -34,17 +35,38 @@ try:
 finally:
     d.quit()
 
-print('2) Simplified author form, optional photo, submitted-safe editing')
+print('2) Author edit-code checkpoint, polished sections, optional photo, submitted-safe editing')
 d=driver();w=WebDriverWait(d,15)
 try:
     d.get(BASE+'/author.html')
+    check('私の記録を綴る' in w.until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#auth h1'))).text,'author heading matches product language')
+    check(len(d.find_elements(By.CSS_SELECTOR,'.rpp-author-step'))==3,'three-step author guide is visible')
     email=f'ux-{int(time.time())}@example.invalid'
     w.until(EC.visibility_of_element_located((By.ID,'email'))).send_keys(email)
     d.find_element(By.ID,'send').click()
     msg=w.until(lambda x:x.find_element(By.ID,'authmsg').text)
     m=re.search(r'(\d{6})',msg);check(bool(m),'preview OTP is available')
     d.find_element(By.ID,'otp').send_keys(m.group(1));d.find_element(By.ID,'verify').click()
+
+    checkpoint=w.until(EC.visibility_of_element_located((By.ID,'rppCodeCheckpoint')))
+    check(checkpoint.is_displayed(),'edit-code checkpoint appears before writing')
+    code_text=d.find_element(By.CSS_SELECTOR,'.rpp-checkpoint-code').text
+    code_digits=re.sub(r'\D','',code_text)
+    check(len(code_digits)==8,'persistent edit code is eight digits')
+    cont=d.find_element(By.ID,'rppCheckpointContinue')
+    check(not cont.is_enabled(),'continue is disabled until code-save acknowledgement')
+    d.save_screenshot('artifacts/screens/author-r5-code-checkpoint.png')
+    d.find_element(By.ID,'rppCodeSaved').click()
+    check(cont.is_enabled(),'continue enables after code-save acknowledgement')
+    cont.click()
+
     w.until(EC.visibility_of_element_located((By.ID,'editor')))
+    w.until(lambda x:len(x.find_elements(By.CSS_SELECTOR,'.rpp-form-section'))==3)
+    check(len(d.find_elements(By.CSS_SELECTOR,'.rpp-form-section'))==3,'author form is organized into three sections')
+    heads=[x.text for x in d.find_elements(By.CSS_SELECTOR,'.rpp-section-title')]
+    check(heads==['基本情報','あなたの記録','写真・確認・提出'],'author section titles are correct')
+    d.save_screenshot('artifacts/screens/author-r5-editor.png')
+
     check(len(d.find_elements(By.ID,'org'))==1,'organization is one field')
     check(not any(d.find_elements(By.ID,x) for x in ('soku','bunku','honbu','shibu')),'legacy organization fields are absent')
     check(len(d.find_elements(By.ID,'category'))==0,'category is absent')
