@@ -23,6 +23,7 @@ body.rpp-consent-open{overflow:hidden!important}
  const GROUPS=['中区','南総区','港南総区','磯子総区','金沢総区','栄区'];
  const box=()=>document.getElementById('rppViewerConsent');
  let resolveConsent=null,busy=false;
+ try{updateResume=()=>{}}catch(e){}
  function accepted(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
  function save(){try{localStorage.setItem(KEY,'1')}catch(e){}}
  function showNow(){if(accepted())return;const el=box();if(!el)return;el.classList.remove('hidden');document.body.classList.add('rpp-consent-open')}
@@ -74,7 +75,7 @@ body.rpp-consent-open{overflow:hidden!important}
      show('cover');
      const s=await fetch('/api/stories',{credentials:'same-origin',cache:'no-store'}),data=await s.json();
      if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
-     stories=data.stories||[];updateResume();
+     stories=data.stories||[];
      try{renderToc()}catch(e){}
      settleContents();
    }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
