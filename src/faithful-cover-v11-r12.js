@@ -30,6 +30,7 @@ body.rpp-author-r12 .r12-preview-photo{display:block;width:min(100%,520px);max-h
 (()=>{
  const ready=fn=>document.readyState==='loading'?document.addEventListener('DOMContentLoaded',fn,{once:true}):fn();
  const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())};
+ let savedStatus='',savedDate='';
  function fieldOf(id){return document.getElementById(id)?.closest('.field')||null}
  function addOrgDetails(orgField){
    if(document.getElementById('rppBunku'))return;
@@ -48,7 +49,7 @@ body.rpp-author-r12 .r12-preview-photo{display:block;width:min(100%,520px);max-h
    const head=panel.querySelector('h1');if(head)head.textContent='あなたの記録';
    const ey=panel.querySelector('.ey');if(ey)ey.textContent='YOUR STORY';
 
-   const dateField=fieldOf('record_date');if(dateField){dateField.classList.add('r12-auto-date');const rd=document.getElementById('record_date');if(rd&&!rd.value)rd.value=today()}
+   const dateField=fieldOf('record_date');if(dateField)dateField.classList.add('r12-auto-date');
    ['deadlineAuth','deadlineEditor'].forEach(id=>{const e=document.getElementById(id);if(e&&/締切は現在設定されていません/.test(e.textContent||'')){e.textContent='';e.classList.add('hidden')}});
 
    const status=panel.querySelector('.status');if(status){status.className='r12-savebox';status.innerHTML='<b>自動で下書き保存されます。</b><br><span id="saveState">下書き保存済です。</span>'}
@@ -66,30 +67,41 @@ body.rpp-author-r12 .r12-preview-photo{display:block;width:min(100%,520px);max-h
    }
    if(photoField){const l=photoField.querySelector('label');if(l)l.textContent='写真';let n=photoField.querySelector('.r12-photo-note');if(!n){n=document.createElement('div');n.className='r12-photo-note';n.innerHTML='<b>写真は任意です。</b><br>写真なしでもそのまま提出できます。';photoField.querySelector('#photo')?.insertAdjacentElement('afterend',n)}const old=document.getElementById('photoOptionalNote');if(old)old.style.display='none'}
 
-   const order=[nameField,orgField,titleField,bodyField,photoField].filter(Boolean);order.forEach(x=>form.appendChild(x));
+   if(!form.dataset.r12Ordered&&nameField&&orgField&&titleField&&bodyField&&photoField){
+     [nameField,orgField,titleField,bodyField,photoField].forEach(x=>form.appendChild(x));form.dataset.r12Ordered='1';
+   }
    const confirm=document.getElementById('confirm');if(confirm){confirm.checked=true;const row=confirm.closest('label');if(row)row.style.display='none'}
    let actions=form.querySelector('.r12-actions');if(!actions){actions=document.createElement('div');actions.className='r12-actions';form.appendChild(actions)}
-   ['save','previewBtn','submit'].forEach(id=>{const b=document.getElementById(id);if(b)actions.appendChild(b)});
+   ['save','previewBtn','submit'].forEach(id=>{const b=document.getElementById(id);if(b&&b.parentElement!==actions)actions.appendChild(b)});
    const submit=document.getElementById('submit');if(submit)submit.textContent='この内容で提出する';
    const prev=document.getElementById('previewBtn');if(prev)prev.textContent='掲載イメージを確認';
    const save=document.getElementById('save');if(save)save.textContent='下書き保存';
-   const logout=document.getElementById('logout');if(logout){let box=form.querySelector('.r12-logout');if(!box){box=document.createElement('div');box.className='r12-logout';form.appendChild(box)}box.appendChild(logout)}
+   const logout=document.getElementById('logout');if(logout){let box=form.querySelector('.r12-logout');if(!box){box=document.createElement('div');box.className='r12-logout';form.appendChild(box)}if(logout.parentElement!==box)box.appendChild(logout)}
    const oldStack=form.querySelector('.stack');if(oldStack&&oldStack.children.length===0)oldStack.remove();
 
-   ['save','previewBtn','submit','submitPreview'].forEach(id=>{const b=document.getElementById(id);if(b&&!b.dataset.r12Date){b.dataset.r12Date='1';b.addEventListener('click',()=>{const rd=document.getElementById('record_date');if(rd&&!rd.value)rd.value=today();if(confirm)confirm.checked=true},true)}});
+   ['save','previewBtn','submit','submitPreview'].forEach(id=>{const b=document.getElementById(id);if(b&&!b.dataset.r12Date){b.dataset.r12Date='1';b.addEventListener('click',()=>{if(confirm)confirm.checked=true},true)}});
    syncSaveWords();
    return true;
  }
  function installFetch(){if(window.__rpp12Fetch)return;window.__rpp12Fetch=true;const native=window.fetch.bind(window);window.fetch=async(input,init)=>{
-   const u=typeof input==='string'?input:(input&&input.url)||'';let ni=init;
-   if(u.includes('/api/me/story')&&init?.method==='PUT'&&init.body){try{const b=JSON.parse(init.body);const soku=document.getElementById('rppOrgSelect')?.value||document.getElementById('org')?.value||b.soku||'';b.soku=soku;b.org=soku;b.bunku=document.getElementById('rppBunku')?.value.trim()||'';b.honbu=document.getElementById('rppHonbu')?.value.trim()||'';b.shibu=document.getElementById('rppShibu')?.value.trim()||'';if(!b.record_date)b.record_date=today();ni={...init,body:JSON.stringify(b)}}catch(e){}
-   }
+   const u=typeof input==='string'?input:(input&&input.url)||'';let ni=init,putBody=null;
+   if(u.includes('/api/me/story')&&init?.method==='PUT'&&init.body){try{
+      const b=JSON.parse(init.body);const soku=document.getElementById('rppOrgSelect')?.value||document.getElementById('org')?.value||b.soku||'';
+      b.soku=soku;b.org=soku;b.bunku=document.getElementById('rppBunku')?.value.trim()||'';b.honbu=document.getElementById('rppHonbu')?.value.trim()||'';b.shibu=document.getElementById('rppShibu')?.value.trim()||'';
+      if(b.status==='submitted')b.record_date=(savedStatus==='submitted'&&savedDate)?savedDate:today();
+      else b.record_date=(savedStatus==='submitted'&&savedDate)?savedDate:'';
+      putBody=b;ni={...init,body:JSON.stringify(b)};
+   }catch(e){}}
    const r=await native(input,ni);
-   if(u.includes('/api/me/story')&&(!init||init.method==='GET')){try{const d=await r.clone().json(),s=d.story||{};setTimeout(()=>{const map=[['rppBunku',s.bunku],['rppHonbu',s.honbu],['rppShibu',s.shibu]];map.forEach(([id,v])=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v})},80)}catch(e){}}
+   if(u.includes('/api/me/story')&&(!init||init.method==='GET')){try{
+      const d=await r.clone().json(),s=d.story||{};savedStatus=s.status||'';savedDate=s.record_date||'';
+      setTimeout(()=>{const map=[['rppBunku',s.bunku],['rppHonbu',s.honbu],['rppShibu',s.shibu]];map.forEach(([id,v])=>{const e=document.getElementById(id);if(e&&v!=null)e.value=v})},80)
+   }catch(e){}}
+   if(r.ok&&putBody?.status==='submitted'){savedStatus='submitted';savedDate=putBody.record_date||savedDate}
    return r;
  }}
- function previewEnhance(){const m=document.getElementById('storyPreview');if(!m||m.dataset.r12Obs)return;m.dataset.r12Obs='1';new MutationObserver(()=>{if(m.classList.contains('hidden'))return;const meta=document.getElementById('pMeta');if(meta){const parts=[document.getElementById('name')?.value,document.getElementById('rppOrgSelect')?.value||document.getElementById('org')?.value,document.getElementById('rppBunku')?.value,document.getElementById('rppHonbu')?.value,document.getElementById('rppShibu')?.value].filter(Boolean);meta.textContent=parts.join(' ／ ')}let img=m.querySelector('.r12-preview-photo');const src=document.getElementById('photoPreview');if(src&&!src.classList.contains('hidden')&&src.src){if(!img){img=document.createElement('img');img.className='r12-preview-photo';document.getElementById('pBody')?.insertAdjacentElement('beforebegin',img)}img.src=src.src;img.alt='掲載写真'}else if(img)img.remove()},).observe(m,{attributes:true,attributeFilter:['class']})}
- ready(()=>{installFetch();const run=()=>{apply();previewEnhance()};run();setTimeout(run,120);setTimeout(run,500);setTimeout(run,1300);new MutationObserver(run).observe(document.body,{subtree:true,childList:true});setInterval(syncSaveWords,1500)});
+ function previewEnhance(){const m=document.getElementById('storyPreview');if(!m||m.dataset.r12Obs)return;m.dataset.r12Obs='1';new MutationObserver(()=>{if(m.classList.contains('hidden'))return;const meta=document.getElementById('pMeta');if(meta){const parts=[document.getElementById('name')?.value,document.getElementById('rppOrgSelect')?.value||document.getElementById('org')?.value,document.getElementById('rppBunku')?.value,document.getElementById('rppHonbu')?.value,document.getElementById('rppShibu')?.value].filter(Boolean);meta.textContent=parts.join(' ／ ')}let img=m.querySelector('.r12-preview-photo');const src=document.getElementById('photoPreview');if(src&&!src.classList.contains('hidden')&&src.src){if(!img){img=document.createElement('img');img.className='r12-preview-photo';document.getElementById('pBody')?.insertAdjacentElement('beforebegin',img)}img.src=src.src;img.alt='掲載写真'}else if(img)img.remove()}).observe(m,{attributes:true,attributeFilter:['class']})}
+ ready(()=>{installFetch();const run=()=>{apply();previewEnhance()};run();setTimeout(run,120);setTimeout(run,500);setTimeout(run,1300);setInterval(syncSaveWords,1500)});
 })();
 </script>`;
 
