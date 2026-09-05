@@ -26,7 +26,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
 </style>
 <script>
 (()=>{
-  let renderedForOpen=false;
+  let renderEpoch=0;
   const pruneCover=()=>{
     const cover=document.getElementById('cover');if(!cover)return;
     const forbidden=['そして、11.15、11.18へ','OUR VOW, OUR JOURNEY','STORIES ↓','続きから読む','WRITE YOUR STORY｜私の記録を綴る','WRITE YOUR STORY｜原稿を書く','ログアウト'];
@@ -36,20 +36,34 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     cover.querySelectorAll('.eyebrow').forEach(el=>el.remove());
     const resume=document.getElementById('resumeNote');if(resume)resume.remove();
   };
+  const sectionCount=()=>document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length;
+  const renderContents=()=>{try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}};
+  const ensureContents=()=>{
+    const epoch=++renderEpoch;
+    const delays=[0,180,450,900,1600,2600,4200,6500];
+    delays.forEach(ms=>setTimeout(()=>{
+      if(epoch!==renderEpoch)return;
+      const cover=document.getElementById('cover'),toc=document.getElementById('toc');
+      if(!cover||!toc||cover.classList.contains('hidden'))return;
+      toc.classList.remove('hidden');
+      if(sectionCount()<6)renderContents();
+    },ms));
+  };
   const applyPublic=()=>{
     const cover=document.getElementById('cover'),toc=document.getElementById('toc');
     if(!cover||!toc)return false;
     pruneCover();
     document.body.classList.add('rpp-cover-direct');
     const open=!cover.classList.contains('hidden');
-    if(open){toc.classList.remove('hidden');if(!renderedForOpen){renderedForOpen=true;try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}}}else renderedForOpen=false;
+    if(open){toc.classList.remove('hidden');if(sectionCount()<6)ensureContents();}
+    else renderEpoch++;
     return true;
   };
   const installPublic=()=>{
     const cover=document.getElementById('cover');if(!cover)return false;
     if(!cover.dataset.r13Observed){
       cover.dataset.r13Observed='1';
-      new MutationObserver(()=>applyPublic()).observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true,characterData:true});
+      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class'],childList:true,subtree:true,characterData:true});
       const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(applyPublic,80);setTimeout(applyPublic,320);setTimeout(applyPublic,900)})
     }
     applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);setTimeout(applyPublic,1200);return true;
