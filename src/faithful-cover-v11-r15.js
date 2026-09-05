@@ -15,9 +15,9 @@ const R15=`
   function sync(){
     const detail=document.getElementById('rppOrgDetail');if(!detail)return;
     const [b,h,s]=legacy();
-    if(b){b.value=detail.value;b.dispatchEvent(new Event('input',{bubbles:true}))}
-    if(h)h.value='';
-    if(s)s.value='';
+    if(b&&b.value!==detail.value){b.value=detail.value;b.dispatchEvent(new Event('input',{bubbles:true}))}
+    if(h&&h.value)h.value='';
+    if(s&&s.value)s.value='';
   }
   function patch(){
     const select=document.getElementById('rppOrgSelect');
@@ -35,7 +35,10 @@ const R15=`
       detail.addEventListener('input',sync);
     }
     const [b,h,s]=legacy();
-    [b,h,s].filter(Boolean).forEach(el=>{const f=el.closest('.field');if(f)f.classList.add('r15-legacy-org')});
+    [b,h,s].filter(Boolean).forEach(el=>{
+      const f=el.closest('.field');
+      if(f&&!f.classList.contains('r15-legacy-org'))f.classList.add('r15-legacy-org');
+    });
     if(!detail.value){
       const vals=[b&&b.value,h&&h.value,s&&s.value].filter(v=>String(v||'').trim());
       if(vals.length)detail.value=vals.join('／');
@@ -46,9 +49,9 @@ const R15=`
   function boot(){
     patch();
     let ticks=0;
-    const timer=setInterval(()=>{patch();ticks++;if(ticks>=80)clearInterval(timer)},125);
+    const timer=setInterval(()=>{patch();ticks++;if(ticks>=48)clearInterval(timer)},125);
     const editor=document.getElementById('editor');
-    if(editor)new MutationObserver(()=>patch()).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+    if(editor)new MutationObserver(()=>patch()).observe(editor,{childList:true,subtree:true});
     document.addEventListener('click',e=>{
       const btn=e.target&&e.target.closest?e.target.closest('button'):null;
       if(btn&&['save','previewBtn','submit','submitPreview'].includes(btn.id))sync();
