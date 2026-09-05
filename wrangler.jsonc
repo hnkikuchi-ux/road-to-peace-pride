@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "road-to-peace-pride",
-  "main": "src/faithful-cover-v11-r8.js",
+  "main": "src/faithful-cover-v11-r9.js",
   "compatibility_date": "2026-08-05",
   "assets": {
     "directory": "./public",
@@ -22,10 +22,6 @@
       "id": "9c223c1636874dbc912583c8704bea42"
     }
   ],
-  "secrets": {
-    "required": ["SETUP_KEY"]
-  },
-  "observability": {
-    "enabled": true
-  }
+  "secrets": {"required": ["SETUP_KEY"]},
+  "observability": {"enabled": true}
 }
