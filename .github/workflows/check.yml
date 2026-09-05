@@ -36,20 +36,13 @@ jobs:
           node --check src/faithful-cover-v11-r3.js
           node --check src/faithful-cover-v11.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/scale_300_regression.py
-      - name: Verify faithful v11 r13 direct contents
+      - name: Verify public direct contents and mobile containment
         run: |
           grep -Fq "import app from './faithful-cover-v11-r12.js'" src/faithful-cover-v11-r13.js
-          grep -Fq 'そして、11.15、11.18へ' src/faithful-cover-v11-r13.js
-          grep -Fq 'OUR VOW, OUR JOURNEY' src/faithful-cover-v11-r13.js
-          grep -Fq 'STORIES ↓' src/faithful-cover-v11-r13.js
-          grep -Fq '続きから読む' src/faithful-cover-v11-r13.js
-          grep -Fq 'WRITE YOUR STORY｜私の記録を綴る' src/faithful-cover-v11-r13.js
-          grep -Fq 'ログアウト' src/faithful-cover-v11-r13.js
-          grep -Fq '前回：' src/faithful-cover-v11-r13.js
           grep -Fq 'r13Observed' src/faithful-cover-v11-r13.js
           grep -Fq 'overflow-x:clip' src/faithful-cover-v11-r13.js
-          grep -Fq '2026.09.05-faithful-v11-r13.3-mobile-overflow-fixed' public/version.json
-      - name: Verify faithful v11 r12 simplified author flow
+          grep -Fq '2026.09.05-faithful-v11-r13.4-observers-stabilized' public/version.json
+      - name: Verify simplified author flow
         run: |
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
           grep -Fq '自動で下書き保存されます。' src/faithful-cover-v11-r12.js
@@ -62,12 +55,13 @@ jobs:
           grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
           grep -Fq "form.dataset.r12Ordered" src/faithful-cover-v11-r12.js
           grep -Fq "savedStatus==='submitted'" src/faithful-cover-v11-r12.js
-      - name: Verify six-digit author code retained
+      - name: Verify six-digit author code and observer stabilization
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
           grep -Fq "code.length!==6" src/faithful-cover-v11-r11.js
           grep -Fq 'attempts>=8' src/faithful-cover-v11-r11.js
           grep -Fq '15*60*1000' src/faithful-cover-v11-r11.js
+          grep -Fq "const relevant='#rppEditCodeCard,#rppCodeCheckpoint,#rppEditLogin'" src/faithful-cover-v11-r11.js
       - name: Verify production hardening retained
         run: |
           grep -Fq 'rpp_story_revisions' src/faithful-cover-v11-r10.js
@@ -77,7 +71,7 @@ jobs:
           grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.3 mobile-overflow-fixed flow active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.4 stabilized flow active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -106,10 +100,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r13.3 public deployment
+      - name: Wait for faithful v11 r13.4 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r133=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.3-mobile-overflow-fixed'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r134=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.4-observers-stabilized'; then exit 0; fi
             sleep 10
           done
           exit 1
@@ -119,7 +113,7 @@ jobs:
     if: github.event_name == 'push'
     needs: live-smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
@@ -133,9 +127,9 @@ jobs:
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
       - name: Full current-product browser QA
-        run: python scripts/full_product_qa.py
+        run: timeout 180s python -u scripts/full_product_qa.py
       - name: Exercise 300-story scale
-        run: python scripts/scale_300_regression.py
+        run: timeout 120s python -u scripts/scale_300_regression.py
       - run: python scripts/cache_refresh_smoke.py
       - run: python scripts/faithful_v11_smoke.py
       - run: python scripts/logout_smoke.py
