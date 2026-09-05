@@ -23,19 +23,24 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r14.js
           node --check src/faithful-cover-v11-r13.js
           node --check src/faithful-cover-v11-r12.js
           node --check src/faithful-cover-v11-r11.js
           node --check src/faithful-cover-v11-r10.js
+          node --check src/faithful-cover-v11-r5.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/scale_300_regression.py
-      - name: Verify public direct contents and DOM cleanup
+      - name: Verify viewer consent and public cleanup
         run: |
-          grep -Fq "import app from './faithful-cover-v11-r12.js'" src/faithful-cover-v11-r13.js
+          grep -Fq "import app from './faithful-cover-v11-r13.js'" src/faithful-cover-v11-r14.js
+          grep -Fq '閲覧にあたっての確認事項' src/faithful-cover-v11-r14.js
+          grep -Fq '本企画参加者のみ' src/faithful-cover-v11-r14.js
+          grep -Fq '外部共有' src/faithful-cover-v11-r14.js
+          grep -Fq 'rpp_viewer_consent_v1' src/faithful-cover-v11-r14.js
           grep -Fq "on('#cover .bridge'" src/faithful-cover-v11-r13.js
           grep -Fq "on('#cover .actions'" src/faithful-cover-v11-r13.js
           grep -Fq "on('#toc .top-actions .eyebrow'" src/faithful-cover-v11-r13.js
-          grep -Fq 'overflow-x:clip' src/faithful-cover-v11-r13.js
-          grep -Fq '2026.09.05-faithful-v11-r13.5-cover-dom-cleanup' public/version.json
+          grep -Fq '2026.09.05-faithful-v11-r14-viewer-consent' public/version.json
       - name: Verify simplified author flow
         run: |
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
@@ -47,12 +52,15 @@ jobs:
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
           grep -Fq "code.length!==6" src/faithful-cover-v11-r11.js
+          grep -Fq "code.length!==6" src/faithful-cover-v11-r5.js
+          grep -Fq 'この6桁コードを使用します' src/faithful-cover-v11-r5.js
           grep -Fq 'attempts>=8' src/faithful-cover-v11-r11.js
           grep -Fq 'rpp_story_revisions' src/faithful-cover-v11-r10.js
           grep -Fq '300-STORY SCALE REGRESSION PASSED' scripts/scale_300_regression.py
+          grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13.5 cover-dom-cleanup active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r14.js') process.exit(1); console.log('faithful-v11 r14 viewer-consent active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -81,10 +89,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r13.5 public deployment
+      - name: Wait for faithful v11 r14 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r135=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13.5-cover-dom-cleanup'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r14=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r14-viewer-consent'; then exit 0; fi
             sleep 10
           done
           exit 1
@@ -111,9 +119,12 @@ jobs:
         run: timeout 180s python -u scripts/full_product_qa.py
       - name: Exercise 300-story scale
         run: timeout 120s python -u scripts/scale_300_regression.py
-      - run: python scripts/cache_refresh_smoke.py
-      - run: python scripts/faithful_v11_smoke.py
-      - run: python scripts/logout_smoke.py
+      - name: Cache refresh smoke
+        run: python scripts/cache_refresh_smoke.py
+      - name: Faithful cover smoke
+        run: python scripts/faithful_v11_smoke.py
+      - name: Logout smoke
+        run: python scripts/logout_smoke.py
       - name: Upload visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
