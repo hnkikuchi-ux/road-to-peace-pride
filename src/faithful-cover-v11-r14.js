@@ -36,10 +36,11 @@ body.rpp-consent-open{overflow:hidden!important}
      const d=await r.json();
      if(!r.ok){if(msg)msg.textContent=d.error||'パスワードを確認してください。';return}
      await waitForConsent();
+     show('cover');
      const s=await fetch('/api/stories',{credentials:'same-origin',cache:'no-store'}),data=await s.json();
      if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
-     stories=data.stories||[];updateResume();show('cover');
-     try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}
+     stories=data.stories||[];updateResume();
+     try{renderToc()}catch(e){try{if(typeof window.renderToc==='function')window.renderToc()}catch(_){}}
    }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
  }
  function install(){
