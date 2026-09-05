@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r13.js
           node --check src/faithful-cover-v11-r12.js
           node --check src/faithful-cover-v11-r11.js
           node --check src/faithful-cover-v11-r10.js
@@ -35,9 +36,19 @@ jobs:
           node --check src/faithful-cover-v11-r3.js
           node --check src/faithful-cover-v11.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/ux_regression.py scripts/scale_300_regression.py
+      - name: Verify faithful v11 r13 direct contents
+        run: |
+          grep -Fq "import app from './faithful-cover-v11-r12.js'" src/faithful-cover-v11-r13.js
+          grep -Fq 'そして、11.15、11.18へ' src/faithful-cover-v11-r13.js
+          grep -Fq 'OUR VOW, OUR JOURNEY' src/faithful-cover-v11-r13.js
+          grep -Fq 'STORIES ↓' src/faithful-cover-v11-r13.js
+          grep -Fq '続きから読む' src/faithful-cover-v11-r13.js
+          grep -Fq 'WRITE YOUR STORY｜私の記録を綴る' src/faithful-cover-v11-r13.js
+          grep -Fq 'ログアウト' src/faithful-cover-v11-r13.js
+          grep -Fq '前回：' src/faithful-cover-v11-r13.js
+          grep -Fq '2026.09.05-faithful-v11-r13-direct-contents' public/version.json
       - name: Verify faithful v11 r12 simplified author flow
         run: |
-          grep -Fq "import app from './faithful-cover-v11-r11.js'" src/faithful-cover-v11-r12.js
           grep -Fq 'トップへ戻る' src/faithful-cover-v11-r12.js
           grep -Fq '自動で下書き保存されます。' src/faithful-cover-v11-r12.js
           grep -Fq '9.12までの挑戦・これからの誓い・思いをありのまま綴ってください。' src/faithful-cover-v11-r12.js
@@ -47,7 +58,6 @@ jobs:
           grep -Fq 'rppHonbu' src/faithful-cover-v11-r12.js
           grep -Fq 'rppShibu' src/faithful-cover-v11-r12.js
           grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
-          grep -Fq '2026.09.05-faithful-v11-r12-simplified-author-flow' public/version.json
       - name: Verify six-digit author code retained
         run: |
           grep -Fq 'function random6()' src/faithful-cover-v11-r11.js
@@ -62,7 +72,7 @@ jobs:
           grep -Fq '300-STORY SCALE REGRESSION PASSED' scripts/scale_300_regression.py
       - name: Verify Worker routing
         run: |
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r12.js') process.exit(1); console.log('faithful-v11 r12 simplified author flow active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r13.js') process.exit(1); console.log('faithful-v11 r13 direct contents active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -91,10 +101,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for faithful v11 r12 public deployment
+      - name: Wait for faithful v11 r13 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r12=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r12-simplified-author-flow'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r13=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.05-faithful-v11-r13-direct-contents'; then exit 0; fi
             sleep 10
           done
           exit 1
