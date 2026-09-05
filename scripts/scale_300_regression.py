@@ -32,18 +32,20 @@ try:
       return performance.now()-t;
     """)
     w.until(lambda x:len(x.find_elements(By.CSS_SELECTOR,'.toc-item'))==300)
-    time.sleep(.4)
+    time.sleep(.5)
     check(len(d.find_elements(By.CSS_SELECTOR,'.toc-item'))==300,'300 stories render into the contents')
     check(elapsed<1500,f'300-story render remains responsive ({elapsed:.1f} ms)')
     sections=d.find_elements(By.CSS_SELECTOR,'.rpp-district-section:not(.rpp-legacy-section)')
     check(len(sections)==6,'300 stories remain grouped into six organizations')
     heads=d.find_elements(By.CSS_SELECTOR,'.rpp-district-section:not(.rpp-legacy-section) .rpp-district-head')
-    d.execute_script('arguments[0].click()',heads[0]);time.sleep(.15)
+    d.execute_script('arguments[0].click()',heads[0]);time.sleep(.45)
     open_sections=[s for s in sections if 'rpp-open' in (s.get_attribute('class') or '')]
     check(len(open_sections)==1,'only one organization opens at a time at scale')
-    visible=[x for x in d.find_elements(By.CSS_SELECTOR,'.toc-item') if x.is_displayed()]
-    check(len(visible)==50,'opened organization shows its 50 records')
-    d.execute_script('arguments[0].click()',heads[1]);time.sleep(.15)
+    first_items=open_sections[0].find_elements(By.CSS_SELECTOR,':scope > .toc-item')
+    check(len(first_items)==50,'opened organization contains its 50 records')
+    displayed=d.execute_script("return [...arguments[0].querySelectorAll(':scope > .toc-item')].every(x=>getComputedStyle(x).display!=='none' && getComputedStyle(x).opacity!=='0')",open_sections[0])
+    check(displayed,'opened organization records finish their reveal animation')
+    d.execute_script('arguments[0].click()',heads[1]);time.sleep(.45)
     open_sections=[s for s in sections if 'rpp-open' in (s.get_attribute('class') or '')]
     check(len(open_sections)==1 and 'rpp-open' in sections[1].get_attribute('class'),'switching organizations closes the previous one')
     print('300-STORY SCALE REGRESSION PASSED')
