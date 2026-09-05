@@ -36,13 +36,15 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     cover.querySelectorAll('.eyebrow').forEach(el=>el.remove());
     const resume=document.getElementById('resumeNote');if(resume)resume.remove();
   };
+  const tocManaged=()=>document.getElementById('tocList')?.dataset.r14Managed==='1';
   const sectionCount=()=>document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length;
-  const renderContents=()=>{try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}};
+  const renderContents=()=>{if(tocManaged())return;try{if(typeof window.renderToc==='function')window.renderToc()}catch(e){}};
   const ensureContents=()=>{
+    if(tocManaged())return;
     const epoch=++renderEpoch;
     const delays=[0,180,450,900,1600,2600,4200,6500];
     delays.forEach(ms=>setTimeout(()=>{
-      if(epoch!==renderEpoch)return;
+      if(epoch!==renderEpoch||tocManaged())return;
       const cover=document.getElementById('cover'),toc=document.getElementById('toc');
       if(!cover||!toc||cover.classList.contains('hidden'))return;
       toc.classList.remove('hidden');
@@ -55,7 +57,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     pruneCover();
     document.body.classList.add('rpp-cover-direct');
     const open=!cover.classList.contains('hidden');
-    if(open){toc.classList.remove('hidden');if(sectionCount()<6)ensureContents();}
+    if(open){toc.classList.remove('hidden');if(!tocManaged()&&sectionCount()<6)ensureContents();}
     else renderEpoch++;
     return true;
   };
