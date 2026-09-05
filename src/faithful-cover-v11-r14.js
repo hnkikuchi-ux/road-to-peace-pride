@@ -34,12 +34,18 @@ body.rpp-consent-open{overflow:hidden!important}
    if(String(s&&s.id||'').startsWith('sample-'))return GROUPS[i%GROUPS.length];
    return '未分類';
  }
+ function makeTocItem(s,i){
+   const d=document.createElement('div');d.className='toc-item';
+   const b=document.createElement('button'),left=document.createElement('div'),t=document.createElement('div'),n=document.createElement('div'),arrow=document.createElement('div');
+   t.className='toc-title';n.className='toc-name';t.textContent=s.title||'無題';n.textContent=s.name||'';arrow.textContent='›';left.append(t,n);b.append(left,arrow);
+   b.addEventListener('click',()=>{try{openStory(i)}catch(e){try{current=i;renderStory();show('reader')}catch(_){}}});d.append(b);return d;
+ }
  function ensureDistrictSections(){
    const list=document.getElementById('tocList');if(!list)return false;
    if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return true;
-   const flat=[...list.children].filter(x=>x.classList&&x.classList.contains('toc-item'));
-   if(!flat.length)return false;
    let ss=[];try{ss=stories||[]}catch(e){return false}
+   let flat=[...list.children].filter(x=>x.classList&&x.classList.contains('toc-item'));
+   if(!flat.length&&ss.length){list.textContent='';flat=ss.map((s,i)=>{const item=makeTocItem(s,i);list.appendChild(item);return item})}
    document.body.classList.add('rpp-district-book');
    const buckets=new Map(GROUPS.map(g=>[g,[]]));buckets.set('未分類',[]);
    flat.forEach((item,i)=>{const s=ss[i]||{},g=groupOf(s,i);item.dataset.rppGroup=g;item.dataset.rppSearch=((s.title||'')+' '+(s.name||'')).toLowerCase();buckets.get(g).push(item)});
@@ -54,7 +60,7 @@ body.rpp-consent-open{overflow:hidden!important}
    });
    return document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length===6;
  }
- function settleContents(){[20,80,180,360,700,1300,2200].forEach(ms=>setTimeout(ensureDistrictSections,ms))}
+ function settleContents(){[0,40,120,260,520,950,1600].forEach(ms=>setTimeout(ensureDistrictSections,ms))}
  async function openViewer(){
    if(busy)return;busy=true;
    const unlock=document.getElementById('unlock'),msg=document.getElementById('msg'),pw=document.getElementById('pw');
@@ -68,7 +74,7 @@ body.rpp-consent-open{overflow:hidden!important}
      const s=await fetch('/api/stories',{credentials:'same-origin',cache:'no-store'}),data=await s.json();
      if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
      stories=data.stories||[];updateResume();
-     try{renderToc()}catch(e){try{if(typeof window.renderToc==='function')window.renderToc()}catch(_){}}
+     try{renderToc()}catch(e){}
      settleContents();
    }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
  }
