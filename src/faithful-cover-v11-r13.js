@@ -3,6 +3,12 @@ import app from './faithful-cover-v11-r12.js';
 const R13=`
 <style>
 /* r13 — cover flows directly into contents */
+html{max-width:100%;overflow-x:clip!important}
+body.rpp-cover-direct{max-width:100%;overflow-x:clip!important}
+body.rpp-cover-direct .wrap,
+body.rpp-cover-direct #cover,
+body.rpp-cover-direct #toc,
+body.rpp-cover-direct #reader{max-width:100%;overflow-x:clip}
 body.rpp-cover-direct #cover{
   min-height:auto!important;
   padding-bottom:clamp(22px,5vw,38px)!important;
