@@ -44,7 +44,14 @@ try:
     check(d.execute_script("return localStorage.getItem('rpp_viewer_consent_v1')==='1'"),'consent is remembered on this device')
     w.until(EC.visibility_of_element_located((By.ID,'cover')));w.until(EC.visibility_of_element_located((By.ID,'toc')));time.sleep(.5)
     cover=d.find_element(By.ID,'cover');toc=d.find_element(By.ID,'toc');ctext=visible_text(d,'#cover *')
-    for phrase in FORBIDDEN: check(phrase not in ctext,f'cover does not show: {phrase}')
+    for phrase in FORBIDDEN:
+        if phrase in ctext:
+            hits=[]
+            for el in d.find_elements(By.CSS_SELECTOR,'#cover *'):
+                if el.is_displayed() and phrase in el.text:
+                    hits.append({'tag':el.tag_name,'id':el.get_attribute('id'),'class':el.get_attribute('class'),'text':el.text[:300],'before':d.execute_script("return getComputedStyle(arguments[0],'::before').content",el),'after':d.execute_script("return getComputedStyle(arguments[0],'::after').content",el)})
+            print('DIAG FORBIDDEN',repr(phrase),hits,flush=True)
+        check(phrase not in ctext,f'cover does not show: {phrase}')
     check('9.12までの挑戦と誓いの記録' in cover.text,'cover keeps the main memorial subtitle')
     check('CONTENTS' in toc.text,'contents begins immediately after cover')
     check(not d.find_elements(By.CSS_SELECTOR,'#toc .top-actions .eyebrow'),'small CONTENTS label is removed')
