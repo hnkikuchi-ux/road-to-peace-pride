@@ -22,12 +22,6 @@
       "id": "9c223c1636874dbc912583c8704bea42"
     }
   ],
-  "send_email": [
-    {
-      "name": "EMAIL",
-      "remote": true
-    }
-  ],
   "secrets": {"required": ["SETUP_KEY"]},
   "observability": {"enabled": true}
 }
