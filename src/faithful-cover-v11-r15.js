@@ -98,11 +98,26 @@ const R15=`
 </script>`;
 
 function inject(response){return new HTMLRewriter().on('body',{element(el){el.append(R15,{html:true})}}).transform(response)}
+async function emailReady(env){
+  if(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL)return true;
+  try{
+    const rows=(await env.DB.prepare("SELECT key,value FROM rpp_settings WHERE key IN ('brevo_api_key_enc','otp_sender_email')").all()).results||[];
+    const m=Object.fromEntries(rows.map(r=>[r.key,String(r.value||'').trim()]));
+    return Boolean(m.brevo_api_key_enc&&m.otp_sender_email);
+  }catch{return false}
+}
 
 export default{
   async fetch(request,env,ctx){
-    const response=await app.fetch(request,env,ctx),url=new URL(request.url),type=response.headers.get('content-type')||'';
-    const path=url.pathname.replace(/\/$/,'');
+    const url=new URL(request.url),path=url.pathname.replace(/\/$/,'');
+    const response=await app.fetch(request,env,ctx),type=response.headers.get('content-type')||'';
+    if(path==='/api/health'&&request.method==='GET'&&response.ok){
+      try{
+        const data=await response.clone().json();data.emailConfigured=await emailReady(env);
+        const headers=new Headers(response.headers);headers.set('Content-Type','application/json; charset=utf-8');headers.set('Cache-Control','no-store');
+        return new Response(JSON.stringify(data),{status:response.status,headers});
+      }catch{}
+    }
     if(type.includes('text/html')&&['/author','/author.html'].includes(path))return inject(response);
     return response;
   }
