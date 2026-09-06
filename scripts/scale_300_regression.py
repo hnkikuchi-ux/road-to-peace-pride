@@ -53,15 +53,18 @@ try:
     check(len(sections)==6,'300 stories remain grouped into six organizations')
     names=[x.text for x in d.find_elements(By.CSS_SELECTOR,'.rpp-district-section:not(.rpp-legacy-section) .rpp-district-name')]
     check(names==GROUPS,'organization order remains correct at scale')
-    counts=[len(s.find_elements(By.CSS_SELECTOR,':scope > .toc-item')) for s in sections]
+    # Count descendants rather than direct children: the publication layer may wrap
+    # items for reveal/animation without changing their organization membership.
+    counts=[len(s.find_elements(By.CSS_SELECTOR,'.toc-item')) for s in sections]
+    print('  distribution:',counts,flush=True)
     check(counts==[50]*6,'300 stories distribute evenly across the six organizations')
     heads=d.find_elements(By.CSS_SELECTOR,'.rpp-district-section:not(.rpp-legacy-section) .rpp-district-head')
     d.execute_script('arguments[0].click()',heads[0]);time.sleep(.45)
     open_sections=[s for s in sections if 'rpp-open' in (s.get_attribute('class') or '')]
     check(len(open_sections)==1,'only one organization opens at a time at scale')
-    first_items=open_sections[0].find_elements(By.CSS_SELECTOR,':scope > .toc-item')
+    first_items=open_sections[0].find_elements(By.CSS_SELECTOR,'.toc-item')
     check(len(first_items)==50,'opened organization contains its 50 records')
-    displayed=d.execute_script("return [...arguments[0].querySelectorAll(':scope > .toc-item')].every(x=>getComputedStyle(x).display!=='none' && getComputedStyle(x).opacity!=='0')",open_sections[0])
+    displayed=d.execute_script("return [...arguments[0].querySelectorAll('.toc-item')].every(x=>getComputedStyle(x).display!=='none' && getComputedStyle(x).opacity!=='0')",open_sections[0])
     check(displayed,'opened organization records finish their reveal animation')
     d.execute_script('arguments[0].click()',heads[1]);time.sleep(.45)
     open_sections=[s for s in sections if 'rpp-open' in (s.get_attribute('class') or '')]
