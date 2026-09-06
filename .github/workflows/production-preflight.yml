@@ -1,0 +1,35 @@
+name: Production launch preflight
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check live production prerequisites
+        run: |
+          set -euo pipefail
+          BASE='https://road-to-peace-pride.hn-kikuchi.workers.dev'
+          curl -fsS "$BASE/api/health?launch=${GITHUB_RUN_ID}" -o health.json
+          python3 - <<'PY'
+          import json
+          x=json.load(open('health.json'))
+          checks={
+            'health': x.get('ok') is True,
+            'photo storage': x.get('storageConfigured') is True,
+            'email OTP configured': x.get('emailConfigured') is True,
+            'viewer password capability': x.get('viewerPasswordConfigured') is True,
+            'book open': x.get('bookOpen') is True,
+          }
+          for k,v in checks.items():
+              print(('PASS ' if v else 'FAIL ')+k)
+          if not all(checks.values()):
+              print(json.dumps(x,ensure_ascii=False,indent=2))
+              raise SystemExit(1)
+          print('PRODUCTION PREFLIGHT PASSED')
+          PY
