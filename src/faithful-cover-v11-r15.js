@@ -97,14 +97,67 @@ const R15=`
 })();
 </script>`;
 
+const enc=new TextEncoder();
+function json(data,status=200,headers={}){return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}})}
+function cleanEmail(v){return String(v||'').trim().toLowerCase()}
+function random6(){const b=new Uint32Array(1);crypto.getRandomValues(b);return String(b[0]%1000000).padStart(6,'0')}
+async function sha256(v){const b=await crypto.subtle.digest('SHA-256',enc.encode(String(v)));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
 function inject(response){return new HTMLRewriter().on('body',{element(el){el.append(R15,{html:true})}}).transform(response)}
+async function nativeSender(env){
+  let email=cleanEmail(env.EMAIL_FROM||env.OTP_SENDER_EMAIL||''),name=String(env.OTP_SENDER_NAME||'ROAD TO PEACE PRIDE').trim();
+  try{
+    const rows=(await env.DB.prepare("SELECT key,value FROM rpp_settings WHERE key IN ('otp_sender_email','otp_sender_name')").all()).results||[];
+    const m=Object.fromEntries(rows.map(r=>[r.key,String(r.value||'').trim()]));
+    if(!email)email=cleanEmail(m.otp_sender_email||'');
+    if(!env.OTP_SENDER_NAME&&m.otp_sender_name)name=m.otp_sender_name;
+  }catch{}
+  return {email,name:name||'ROAD TO PEACE PRIDE'};
+}
 async function emailReady(env){
+  const sender=await nativeSender(env);
+  if(env.EMAIL&&sender.email)return true;
   if(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL)return true;
   try{
     const rows=(await env.DB.prepare("SELECT key,value FROM rpp_settings WHERE key IN ('brevo_api_key_enc','otp_sender_email')").all()).results||[];
     const m=Object.fromEntries(rows.map(r=>[r.key,String(r.value||'').trim()]));
     return Boolean(m.brevo_api_key_enc&&m.otp_sender_email);
   }catch{return false}
+}
+async function deadlinePassed(env){
+  try{const row=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='submission_deadline'").first();const v=String(row?.value||'').trim();if(!v)return false;const t=Date.parse(v);return Number.isFinite(t)&&Date.now()>t}catch{return false}
+}
+async function sendNativeEmail(env,to,code){
+  if(!env.EMAIL)return false;
+  const sender=await nativeSender(env);if(!sender.email)return false;
+  const subject='【ROAD TO PEACE PRIDE】認証コード';
+  const text=`ROAD TO PEACE PRIDE 原稿投稿画面の認証コードは ${code} です。\nこのコードは10分間有効です。`;
+  const html=`<div style="font-family:sans-serif;line-height:1.8"><p>原稿投稿画面の認証コードです。</p><p style="font-size:30px;letter-spacing:.18em;font-weight:700">${code}</p><p>このコードは10分間有効です。</p><p style="color:#777;font-size:12px">ROAD TO PEACE PRIDE / MEMORIAL COLLECTION 2026</p></div>`;
+  await env.EMAIL.send({to,from:{email:sender.email,name:sender.name},subject,text,html});
+  return true;
+}
+async function nativeOtpRequest(request,env){
+  if(!env.EMAIL)return null;
+  const sender=await nativeSender(env);if(!sender.email)return null;
+  if(await deadlinePassed(env))return json({error:'現在は原稿受付期間を終了しています。'},403);
+  const b=await request.json().catch(()=>({})),email=cleanEmail(b.email);
+  if(!/^\S+@\S+\.\S+$/.test(email))return json({error:'メールアドレスを確認してください。'},400);
+  await env.DB.exec('CREATE TABLE IF NOT EXISTS rpp_otps(email TEXT PRIMARY KEY,code_hash TEXT NOT NULL,expires_at TEXT NOT NULL,sent_at TEXT NOT NULL,attempts INTEGER NOT NULL DEFAULT 0)');
+  const old=await env.DB.prepare('SELECT sent_at FROM rpp_otps WHERE email=?').bind(email).first();
+  if(old?.sent_at&&Date.now()-Date.parse(old.sent_at)<120000)return json({error:'再送は2分ほど待ってから行ってください。'},429);
+  const code=random6(),pepper=String(env.OTP_PEPPER||env.SETUP_KEY||'');
+  if(!pepper)return json({error:'OTP保護キーが未設定です。'},503);
+  const hash=await sha256(`${email}:${code}:${pepper}`),expires=new Date(Date.now()+10*60*1000).toISOString(),sent=new Date().toISOString();
+  await env.DB.prepare('INSERT INTO rpp_otps(email,code_hash,expires_at,sent_at,attempts) VALUES(?,?,?,?,0) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,sent_at=excluded.sent_at,attempts=0').bind(email,hash,expires,sent).run();
+  try{await sendNativeEmail(env,email,code)}catch(e){console.error('Cloudflare Email Service send failed',e);return json({error:'認証メールを送信できませんでした。送信設定を確認してください。'},502)}
+  return json({ok:true,preview:false,emailService:'cloudflare'});
+}
+async function nativeEmailSettings(request,env,path){
+  if(!env.EMAIL)return null;
+  if(path==='/api/admin/email-settings'&&request.method==='GET'){
+    const sender=await nativeSender(env);if(!sender.email)return null;
+    return json({configured:true,source:'cloudflare-email-service',senderEmail:sender.email,senderName:sender.name});
+  }
+  return null;
 }
 async function ensureLaunchSettings(env){
   try{
@@ -127,10 +180,14 @@ export default{
   async fetch(request,env,ctx){
     await ensureLaunchSettings(env);
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'');
+    if(path==='/api/auth/request'&&request.method==='POST'){
+      const native=await nativeOtpRequest(request,env);if(native)return native;
+    }
+    const nativeSettings=await nativeEmailSettings(request,env,path);if(nativeSettings)return nativeSettings;
     const response=await app.fetch(request,env,ctx),type=response.headers.get('content-type')||'';
     if(path==='/api/health'&&request.method==='GET'&&response.ok){
       try{
-        const data=await response.clone().json();data.emailConfigured=await emailReady(env);
+        const data=await response.clone().json();data.emailConfigured=await emailReady(env);data.nativeEmailService=Boolean(env.EMAIL);data.nativeEmailSender=(await nativeSender(env)).email||'';
         const headers=new Headers(response.headers);headers.set('Content-Type','application/json; charset=utf-8');headers.set('Cache-Control','no-store');
         return new Response(JSON.stringify(data),{status:response.status,headers});
       }catch{}
