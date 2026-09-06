@@ -15,9 +15,11 @@ def check(ok,label):
 o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--window-size=390,844')
 d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
 try:
-    d.get(BASE+'/')
+    # Use the refresh route so the regression always exercises the current Worker HTML,
+    # not a previously cached root document.
+    d.get(BASE+'/refresh?scale='+str(int(time.time())))
     # Current product flow is password -> consent -> cover with CONTENTS directly below.
-    # Consent was already tested in full_product_qa, so remember it here and isolate scale.
+    # Consent itself is covered by full_product_qa, so remember it here and isolate scale.
     d.execute_script("localStorage.setItem('rpp_viewer_consent_v1','1')")
     d.execute_script("""
       const groups=['中区','南総区','港南総区','磯子総区','金沢総区','栄区'];
@@ -39,6 +41,7 @@ try:
     w.until(EC.visibility_of_element_located((By.ID,'pw'))).send_keys('demo')
     start=time.perf_counter()
     d.execute_script("arguments[0].click()",w.until(EC.element_to_be_clickable((By.ID,'unlock'))))
+    w.until(EC.visibility_of_element_located((By.ID,'cover')))
     w.until(EC.visibility_of_element_located((By.ID,'toc')))
     w.until(lambda x:len(x.find_elements(By.CSS_SELECTOR,'.rpp-district-section:not(.rpp-legacy-section)'))==6)
     w.until(lambda x:len(x.find_elements(By.CSS_SELECTOR,'.toc-item'))==300)
