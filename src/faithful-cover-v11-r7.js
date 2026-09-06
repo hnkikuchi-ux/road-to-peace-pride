@@ -90,9 +90,13 @@ body.rpp-district-book .story-label{letter-spacing:.24em}
     const dt=new Date(y,mo-1,d);if(dt.getFullYear()!==y||dt.getMonth()!==mo-1||dt.getDate()!==d)return '';
     return y+'-'+pad2(mo)+'-'+pad2(d);
   };
+  const matchGroup=(raw)=>{
+    const v=String(raw||'').trim();
+    const exact=GROUPS.find(g=>v===g);if(exact)return exact;
+    return [...GROUPS].sort((a,b)=>b.length-a.length).find(g=>v.includes(g))||'';
+  };
   const resolveGroup=(s,i)=>{
-    const raw=String((s&&s.org)||'');
-    for(const g of GROUPS)if(raw===g||raw.includes(g))return g;
+    const found=matchGroup(s&&s.org);if(found)return found;
     if(String(s&&s.id||'').startsWith('sample-'))return GROUPS[i%GROUPS.length];
     return '未分類';
   };
@@ -112,8 +116,7 @@ body.rpp-district-book .story-label{letter-spacing:.24em}
       const note=document.createElement('div');note.className='rpp-meta-note';note.innerHTML='皆さまの記録を、<b>総区ごとの章に分けて掲載するため</b>に使用します。掲載したい総区を1つ選択してください。';
       sel.insertAdjacentElement('afterend',note);
       const sync=()=>{
-        const raw=String(org.value||'');const found=GROUPS.find(g=>raw===g||raw.includes(g))||'';
-        if(found)sel.value=found;
+        const found=matchGroup(org.value);if(found)sel.value=found;
       };
       sel.addEventListener('change',()=>{org.value=sel.value;org.dispatchEvent(new Event('input',{bubbles:true}));org.dispatchEvent(new Event('change',{bubbles:true}))});
       sel.addEventListener('focus',sync);sync();setTimeout(sync,80);setTimeout(sync,350);
@@ -193,7 +196,7 @@ body.rpp-district-book .story-label{letter-spacing:.24em}
 
   ready(()=>{
     authorMeta();ensureIntro();
-    const editor=document.getElementById('editor');if(editor)new MutationObserver(()=>{setTimeout(authorMeta,30);setTimeout(()=>{const d=document.getElementById('recordDateDisplay')||document.getElementById('rppRecordDateDisplay');const n=document.getElementById('record_date');if(d&&n&&n.value)d.value=jDate(n.value);const s=document.getElementById('rppOrgSelect'),o=document.getElementById('org');if(s&&o){const f=GROUPS.find(g=>String(o.value||'').includes(g));if(f)s.value=f}},120)}).observe(editor,{attributes:true,attributeFilter:['class']});
+    const editor=document.getElementById('editor');if(editor)new MutationObserver(()=>{setTimeout(authorMeta,30);setTimeout(()=>{const d=document.getElementById('recordDateDisplay')||document.getElementById('rppRecordDateDisplay');const n=document.getElementById('record_date');if(d&&n&&n.value)d.value=jDate(n.value);const s=document.getElementById('rppOrgSelect'),o=document.getElementById('org');if(s&&o){const f=matchGroup(o.value);if(f)s.value=f}},120)}).observe(editor,{attributes:true,attributeFilter:['class']});
     const list=document.getElementById('tocList');if(list){new MutationObserver(()=>{if(!organizing)setTimeout(organizeToc,0)}).observe(list,{childList:true});setTimeout(organizeToc,120)}
     const tocBtn=document.getElementById('tocBtn');if(tocBtn)tocBtn.addEventListener('click',()=>{setTimeout(ensureIntro,0);setTimeout(organizeToc,20);setTimeout(organizeToc,180)});
     const back=document.getElementById('backToc');if(back)back.addEventListener('click',()=>{setTimeout(organizeToc,20);setTimeout(organizeToc,180)});
