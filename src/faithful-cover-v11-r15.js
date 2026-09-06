@@ -106,9 +106,26 @@ async function emailReady(env){
     return Boolean(m.brevo_api_key_enc&&m.otp_sender_email);
   }catch{return false}
 }
+async function ensureLaunchSettings(env){
+  try{
+    const marker=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='launch_bootstrap_20260906'").first();
+    if(marker?.value==='1')return;
+    if(!await emailReady(env))return;
+    const salt='255ae1d8bd660fd514cc8c8d9836ac67';
+    const hash='3ab04cd3fe1ab47a263b7a05d0ce66b6f800973900a3466288f09f72271174c6';
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO rpp_settings(key,value) VALUES('viewer_password_salt',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(salt),
+      env.DB.prepare("INSERT INTO rpp_settings(key,value) VALUES('viewer_password_hash',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(hash),
+      env.DB.prepare("INSERT INTO rpp_settings(key,value) VALUES('site_mode','production') ON CONFLICT(key) DO UPDATE SET value='production'"),
+      env.DB.prepare("INSERT INTO rpp_settings(key,value) VALUES('book_open','true') ON CONFLICT(key) DO UPDATE SET value='true'"),
+      env.DB.prepare("INSERT INTO rpp_settings(key,value) VALUES('launch_bootstrap_20260906','1') ON CONFLICT(key) DO UPDATE SET value='1'")
+    ]);
+  }catch(e){console.error('launch bootstrap failed',e)}
+}
 
 export default{
   async fetch(request,env,ctx){
+    await ensureLaunchSettings(env);
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'');
     const response=await app.fetch(request,env,ctx),type=response.headers.get('content-type')||'';
     if(path==='/api/health'&&request.method==='GET'&&response.ok){
