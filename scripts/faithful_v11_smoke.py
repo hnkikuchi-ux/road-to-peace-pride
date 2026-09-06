@@ -15,21 +15,20 @@ d=webdriver.Chrome(options=opt)
 try:
   for w,h in SIZES:
     d.set_window_size(w,h)
-    d.get(BASE+'/refresh?v11r5='+str(int(time.time()*1000)))
+    d.get(BASE+'/refresh?faithful='+str(int(time.time()*1000)))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
+    # Assert stable visual/product invariants rather than an obsolete internal
+    # revision number. The cover may continue to evolve while these guarantees
+    # must remain true for the public mobile experience.
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-v11-layout')=='reference-frame-stars')
-    # The r4 refinement marks several data attributes from a deferred enhancer.
-    # Wait for the complete marker set so CI never reads the card mid-enhancement.
     WebDriverWait(d,15).until(lambda x:
-      card.get_attribute('data-v11-lock')=='artdeco-compact-r4' and
       card.get_attribute('data-v11-frame')=='uniform-double-frame' and
-      card.get_attribute('data-v11-revision')=='r4' and
       card.get_attribute('data-v11-button')=='refined-gold-r2' and
       card.get_attribute('data-v11-stars')=='animated'
     )
+    assert card.get_attribute('data-v11-layout')=='reference-frame-stars'
     assert card.get_attribute('data-v11-frame')=='uniform-double-frame'
     assert card.get_attribute('data-v11-button')=='refined-gold-r2'
-    assert card.get_attribute('data-v11-revision')=='r4'
     assert card.get_attribute('data-v11-stars')=='animated'
     cr=card.rect
     assert abs(cr['width']/cr['height']-9/16)<.015,(w,cr)
@@ -60,7 +59,7 @@ try:
     assert d.execute_script("return parseInt(getComputedStyle(arguments[0]).fontWeight)",unlock_el)>=800,(w,'unlock text not bold')
     assert float(d.execute_script("return parseFloat(getComputedStyle(arguments[0]).top)",title_rule))>0,(w,'title divider missing')
 
-    # Compact lock: visibly smaller than r3 and fully inside the password field.
+    # Compact lock stays fully inside the password field.
     assert 17<=lock['width']<=23,(w,lock)
     assert 24<=lock['height']<=33,(w,lock)
     assert lock['x']>=pw['x']+7,(w,pw,lock)
@@ -68,7 +67,7 @@ try:
     assert lock['y']>=pw['y']+3,(w,pw,lock)
     assert lock['y']+lock['height']<=pw['y']+pw['height']-3,(w,pw,lock)
 
-    # Inner frame inset must be equal on the vertical and horizontal axes.
+    # Inner double-frame inset stays equal on vertical and horizontal axes.
     inner_top=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').top)",panel_el))
     inner_left=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').left)",panel_el))
     assert abs(inner_top-inner_left)<=.6,(w,inner_top,inner_left)
@@ -82,8 +81,8 @@ try:
     assert panel['y']+panel['height']+7<=author['y'],(w,panel,author)
     assert author['y']+author['height']<=outer['y']+outer['height']-6,(w,outer,author)
     assert d.execute_script('return document.documentElement.scrollWidth <= window.innerWidth + 1')
-    d.save_screenshot(str(out/f'63-faithful-v11-r4-{w}.png'))
-    print(f'  ✓ {w}x{h} v11 r4 compact lock + uniform double frame + stars',flush=True)
-  print('FAITHFUL V11 R4 COMPACT LOCK + UNIFORM FRAME + BUTTON + SHOOTING STARS OK',flush=True)
+    d.save_screenshot(str(out/f'63-faithful-current-{w}.png'))
+    print(f'  ✓ {w}x{h} faithful gate: 9:16 + double frame + compact lock + stars',flush=True)
+  print('FAITHFUL CURRENT GATE VISUAL SMOKE OK',flush=True)
 finally:
   d.quit()
