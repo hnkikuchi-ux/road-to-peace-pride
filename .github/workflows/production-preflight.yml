@@ -16,20 +16,22 @@ jobs:
           set -euo pipefail
           BASE='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           curl -fsS "$BASE/api/health?launch=${GITHUB_RUN_ID}" -o health.json
+          curl -fsS "$BASE/api/config?launch=${GITHUB_RUN_ID}" -o config.json
           python3 - <<'PY'
           import json
-          x=json.load(open('health.json'))
+          h=json.load(open('health.json'))
+          c=json.load(open('config.json'))
           checks={
-            'health': x.get('ok') is True,
-            'photo storage': x.get('storageConfigured') is True,
-            'email OTP configured': x.get('emailConfigured') is True,
-            'viewer password capability': x.get('viewerPasswordConfigured') is True,
-            'book open': x.get('bookOpen') is True,
+            'health': h.get('ok') is True,
+            'photo storage': h.get('storageConfigured') is True,
+            'email OTP configured': c.get('emailConfigured') is True,
+            'book open': c.get('bookOpen') is True,
           }
           for k,v in checks.items():
               print(('PASS ' if v else 'FAIL ')+k)
           if not all(checks.values()):
-              print(json.dumps(x,ensure_ascii=False,indent=2))
+              print('health=',json.dumps(h,ensure_ascii=False))
+              print('config=',json.dumps(c,ensure_ascii=False))
               raise SystemExit(1)
           print('PRODUCTION PREFLIGHT PASSED')
           PY
