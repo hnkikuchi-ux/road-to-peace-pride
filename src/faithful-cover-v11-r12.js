@@ -65,7 +65,7 @@ body.rpp-author-r12 .r12-preview-photo{display:block;width:min(100%,520px);max-h
       let n=bodyField.querySelector('.r12-writing-note');if(!n){n=document.createElement('div');n.className='r12-writing-note';n.textContent='9.12までの挑戦・これからの誓い・思いをありのまま綴ってください。';bodyField.querySelector('textarea')?.insertAdjacentElement('beforebegin',n)}
       const ta=document.getElementById('body');if(ta)ta.placeholder='本文はこちらに入力してください。';
    }
-   if(photoField){const l=photoField.querySelector('label');if(l)l.textContent='写真';let n=photoField.querySelector('.r12-photo-note');if(!n){n=document.createElement('div');n.className='r12-photo-note';n.innerHTML='<b>写真は任意です。</b><br>写真なしでもそのまま提出できます。';photoField.querySelector('#photo')?.insertAdjacentElement('afterend',n)}const old=document.getElementById('photoOptionalNote');if(old)old.style.display='none'}
+   if(photoField){const l=photoField.querySelector('label');if(l)l.textContent='写真';let n=photoField.querySelector('.r12-photo-note');if(!n){n=document.createElement('div');n.className='r12-photo-note';n.innerHTML='<b>思い出の写真を1枚添付できます。</b><br>9.12までの歩みや、心に残る一枚をぜひお寄せください。写真の添付は任意です。';photoField.querySelector('#photo')?.insertAdjacentElement('afterend',n)}const old=document.getElementById('photoOptionalNote');if(old)old.style.display='none'}
 
    if(!form.dataset.r12Ordered&&nameField&&orgField&&titleField&&bodyField&&photoField){
      [nameField,orgField,titleField,bodyField,photoField].forEach(x=>form.appendChild(x));form.dataset.r12Ordered='1';
