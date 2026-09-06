@@ -30,8 +30,13 @@ body.rpp-consent-open{overflow:hidden!important}
  function hide(){const el=box();if(el)el.classList.add('hidden');document.body.classList.remove('rpp-consent-open')}
  function waitForConsent(){if(accepted())return Promise.resolve();showNow();return new Promise(resolve=>{resolveConsent=resolve})}
  function groupOf(s,i){
-   const raw=String((s&&((s.soku||s.org)))||'');
-   for(const g of GROUPS)if(raw===g||raw.includes(g))return g;
+   const raw=String((s&&((s.soku||s.org)))||'').trim();
+   // Exact canonical organization labels always win. This prevents 港南総区
+   // from being swallowed by the shorter overlapping label 南総区.
+   for(const g of GROUPS)if(raw===g)return g;
+   // For legacy/free-form values containing an organization label, check the
+   // longest labels first so overlapping names are classified correctly.
+   for(const g of [...GROUPS].sort((a,b)=>b.length-a.length))if(raw.includes(g))return g;
    if(String(s&&s.id||'').startsWith('sample-'))return GROUPS[i%GROUPS.length];
    return '未分類';
  }
