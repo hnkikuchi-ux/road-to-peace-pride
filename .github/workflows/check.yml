@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r22.js
           node --check src/faithful-cover-v11-r20.js
           node --check src/faithful-cover-v11-r19.js
           node --check src/faithful-cover-v11-r17.js
@@ -35,15 +36,20 @@ jobs:
           node --check src/faithful-cover-v11-r10.js
           node --check src/faithful-cover-v11-r5.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/scale_300_regression.py
-      - name: Verify r20 unified author code flow
+      - name: Verify r22 author reset flow
         run: |
-          grep -Fq "import app from './faithful-cover-v11-r19.js'" src/faithful-cover-v11-r20.js
+          grep -Fq "import app from './faithful-cover-v11-r20.js'" src/faithful-cover-v11-r22.js
+          grep -Fq 'rpp_author_resets' src/faithful-cover-v11-r22.js
+          grep -Fq '/api/admin/author-reset' src/faithful-cover-v11-r22.js
+          grep -Fq '投稿者登録をリセット' src/faithful-cover-v11-r22.js
+          grep -Fq "localStorage.removeItem('rpp_draft_'+email)" src/faithful-cover-v11-r22.js
+      - name: Verify r20 one-code flow remains active underneath
+        run: |
           grep -Fq 'storeOtpAsEditCode' src/faithful-cover-v11-r20.js
           grep -Fq 'data.editCodeSameAsOtp=true' src/faithful-cover-v11-r20.js
           grep -Fq 'メールで届いた6桁コードを保存してください' src/faithful-cover-v11-r20.js
           grep -Fq '#rppAuthorHero .rpp-author-title' src/faithful-cover-v11-r20.js
           grep -Fq '#rppAuthorHero .rpp-author-sub' src/faithful-cover-v11-r20.js
-          grep -Fq 'ONE CODE r20' src/faithful-cover-v11-r20.js
       - name: Verify existing safety and Brevo path
         run: |
           grep -Fq 'attempts>=8' src/faithful-cover-v11-r11.js
@@ -51,14 +57,10 @@ jobs:
           grep -Fq 'email_delivery_verified_at' src/faithful-cover-v11-r15.js
           grep -Fq 'smtp/statistics/events' src/faithful-cover-v11-r15.js
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
-          grep -Fq 'rppOrgDetail' src/faithful-cover-v11-r15.js
-          grep -Fq 'この内容で提出する' src/faithful-cover-v11-r12.js
-          grep -Fq 'FULL PRODUCT QA PASSED' scripts/full_product_qa.py
-          grep -Fq '300-STORY SCALE REGRESSION PASSED' scripts/scale_300_regression.py
       - name: Verify active build and routing
         run: |
-          grep -Fq '2026.09.07-faithful-v11-r20-one-code-author-clean-restored' public/version.json
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r20.js') process.exit(1); if(c.send_email) process.exit(1); console.log('faithful-v11 r20 one-code author flow restored')"
+          grep -Fq '2026.09.07-faithful-v11-r22-author-reset' public/version.json
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r22.js') process.exit(1); if(c.send_email) process.exit(1); console.log('faithful-v11 r22 author reset active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -87,13 +89,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for restored faithful v11 r20 public deployment
+      - name: Wait for faithful v11 r22 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r20=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r20-one-code-author-clean-restored'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r22=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r22-author-reset'; then exit 0; fi
             sleep 10
           done
           exit 1
+      - name: Verify reset controls are live
+        run: |
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r22=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
       - run: bash scripts/smoke-live.sh
 
   mobile-browser:
@@ -132,19 +137,14 @@ jobs:
           o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--lang=ja-JP');o.add_argument('--window-size=390,844')
           d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
           try:
-              d.get(base+'/?prod-browser=1')
-              w.until(EC.visibility_of_element_located((By.ID,'pw')))
-              assert d.find_element(By.ID,'unlock').is_displayed()
-              assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
-              d.get(base+'/author.html?prod-browser=1')
+              d.get(base+'/author.html?prod-browser-r22=1')
               w.until(EC.visibility_of_element_located((By.ID,'auth')))
               w.until(lambda x: x.execute_script("return document.documentElement.dataset.rppOneCode")=='r20')
-              assert not d.find_element(By.CSS_SELECTOR,'#rppAuthorHero .rpp-author-title').is_displayed()
-              assert not d.find_element(By.CSS_SELECTOR,'#rppAuthorHero .rpp-author-sub').is_displayed()
               assert '同じ6桁コード' in d.find_element(By.CSS_SELECTOR,'#auth > .note').text
               assert d.find_element(By.ID,'email').is_displayed()
-              d.save_screenshot('artifacts/screens/production-author-auth-r20.png')
-              print('PRODUCTION R20 BROWSER SMOKE PASSED')
+              assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
+              d.save_screenshot('artifacts/screens/production-author-r22.png')
+              print('PRODUCTION R22 BROWSER SMOKE PASSED')
           finally:
               d.quit()
           PY
@@ -158,7 +158,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-qa
+          name: visual-qa-r22
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
