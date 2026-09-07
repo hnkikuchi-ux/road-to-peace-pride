@@ -22,7 +22,7 @@ body.rpp-author-r5 #statusBadge.rpp-submitted-badge{color:#f4dc97;border-color:r
       notice=document.createElement('div');
       notice.id='rppSubmittedNotice';
       notice.dataset.r23='submitted-editing-notice';
-      notice.innerHTML='<b>提出済みの原稿です。内容を変更して再提出できます。</b><span class="rpp-submitted-help">前回提出した内容を読み込んでいます。修正後、下の「変更内容を再提出する」を押すと、同じ原稿が更新されます。別の投稿は増えません。</span>';
+      notice.innerHTML='<b>提出済みの原稿です。内容を変更して再提出できます。</b><span class="rpp-submitted-help">修正後、「変更内容を再提出する」を押すと、原稿が更新されます。</span>';
       row.insertAdjacentElement('afterend',notice);
     }
     sync();
