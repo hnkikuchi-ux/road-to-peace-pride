@@ -125,16 +125,18 @@ const AUTHOR_RESET_CLIENT=`
 })();
 </script>`;
 
-function inject(response,html){
-  const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
-  return new HTMLRewriter().on('body',{element(el){el.append(html,{html:true})}})
-    .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
+async function inject(response,html){
+  const headers=new Headers(response.headers);
+  headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
+  headers.delete('Content-Length');
+  const body=await response.text();
+  const next=body.includes('</body>')?body.replace('</body>',html+'</body>'):body+html;
+  return new Response(next,{status:response.status,statusText:response.statusText,headers});
 }
 
 export default{
   async fetch(request,env,ctx){
     const url=new URL(request.url),path=url.pathname.replace(/\/$/,'')||'/';
-    await ensureResetSchema(env);
 
     if(path==='/api/admin/author-reset'&&request.method==='POST'){
       if(!await adminSession(env,request))return json({error:'管理者認証が必要です。'},401);
@@ -144,6 +146,7 @@ export default{
     }
 
     if(path==='/api/auth/verify'&&request.method==='POST'){
+      await ensureResetSchema(env);
       let payload={};try{payload=await request.clone().json()}catch{}
       const response=await app.fetch(request,env,ctx);if(!response.ok)return response;
       let data={};try{data=await response.clone().json()}catch{return response}
