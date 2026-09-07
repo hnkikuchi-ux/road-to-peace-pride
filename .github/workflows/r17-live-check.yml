@@ -1,12 +1,12 @@
-name: Verify r17 live deployment
+name: Verify r18 live deployment
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/faithful-cover-v11-r17.js'
-      - 'wrangler.jsonc'
+      - 'public/zip-store.js'
       - 'public/version.json'
+      - 'wrangler.jsonc'
       - '.github/workflows/r17-live-check.yml'
   workflow_dispatch:
 
@@ -18,30 +18,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Wait for r17 version
+      - name: Wait for r18 version
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsS --max-time 8 "$BASE/version.json?r17=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r17-brevo-save-gate'; then
-              echo 'r17 version is live'
+            if curl -fsS --max-time 8 "$BASE/version.json?r18=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r18-static-mail-save'; then
+              echo 'r18 version is live'
               exit 0
             fi
             sleep 10
           done
-          echo 'r17 version did not become live in time'
+          echo 'r18 version did not become live in time'
           exit 1
-      - name: Verify admin r17 injection
+      - name: Verify static mail fix asset
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r17=${GITHUB_RUN_ID}" > /tmp/admin.html
-          grep -Fq 'MAIL FIX r17' /tmp/admin.html
-          grep -Fq 'saveAndVerify' /tmp/admin.html
-          echo 'r17 admin capture patch is live'
+          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r18=${GITHUB_RUN_ID}" > /tmp/zip-store.js
+          grep -Fq 'ADMIN MAIL FIX r18' /tmp/zip-store.js
+          grep -Fq 'ensureSaved' /tmp/zip-store.js
+          grep -Fq 'APIキー保存確認後にBrevo送信します' /tmp/zip-store.js
+          echo 'r18 static admin mail fix is live'
+      - name: Verify admin loads static fix asset
+        env:
+          BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
+        run: |
+          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r18=${GITHUB_RUN_ID}" > /tmp/admin.html
+          grep -Fq 'zip-store.js' /tmp/admin.html
+          echo 'admin page loads zip-store.js'
       - name: Verify public health
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 "$BASE/api/health?r17=${GITHUB_RUN_ID}" | python3 -m json.tool
+          curl -fsS --max-time 15 "$BASE/api/health?r18=${GITHUB_RUN_ID}" | python3 -m json.tool
