@@ -43,9 +43,73 @@ const REEDIT_NO_RELOAD=`<script>
 })();
 </script>`;
 
+const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
+/* AUTHOR CLARITY r27.1 — start with the Japanese author card and keep every control legible */
+#rppAuthorHero{display:none!important}
+body.rpp-author-r5 .top{display:none!important}
+body.rpp-author-r5 .wrap{padding-top:10px!important}
+body.rpp-author-r5 #auth{color:#17243a!important}
+body.rpp-author-r5 #auth h1{color:#17243a!important;text-shadow:none!important;opacity:1!important}
+body.rpp-author-r5 #auth .ey{color:#8a671b!important;opacity:1!important}
+body.rpp-author-r5 #auth .note,
+body.rpp-author-r5 #auth p,
+body.rpp-author-r5 #auth small,
+body.rpp-author-r5 #auth .rpp-code-note{color:#4b5360!important;opacity:1!important}
+body.rpp-author-r5 #auth label{color:#263650!important;opacity:1!important;font-weight:650!important}
+body.rpp-author-r5 #auth .rpp-author-guide{
+  color:#4b3c20!important;opacity:1!important;
+  background:linear-gradient(90deg,#fff4d2,#fffaf0)!important;
+  border-color:#c69b3c!important
+}
+body.rpp-author-r5 #auth .rpp-author-guide b{color:#76520f!important;opacity:1!important}
+body.rpp-author-r5 #auth input:not([type="checkbox"]){
+  color:#17243a!important;-webkit-text-fill-color:#17243a!important;
+  background:#fffdf8!important;border-color:#c9ad67!important;opacity:1!important
+}
+body.rpp-author-r5 #auth input::placeholder{
+  color:#747a82!important;-webkit-text-fill-color:#747a82!important;opacity:1!important
+}
+body.rpp-author-r5 #auth .rpp-auth-tab,
+body.rpp-author-r5 #auth #rppEditTab{
+  color:#4a4338!important;-webkit-text-fill-color:#4a4338!important;opacity:1!important
+}
+body.rpp-author-r5 #auth .rpp-auth-tab.active,
+body.rpp-author-r5 #auth #rppFirstTab.active{
+  color:#1b160c!important;-webkit-text-fill-color:#1b160c!important;opacity:1!important
+}
+body.rpp-author-r5 #auth button:disabled{
+  opacity:.62!important;color:#665e50!important;-webkit-text-fill-color:#665e50!important
+}
+body.rpp-author-r5 #auth #send,
+body.rpp-author-r5 #auth #verify,
+body.rpp-author-r5 #auth #rppEditLoginBtn{
+  color:#1c160c!important;-webkit-text-fill-color:#1c160c!important
+}
+@media(max-width:560px){
+  body.rpp-author-r5 .wrap{padding-top:8px!important}
+  body.rpp-author-r5 #auth{margin-top:0!important}
+}
+</style>
+<script>
+(()=>{
+  const apply=()=>{
+    document.documentElement.dataset.rppAuthorClarity='r27-1';
+    document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
+    const auth=document.getElementById('auth');
+    const h1=auth?.querySelector('h1');
+    if(h1&&h1.textContent!=='私の記録を綴る')h1.textContent='私の記録を綴る';
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
+  addEventListener('pageshow',apply);
+})();
+</script>`;
+
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
-  return new HTMLRewriter().on('html',{element(el){el.setAttribute('data-rpp-reedit','r27')}}).on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true})}}).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
+  return new HTMLRewriter()
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-1')}})
+    .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
+    .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
 
 export default{
