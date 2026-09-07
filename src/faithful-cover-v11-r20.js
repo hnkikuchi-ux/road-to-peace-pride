@@ -55,33 +55,35 @@ body.rpp-author-r5 #rppEditLogin .rpp-code-note{color:#6f6a61!important}
 <script>
 (()=>{
   const ONE_CODE_MARK='ONE CODE r20';
+  const setText=(el,text)=>{if(el&&el.textContent!==text)el.textContent=text};
+  const setHtml=(el,html)=>{if(el&&el.innerHTML!==html)el.innerHTML=html};
   function patch(){
     document.documentElement.dataset.rppOneCode='r20';
-    document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
+    if(document.title!=='私の記録を綴る | ROAD TO PEACE PRIDE')document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const hero=document.getElementById('rppAuthorHero');if(hero)hero.dataset.r20=ONE_CODE_MARK;
 
     const guide=document.querySelector('.rpp-author-guide');
-    if(guide)guide.innerHTML='<b>🔑 6桁コードについて</b><br>初回のメール認証で届く6桁コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。';
+    setHtml(guide,'<b>🔑 6桁コードについて</b><br>初回のメール認証で届く6桁コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。');
 
     const note=document.querySelector('#auth > .note');
-    if(note)note.textContent='初回はメールに届く6桁コードで本人確認します。この同じ6桁コードを、提出後の再編集にも使用します。';
+    setText(note,'初回はメールに届く6桁コードで本人確認します。この同じ6桁コードを、提出後の再編集にも使用します。');
 
     const edit=document.getElementById('rppEditCode');
-    if(edit){edit.maxLength=6;edit.placeholder='6桁コード';edit.setAttribute('inputmode','numeric');const label=edit.closest('.field')?.querySelector('label');if(label)label.textContent='6桁コード';}
-    const editBtn=document.getElementById('rppEditLoginBtn');if(editBtn)editBtn.textContent='6桁コードで編集する';
-    const codeNote=document.querySelector('#rppEditLogin .rpp-code-note');if(codeNote)codeNote.textContent='初回のメール認証で使用した6桁コードを入力してください。紛失した場合は、メール認証で新しい6桁コードを再発行できます。';
+    if(edit){edit.maxLength=6;edit.placeholder='6桁コード';edit.setAttribute('inputmode','numeric');const label=edit.closest('.field')?.querySelector('label');setText(label,'6桁コード');}
+    setText(document.getElementById('rppEditLoginBtn'),'6桁コードで編集する');
+    setText(document.querySelector('#rppEditLogin .rpp-code-note'),'初回のメール認証で使用した6桁コードを入力してください。紛失した場合は、メール認証で新しい6桁コードを再発行できます。');
 
     const card=document.getElementById('rppEditCodeCard');
-    if(card){const h=card.querySelector('h2');if(h)h.textContent='あなたの6桁コード';const badge=card.querySelector('.rpp-code-saved-badge');if(badge)badge.textContent='再編集にも使う6桁コードです';const copy=card.querySelector('#rppCopyEditCode');if(copy)copy.textContent='6桁コードをコピー';}
+    if(card){setText(card.querySelector('h2'),'あなたの6桁コード');setText(card.querySelector('.rpp-code-saved-badge'),'再編集にも使う6桁コードです');setText(card.querySelector('#rppCopyEditCode'),'6桁コードをコピー');}
 
     const cp=document.getElementById('rppCodeCheckpoint');
     if(cp){
-      const kicker=cp.querySelector('.rpp-checkpoint-kicker');if(kicker)kicker.textContent='YOUR 6-DIGIT KEY';
-      const title=cp.querySelector('#rppCheckpointTitle');if(title){title.textContent='メールで届いた6桁コードを保存してください';title.dataset.r20Title='1'}
-      const lead=cp.querySelector('.rpp-checkpoint-lead');if(lead)lead.textContent='本人確認で使用した同じ6桁コードです。このコードが、あとから原稿を編集するための「鍵」になります。';
-      const copy=cp.querySelector('#rppCheckpointCopy');if(copy)copy.textContent='6桁コードをコピー';
-      const span=cp.querySelector('.rpp-saved-check span');if(span)span.innerHTML='<b>スクリーンショットまたはメモで保存しました</b><br>次回編集するときも、この同じ6桁コードを使用します。';
-      const foot=cp.querySelector('.rpp-checkpoint-foot');if(foot)foot.textContent='紛失した場合は、登録メールアドレスへの本人確認で新しい6桁コードを再発行できます。';
+      setText(cp.querySelector('.rpp-checkpoint-kicker'),'YOUR 6-DIGIT KEY');
+      const title=cp.querySelector('#rppCheckpointTitle');setText(title,'メールで届いた6桁コードを保存してください');if(title)title.dataset.r20Title='1';
+      setText(cp.querySelector('.rpp-checkpoint-lead'),'本人確認で使用した同じ6桁コードです。このコードが、あとから原稿を編集するための「鍵」になります。');
+      setText(cp.querySelector('#rppCheckpointCopy'),'6桁コードをコピー');
+      setHtml(cp.querySelector('.rpp-saved-check span'),'<b>スクリーンショットまたはメモで保存しました</b><br>次回編集するときも、この同じ6桁コードを使用します。');
+      setText(cp.querySelector('.rpp-checkpoint-foot'),'紛失した場合は、登録メールアドレスへの本人確認で新しい6桁コードを再発行できます。');
     }
   }
   const run=()=>{patch();setTimeout(patch,120);setTimeout(patch,500);setTimeout(patch,1200)};
