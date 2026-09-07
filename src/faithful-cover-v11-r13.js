@@ -29,12 +29,13 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
 <script>
 (()=>{
   let renderEpoch=0;
+  const compactText=v=>String(v||'').replaceAll(String.fromCharCode(10),' ').replaceAll(String.fromCharCode(13),' ').replaceAll(String.fromCharCode(9),' ').split(' ').filter(Boolean).join(' ').trim();
   const pruneCover=()=>{
     const cover=document.getElementById('cover');if(!cover)return;
     const forbidden=['そして、11.15、11.18へ','OUR VOW, OUR JOURNEY','STORIES ↓','続きから読む','WRITE YOUR STORY｜私の記録を綴る','WRITE YOUR STORY｜原稿を書く','ログアウト'];
     const walker=document.createTreeWalker(cover,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
     nodes.forEach(n=>{let v=n.nodeValue||'';for(const x of forbidden)v=v.split(x).join('');if(v!==n.nodeValue)n.nodeValue=v});
-    cover.querySelectorAll('*').forEach(el=>{const t=(el.textContent||'').replace(/\s+/g,' ').trim();if(forbidden.some(x=>t===x))el.remove()});
+    cover.querySelectorAll('*').forEach(el=>{const t=compactText(el.textContent);if(forbidden.some(x=>t===x))el.remove()});
     cover.querySelectorAll('.eyebrow').forEach(el=>el.remove());
     const resume=document.getElementById('resumeNote');if(resume)resume.remove();
   };
@@ -82,7 +83,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     const photoMeta=document.querySelector('#photoOptionalNote + .note');if(photoMeta)photoMeta.remove();
     const exact=['アップロード前に最大1600pxへ圧縮し、JPEG再生成で通常の位置情報等のメタデータを除去します。'];
     document.querySelectorAll('p,div,small,span').forEach(el=>{
-      const t=(el.textContent||'').replace(/\s+/g,' ').trim();
+      const t=compactText(el.textContent);
       if(t.startsWith('皆さまの記録を、総区ごとの章に分けて掲載するために使用します。')||exact.includes(t))el.remove();
     });
   };
@@ -122,7 +123,7 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     const editor=document.getElementById('editor');if(editor&&!editor.dataset.r13AuthorObserved){editor.dataset.r13AuthorObserved='1';new MutationObserver(queueAuthor).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
   };
 
-  const start=()=>{/\/author(?:\.html)?\/?$/.test(location.pathname)?installAuthor():installPublic()};
+  const start=()=>{const p=location.pathname;const authorPage=p==='/author'||p==='/author/'||p==='/author.html'||p==='/author.html/';authorPage?installAuthor():installPublic()};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>`;
