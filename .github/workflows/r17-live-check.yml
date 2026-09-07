@@ -45,7 +45,7 @@ jobs:
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r18=${GITHUB_RUN_ID}" > /tmp/admin.html
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r18=${GITHUB_RUN_ID}" -o /tmp/admin.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
           grep -Fq 'zip-store.js' /tmp/admin.html
           echo 'admin page loads zip-store.js'
       - name: Verify public health
