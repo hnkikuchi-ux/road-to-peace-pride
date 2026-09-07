@@ -44,10 +44,10 @@ jobs:
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
         run: python scripts/faithful_v11_smoke.py
-      - name: Full viewer-author-submit-reedit lifecycle
+      - name: Full r27 author-submit-reedit lifecycle
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
-        run: timeout 240s python -u scripts/full_product_qa_r26.py
+        run: timeout 240s python -u scripts/full_product_qa_r27.py
       - name: Exercise 300-story rendering and navigation
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
@@ -59,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: local-r26-full-qa
+          name: local-r27-full-qa
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
