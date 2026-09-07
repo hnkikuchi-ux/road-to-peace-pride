@@ -11,7 +11,7 @@ permissions:
 jobs:
   local-v11-visual:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 16
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,18 +38,26 @@ jobs:
           done
           cat /tmp/rpp-wrangler.log || true
           exit 1
-      - name: Verify faithful v11 reference geometry and shooting stars
+      - name: Verify cover geometry and periodic shooting stars
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
         run: python scripts/faithful_v11_smoke.py
+      - name: Full viewer-author-submit-reedit lifecycle
+        env:
+          RPP_BASE_URL: http://127.0.0.1:8787
+        run: timeout 240s python -u scripts/full_product_qa.py
+      - name: Exercise 300-story rendering and navigation
+        env:
+          RPP_BASE_URL: http://127.0.0.1:8787
+        run: timeout 150s python -u scripts/scale_300_regression.py
       - name: Show Worker log on failure
         if: failure()
         run: cat /tmp/rpp-wrangler.log || true
-      - name: Upload local v11 screenshots
+      - name: Upload local QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: local-faithful-v11-visual
+          name: local-r25-full-qa
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
