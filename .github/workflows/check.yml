@@ -126,15 +126,55 @@ jobs:
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
           fc-cache -f
           python -m pip install --disable-pip-version-check selenium==4.35.0
+      - name: Detect live mode
+        run: |
+          MODE=$(curl -fsS "$RPP_BASE_URL/api/health?mode=${GITHUB_RUN_ID}" | python3 -c "import json,sys; x=json.load(sys.stdin); print('preview' if x.get('preview') is True else 'production')")
+          echo "RPP_MODE=$MODE" >> "$GITHUB_ENV"
+          echo "Live mode: $MODE"
+      - name: Production public browser smoke
+        if: env.RPP_MODE == 'production'
+        run: |
+          timeout 90s python - <<'PY'
+          import os
+          from selenium import webdriver
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+          base=os.environ['RPP_BASE_URL']
+          o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--lang=ja-JP');o.add_argument('--window-size=390,844')
+          d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
+          try:
+              d.get(base+'/?prod-browser=1')
+              w.until(EC.visibility_of_element_located((By.ID,'pw')))
+              assert d.find_element(By.ID,'unlock').is_displayed()
+              assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
+              d.save_screenshot('artifacts/screens/production-viewer-gate.png')
+              d.get(base+'/author.html?prod-browser=1')
+              w.until(EC.visibility_of_element_located((By.ID,'auth')))
+              assert d.find_element(By.ID,'email').is_displayed()
+              d.save_screenshot('artifacts/screens/production-author-auth.png')
+              d.get(base+'/admin.html?prod-browser=1')
+              w.until(EC.visibility_of_element_located((By.ID,'login')))
+              assert d.find_element(By.ID,'password').is_displayed()
+              print('PRODUCTION PUBLIC BROWSER SMOKE PASSED')
+          finally:
+              d.quit()
+          PY
       - name: Full current-product browser QA
+        if: env.RPP_MODE == 'preview'
         run: timeout 180s python -u scripts/full_product_qa.py
       - name: Exercise 300-story scale
+        if: env.RPP_MODE == 'preview'
         run: timeout 120s python -u scripts/scale_300_regression.py
       - name: Cache refresh smoke
+        if: env.RPP_MODE == 'preview'
         run: python scripts/cache_refresh_smoke.py
       - name: Faithful cover smoke
+        if: env.RPP_MODE == 'preview'
         run: python scripts/faithful_v11_smoke.py
       - name: Logout smoke
+        if: env.RPP_MODE == 'preview'
         run: python scripts/logout_smoke.py
       - name: Upload visual QA screenshots
         if: always()
