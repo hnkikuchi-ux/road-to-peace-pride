@@ -41,6 +41,7 @@ jobs:
         run: |
           grep -Fq "import app from './faithful-cover-v11-r22.js'" src/faithful-cover-v11-r23.js
           grep -Fq '提出済みの原稿です。内容を変更して再提出できます。' src/faithful-cover-v11-r23.js
+          grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。' src/faithful-cover-v11-r23.js
           grep -Fq '変更内容を再提出する' src/faithful-cover-v11-r23.js
           grep -Fq "rppStoryMode=submitted?'submitted-edit':'draft'" src/faithful-cover-v11-r23.js
       - name: Verify r22 safe author reset flow
@@ -68,7 +69,7 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing' public/version.json
+          grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing-copy' public/version.json
           node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r23.js') process.exit(1); if(c.send_email) process.exit(1); console.log('faithful-v11 r23 submitted editing active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
@@ -101,14 +102,14 @@ jobs:
       - name: Wait for r23 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r23=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r23copy=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing-copy'; then exit 0; fi
             sleep 10
           done
           exit 1
       - name: Verify author guidance and reset controls are live
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r23=${GITHUB_RUN_ID}" | grep -Fq '提出済みの原稿です。内容を変更して再提出できます。'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r23=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r23copy=${GITHUB_RUN_ID}" | grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r23copy=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
       - run: bash scripts/smoke-live.sh
 
   mobile-browser:
@@ -147,16 +148,17 @@ jobs:
           o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--lang=ja-JP');o.add_argument('--window-size=390,844')
           d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
           try:
-              d.get(base+'/author.html?prod-browser-r23=1')
+              d.get(base+'/author.html?prod-browser-r23copy=1')
               w.until(EC.visibility_of_element_located((By.ID,'auth')))
               w.until(lambda x: x.execute_script("return document.documentElement.dataset.rppOneCode")=='r20')
               w.until(lambda x: x.find_element(By.ID,'rppSubmittedNotice'))
               assert '同じ6桁コード' in d.find_element(By.CSS_SELECTOR,'#auth > .note').text
               assert '提出済みの原稿です。内容を変更して再提出できます。' in d.find_element(By.ID,'rppSubmittedNotice').text
+              assert '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。' in d.find_element(By.ID,'rppSubmittedNotice').text
               assert d.find_element(By.ID,'email').is_displayed()
               assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
-              d.save_screenshot('artifacts/screens/production-author-r23.png')
-              print('PRODUCTION R23 BROWSER SMOKE PASSED')
+              d.save_screenshot('artifacts/screens/production-author-r23-copy.png')
+              print('PRODUCTION R23 COPY BROWSER SMOKE PASSED')
           finally:
               d.quit()
           PY
@@ -170,7 +172,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-qa-r23
+          name: visual-qa-r23-copy
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
