@@ -30,8 +30,13 @@ jobs:
           h=json.load(open('health.json'))
           checks={
             'health': h.get('ok') is True,
+            'production mode': h.get('preview') is False,
             'photo storage': h.get('storageConfigured') is True,
+            'viewer password configured': h.get('viewerPasswordConfigured') is True,
             'email OTP configured': h.get('emailConfigured') is True,
+            'Brevo provider': h.get('emailProvider') == 'brevo',
+            'free-plan compatible': h.get('freePlanCompatible') is True,
+            'security guard v3': h.get('securityGuard') == 'v3',
             'book open': h.get('bookOpen') is True,
           }
           for k,v in checks.items():
