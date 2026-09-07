@@ -7,16 +7,17 @@ const REEDIT_NO_RELOAD=`<script>
     const codeInput=document.getElementById('rppEditCode');
     const out=document.getElementById('rppEditMsg');
     const mail=(emailInput?.value||'').trim().toLowerCase();
-    const code=(codeInput?.value||'').replace(/\D/g,'');
-    if(!/^\S+@\S+\.\S+$/.test(mail)||code.length!==6){if(out)out.textContent='メールアドレスと6桁コードを入力してください。';return}
+    const code=(codeInput?.value||'').replace(/\\D/g,'');
+    if(!/^\\S+@\\S+\\.\\S+$/.test(mail)||code.length!==6){if(out)out.textContent='メールアドレスと6桁コードを入力してください。';return}
     if(btn)btn.disabled=true;
     try{
       const r=await fetch('/api/edit-code/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email:mail,code})});
       const d=await r.json();
       if(!r.ok){if(out)out.textContent=d.error||'6桁コードを確認してください。';return}
       if(out)out.textContent='認証しました。原稿を開きます。';
-      if(typeof openEditor!=='function')throw new Error('原稿画面を開く準備ができていません。ページを更新してもう一度お試しください。');
-      const ok=await openEditor();
+      let ok=false;
+      if(typeof openEditor==='function')ok=await openEditor();
+      else throw new Error('原稿画面を開く準備ができていません。ページを更新してもう一度お試しください。');
       if(!ok)throw new Error('原稿を開けませんでした。');
       const editor=document.getElementById('editor');
       if(!editor||editor.classList.contains('hidden'))throw new Error('原稿画面を表示できませんでした。');
