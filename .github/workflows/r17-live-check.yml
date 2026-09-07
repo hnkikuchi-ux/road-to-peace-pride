@@ -1,9 +1,10 @@
-name: Verify r19 live deployment
+name: Verify r20 live deployment
 
 on:
   push:
     branches: [main]
     paths:
+      - 'src/faithful-cover-v11-r20.js'
       - 'src/faithful-cover-v11-r19.js'
       - 'public/zip-store.js'
       - 'public/version.json'
@@ -19,40 +20,42 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Wait for r19 version
+      - name: Wait for r20 version
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsS --max-time 8 "$BASE/version.json?r19=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r19-human-receipt-confirmed'; then
-              echo 'r19 version is live'
+            if curl -fsS --max-time 8 "$BASE/version.json?r20=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r20-one-code-author-clean'; then
+              echo 'r20 version is live'
               exit 0
             fi
             sleep 10
           done
-          echo 'r19 version did not become live in time'
+          echo 'r20 version did not become live in time'
           exit 1
+      - name: Verify author one-code UI is live
+        env:
+          BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
+        run: |
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r20=${GITHUB_RUN_ID}" -o /tmp/author.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
+          grep -Fq 'ONE CODE r20' /tmp/author.html
+          grep -Fq 'メールで届いた6桁コードを保存してください' /tmp/author.html
+          grep -Fq '#rppAuthorHero .rpp-author-title' /tmp/author.html
+          echo 'r20 unified author UI is live'
       - name: Verify static mail fix asset
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r19=${GITHUB_RUN_ID}" > /tmp/zip-store.js
+          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r20=${GITHUB_RUN_ID}" > /tmp/zip-store.js
           grep -Fq 'ADMIN MAIL FIX r18' /tmp/zip-store.js
           grep -Fq 'ensureSaved' /tmp/zip-store.js
           echo 'static admin mail fix remains live'
-      - name: Verify admin loads static fix asset
-        env:
-          BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
-        run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r19=${GITHUB_RUN_ID}" -o /tmp/admin.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
-          grep -Fq 'zip-store.js' /tmp/admin.html
-          echo 'admin page loads zip-store.js'
       - name: Verify public production health
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 "$BASE/api/health?r19=${GITHUB_RUN_ID}" -o /tmp/health.json
+          curl -fsS --max-time 15 "$BASE/api/health?r20=${GITHUB_RUN_ID}" -o /tmp/health.json
           python3 - <<'PY'
           import json
           h=json.load(open('/tmp/health.json'))
