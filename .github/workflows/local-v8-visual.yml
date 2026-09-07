@@ -12,6 +12,8 @@ jobs:
   local-v11-visual:
     runs-on: ubuntu-latest
     timeout-minutes: 16
+    env:
+      SETUP_KEY: local-r26-test-key-not-production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -57,7 +59,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: local-r25-full-qa
+          name: local-r26-full-qa
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
