@@ -17,9 +17,6 @@ try:
     d.set_window_size(w,h)
     d.get(BASE+'/refresh?faithful='+str(int(time.time()*1000)))
     card=WebDriverWait(d,25).until(EC.visibility_of_element_located((By.CSS_SELECTOR,'#gate .gate-card')))
-    # Assert stable visual/product invariants rather than an obsolete internal
-    # revision number. The cover may continue to evolve while these guarantees
-    # must remain true for the public mobile experience.
     WebDriverWait(d,25).until(lambda x: card.get_attribute('data-v11-layout')=='reference-frame-stars')
     WebDriverWait(d,15).until(lambda x:
       card.get_attribute('data-v11-frame')=='uniform-double-frame' and
@@ -45,13 +42,16 @@ try:
     lock_el=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-lock')
     lock=lock_el.rect
     corners=d.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v11-corners i')
-    stars=d.find_elements(By.CSS_SELECTOR,'#rppFaithfulV7 .v11-star')
+    meteors=d.find_elements(By.CSS_SELECTOR,'#rppR25MeteorSky i')
+    gate=d.find_element(By.ID,'gate')
     title_rule=d.find_element(By.CSS_SELECTOR,'#rppFaithfulV7 .v7-deco.top')
 
     assert d.execute_script("return getComputedStyle(arguments[0]).clipPath",panel_el) in ('none',''),(w,'panel clipped')
     assert len(corners)==4,(w,len(corners))
-    assert len(stars)==4,(w,len(stars))
-    assert all('v11Shoot' in d.execute_script("return getComputedStyle(arguments[0]).animationName",s) for s in stars),(w,'star animation missing')
+    assert gate.get_attribute('data-r25-stars')=='periodic',(w,'periodic star marker missing')
+    assert len(meteors)==4,(w,len(meteors))
+    assert all('r25Shoot' in d.execute_script("return getComputedStyle(arguments[0]).animationName",s) for s in meteors),(w,'r25 meteor animation missing')
+    assert all(d.execute_script("return getComputedStyle(arguments[0]).pointerEvents",s)=='none' for s in [d.find_element(By.ID,'rppR25MeteorSky')]),(w,'meteor layer blocks taps')
     bg=d.execute_script("return getComputedStyle(arguments[0]).backgroundImage",unlock_el)
     assert 'unlock-luxury-v11.svg' in bg,(w,bg)
     lock_bg=d.execute_script("return getComputedStyle(arguments[0]).backgroundImage",lock_el)
@@ -59,7 +59,6 @@ try:
     assert d.execute_script("return parseInt(getComputedStyle(arguments[0]).fontWeight)",unlock_el)>=800,(w,'unlock text not bold')
     assert float(d.execute_script("return parseFloat(getComputedStyle(arguments[0]).top)",title_rule))>0,(w,'title divider missing')
 
-    # Compact lock stays fully inside the password field.
     assert 17<=lock['width']<=23,(w,lock)
     assert 24<=lock['height']<=33,(w,lock)
     assert lock['x']>=pw['x']+7,(w,pw,lock)
@@ -67,7 +66,6 @@ try:
     assert lock['y']>=pw['y']+3,(w,pw,lock)
     assert lock['y']+lock['height']<=pw['y']+pw['height']-3,(w,pw,lock)
 
-    # Inner double-frame inset stays equal on vertical and horizontal axes.
     inner_top=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').top)",panel_el))
     inner_left=float(d.execute_script("return parseFloat(getComputedStyle(arguments[0],'::before').left)",panel_el))
     assert abs(inner_top-inner_left)<=.6,(w,inner_top,inner_left)
@@ -82,7 +80,7 @@ try:
     assert author['y']+author['height']<=outer['y']+outer['height']-6,(w,outer,author)
     assert d.execute_script('return document.documentElement.scrollWidth <= window.innerWidth + 1')
     d.save_screenshot(str(out/f'63-faithful-current-{w}.png'))
-    print(f'  ✓ {w}x{h} faithful gate: 9:16 + double frame + compact lock + stars',flush=True)
+    print(f'  ✓ {w}x{h} faithful gate: 9:16 + double frame + compact lock + periodic meteors',flush=True)
   print('FAITHFUL CURRENT GATE VISUAL SMOKE OK',flush=True)
 finally:
   d.quit()
