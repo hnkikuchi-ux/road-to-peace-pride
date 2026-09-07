@@ -23,7 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
-          node --check src/faithful-cover-v11-r23.js
+          node --check src/faithful-cover-v11-r24.js
           node --check src/faithful-cover-v11-r22.js
           node --check src/faithful-cover-v11-r20.js
           node --check src/faithful-cover-v11-r19.js
@@ -37,13 +37,17 @@ jobs:
           node --check src/faithful-cover-v11-r10.js
           node --check src/faithful-cover-v11-r5.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/scale_300_regression.py
-      - name: Verify r23 submitted editing guidance
+      - name: Verify r24 iPhone and LINE compatibility
         run: |
-          grep -Fq "import app from './faithful-cover-v11-r22.js'" src/faithful-cover-v11-r23.js
-          grep -Fq '提出済みの原稿です。内容を変更して再提出できます。' src/faithful-cover-v11-r23.js
-          grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。' src/faithful-cover-v11-r23.js
-          grep -Fq '変更内容を再提出する' src/faithful-cover-v11-r23.js
-          grep -Fq "rppStoryMode=submitted?'submitted-edit':'draft'" src/faithful-cover-v11-r23.js
+          grep -Fq "import app from './faithful-cover-v11-r22.js'" src/faithful-cover-v11-r24.js
+          grep -Fq "dataset.rppMobileCompat='r24'" src/faithful-cover-v11-r24.js
+          grep -Fq 'rpp-line' src/faithful-cover-v11-r24.js
+          grep -Fq 'touch-action:manipulation' src/faithful-cover-v11-r24.js
+          grep -Fq 'font-size:16px!important' src/faithful-cover-v11-r24.js
+          grep -Fq 'statusObserver.observe(badge' src/faithful-cover-v11-r24.js
+          ! grep -Fq 'observe(document.documentElement' src/faithful-cover-v11-r24.js
+          grep -Fq '提出済みの原稿です。内容を変更して再提出できます。' src/faithful-cover-v11-r24.js
+          grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。' src/faithful-cover-v11-r24.js
       - name: Verify r22 safe author reset flow
         run: |
           grep -Fq "import app from './faithful-cover-v11-r20.js'" src/faithful-cover-v11-r22.js
@@ -69,8 +73,8 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing-copy' public/version.json
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r23.js') process.exit(1); if(c.send_email) process.exit(1); console.log('faithful-v11 r23 submitted editing active')"
+          grep -Fq '2026.09.07-faithful-v11-r24-ios-line-webview' public/version.json
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r24.js') process.exit(1); if(c.send_email) process.exit(1); console.log('faithful-v11 r24 mobile compatibility active')"
       - name: Optional Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist || echo 'Wrangler network check skipped; static checks passed.'
 
@@ -99,31 +103,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for r23 public deployment
+      - name: Wait for r24 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r23copy=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r23-submitted-editing-copy'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?v11r24=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r24-ios-line-webview'; then exit 0; fi
             sleep 10
           done
           exit 1
-      - name: Verify author guidance and reset controls are live
+      - name: Verify iPhone LINE compatibility layer is live
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r23copy=${GITHUB_RUN_ID}" | grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r23copy=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r24=${GITHUB_RUN_ID}" | grep -Fq "dataset.rppMobileCompat='r24'"
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r24=${GITHUB_RUN_ID}" | grep -Fq '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r24=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
       - run: bash scripts/smoke-live.sh
 
   mobile-browser:
     if: github.event_name == 'push'
     needs: live-smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - name: Install browser dependencies
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chrome QA dependencies
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends fonts-noto-cjk
@@ -134,7 +142,7 @@ jobs:
           MODE=$(curl -fsS "$RPP_BASE_URL/api/health?mode=${GITHUB_RUN_ID}" | python3 -c "import json,sys; x=json.load(sys.stdin); print('preview' if x.get('preview') is True else 'production')")
           echo "RPP_MODE=$MODE" >> "$GITHUB_ENV"
           echo "Live mode: $MODE"
-      - name: Production public browser smoke
+      - name: Chrome mobile interaction smoke
         if: env.RPP_MODE == 'production'
         run: |
           timeout 90s python - <<'PY'
@@ -148,20 +156,57 @@ jobs:
           o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--lang=ja-JP');o.add_argument('--window-size=390,844')
           d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
           try:
-              d.get(base+'/author.html?prod-browser-r23copy=1')
+              d.get(base+'/author.html?prod-browser-r24=1')
               w.until(EC.visibility_of_element_located((By.ID,'auth')))
-              w.until(lambda x: x.execute_script("return document.documentElement.dataset.rppOneCode")=='r20')
-              w.until(lambda x: x.find_element(By.ID,'rppSubmittedNotice'))
-              assert '同じ6桁コード' in d.find_element(By.CSS_SELECTOR,'#auth > .note').text
-              assert '提出済みの原稿です。内容を変更して再提出できます。' in d.find_element(By.ID,'rppSubmittedNotice').text
-              assert '修正後、「変更内容を再提出する」を押すと、原稿が更新されます。' in d.find_element(By.ID,'rppSubmittedNotice').text
-              assert d.find_element(By.ID,'email').is_displayed()
+              w.until(lambda x: x.execute_script("return document.documentElement.dataset.rppMobileCompat")=='r24')
+              d.find_element(By.ID,'send').click()
+              w.until(lambda x: 'メールアドレスを入力してください' in x.find_element(By.ID,'authmsg').text)
               assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
-              d.save_screenshot('artifacts/screens/production-author-r23-copy.png')
-              print('PRODUCTION R23 COPY BROWSER SMOKE PASSED')
+              d.save_screenshot('artifacts/screens/production-author-r24-chrome.png')
+              print('PRODUCTION R24 CHROME MOBILE INTERACTION PASSED')
           finally:
               d.quit()
           PY
+      - name: Install WebKit Safari test browser
+        if: env.RPP_MODE == 'production'
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: iPhone Safari and LINE WebView interaction smoke
+        if: env.RPP_MODE == 'production'
+        run: |
+          timeout 180s node <<'JS'
+          const {webkit,devices}=require('playwright');
+          const base=process.env.RPP_BASE_URL;
+          (async()=>{
+            const browser=await webkit.launch({headless:true});
+            const iphone=devices['iPhone 13'];
+            const cases=[
+              {name:'safari',opts:{...iphone}},
+              {name:'line',opts:{...iphone,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Line/15.15.0'}}
+            ];
+            try{
+              for(const c of cases){
+                const context=await browser.newContext(c.opts);
+                const page=await context.newPage();
+                const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+                await page.goto(base+'/author.html?r24-'+c.name+'=1',{waitUntil:'domcontentloaded'});
+                await page.waitForSelector('#auth',{state:'visible'});
+                await page.waitForFunction(()=>document.documentElement.dataset.rppMobileCompat==='r24');
+                if(c.name==='line')await page.waitForFunction(()=>document.documentElement.dataset.rppClient==='line');
+                await page.tap('#send');
+                await page.waitForFunction(()=>document.querySelector('#authmsg')?.textContent.includes('メールアドレスを入力してください'));
+                await page.waitForTimeout(1200);
+                if(errors.length)throw new Error(c.name+' page errors: '+errors.join(' | '));
+                const widthOK=await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2);
+                if(!widthOK)throw new Error(c.name+' horizontal overflow');
+                await page.screenshot({path:'artifacts/screens/production-author-r24-'+c.name+'.png',fullPage:true});
+                await context.close();
+                console.log('R24 '+c.name.toUpperCase()+' INTERACTION PASSED');
+              }
+            } finally {await browser.close()}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
       - name: Full current-product browser QA
         if: env.RPP_MODE == 'preview'
         run: timeout 180s python -u scripts/full_product_qa.py
@@ -172,7 +217,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-qa-r23-copy
+          name: visual-qa-r24-ios-line
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
