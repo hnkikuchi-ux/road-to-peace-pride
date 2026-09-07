@@ -1,4 +1,4 @@
-const {webkit,devices}=require('playwright');
+import {webkit,devices} from 'playwright';
 const base=process.env.RPP_BASE_URL||'https://road-to-peace-pride.hn-kikuchi.workers.dev';
 (async()=>{
   const browser=await webkit.launch({headless:true});
