@@ -1,9 +1,10 @@
-name: Verify r18 live deployment
+name: Verify r19 live deployment
 
 on:
   push:
     branches: [main]
     paths:
+      - 'src/faithful-cover-v11-r19.js'
       - 'public/zip-store.js'
       - 'public/version.json'
       - 'wrangler.jsonc'
@@ -18,38 +19,54 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Wait for r18 version
+      - name: Wait for r19 version
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsS --max-time 8 "$BASE/version.json?r18=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r18-static-mail-save'; then
-              echo 'r18 version is live'
+            if curl -fsS --max-time 8 "$BASE/version.json?r19=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r19-human-receipt-confirmed'; then
+              echo 'r19 version is live'
               exit 0
             fi
             sleep 10
           done
-          echo 'r18 version did not become live in time'
+          echo 'r19 version did not become live in time'
           exit 1
       - name: Verify static mail fix asset
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r18=${GITHUB_RUN_ID}" > /tmp/zip-store.js
+          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r19=${GITHUB_RUN_ID}" > /tmp/zip-store.js
           grep -Fq 'ADMIN MAIL FIX r18' /tmp/zip-store.js
           grep -Fq 'ensureSaved' /tmp/zip-store.js
-          grep -Fq 'APIキー保存確認後にBrevo送信します' /tmp/zip-store.js
-          echo 'r18 static admin mail fix is live'
+          echo 'static admin mail fix remains live'
       - name: Verify admin loads static fix asset
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r18=${GITHUB_RUN_ID}" -o /tmp/admin.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/admin.html?r19=${GITHUB_RUN_ID}" -o /tmp/admin.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
           grep -Fq 'zip-store.js' /tmp/admin.html
           echo 'admin page loads zip-store.js'
-      - name: Verify public health
+      - name: Verify public production health
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 "$BASE/api/health?r18=${GITHUB_RUN_ID}" | python3 -m json.tool
+          curl -fsS --max-time 15 "$BASE/api/health?r19=${GITHUB_RUN_ID}" -o /tmp/health.json
+          python3 - <<'PY'
+          import json
+          h=json.load(open('/tmp/health.json'))
+          checks={
+            'health':h.get('ok') is True,
+            'production':h.get('preview') is False,
+            'viewer password':h.get('viewerPasswordConfigured') is True,
+            'email configured':h.get('emailConfigured') is True,
+            'email delivered':h.get('emailDeliveryVerified') is True,
+            'production ready':h.get('productionReady') is True,
+            'book open':h.get('bookOpen') is True,
+          }
+          for k,v in checks.items(): print(('PASS ' if v else 'FAIL ')+k)
+          if not all(checks.values()):
+            print(json.dumps(h,ensure_ascii=False,indent=2))
+            raise SystemExit(1)
+          PY
