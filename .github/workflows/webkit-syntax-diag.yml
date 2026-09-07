@@ -1,0 +1,34 @@
+name: WebKit syntax diagnostic
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  webkit-syntax:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      RPP_BASE_URL: https://road-to-peace-pride.hn-kikuchi.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Wait for current version
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?diag=$i" | grep -Fq '2026.09.08-faithful-v11-r27-reedit-stable'; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Parse every inline script in WebKit
+        run: node scripts/webkit_inline_syntax.js
