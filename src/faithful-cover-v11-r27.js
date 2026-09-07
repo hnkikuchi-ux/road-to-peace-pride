@@ -44,7 +44,7 @@ const REEDIT_NO_RELOAD=`<script>
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.1 — start with the Japanese author card and keep every control legible */
+/* AUTHOR CLARITY r27.2 — email first, then choose first-time or re-edit */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -59,7 +59,8 @@ body.rpp-author-r5 #auth label{color:#263650!important;opacity:1!important;font-
 body.rpp-author-r5 #auth .rpp-author-guide{
   color:#4b3c20!important;opacity:1!important;
   background:linear-gradient(90deg,#fff4d2,#fffaf0)!important;
-  border-color:#c69b3c!important
+  border-color:#c69b3c!important;
+  margin-top:10px!important
 }
 body.rpp-author-r5 #auth .rpp-author-guide b{color:#76520f!important;opacity:1!important}
 body.rpp-author-r5 #auth input:not([type="checkbox"]){
@@ -85,6 +86,13 @@ body.rpp-author-r5 #auth #verify,
 body.rpp-author-r5 #auth #rppEditLoginBtn{
   color:#1c160c!important;-webkit-text-fill-color:#1c160c!important
 }
+body.rpp-author-r5 #auth #rppEmailFirstHint{
+  margin:7px 2px 12px!important;
+  color:#59616d!important;
+  font-size:12px!important;
+  line-height:1.65!important
+}
+body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:10px!important}
 @media(max-width:560px){
   body.rpp-author-r5 .wrap{padding-top:8px!important}
   body.rpp-author-r5 #auth{margin-top:0!important}
@@ -93,21 +101,41 @@ body.rpp-author-r5 #auth #rppEditLoginBtn{
 <script>
 (()=>{
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-1';
+    document.documentElement.dataset.rppAuthorClarity='r27-2';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
     if(h1&&h1.textContent!=='私の記録を綴る')h1.textContent='私の記録を綴る';
+    if(!auth||!h1)return;
+
+    const email=document.getElementById('email');
+    const emailField=email?.closest?.('.field')||email?.parentElement;
+    const tabs=auth.querySelector('.rpp-auth-tabs');
+    const guide=auth.querySelector('.rpp-author-guide');
+
+    if(emailField&&emailField.parentElement===auth){
+      h1.insertAdjacentElement('afterend',emailField);
+      let hint=document.getElementById('rppEmailFirstHint');
+      if(!hint){
+        hint=document.createElement('div');
+        hint.id='rppEmailFirstHint';
+        hint.textContent='初回登録・再編集のどちらも、まずメールアドレスを入力してください。';
+      }
+      emailField.insertAdjacentElement('afterend',hint);
+      if(tabs)hint.insertAdjacentElement('afterend',tabs);
+      if(guide&&tabs)tabs.insertAdjacentElement('afterend',guide);
+    }
   };
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();
-  addEventListener('pageshow',apply);
+  const run=()=>{apply();setTimeout(apply,120);setTimeout(apply,500)};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+  addEventListener('pageshow',run);
 })();
 </script>`;
 
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-1')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-2')}})
     .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
