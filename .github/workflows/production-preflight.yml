@@ -20,7 +20,7 @@ jobs:
             if python3 - <<'PY'
           import json,sys
           x=json.load(open('health.json'))
-          sys.exit(0 if 'emailConfigured' in x else 1)
+          sys.exit(0 if 'emailDeliveryVerified' in x else 1)
           PY
             then break; fi
             sleep 10
@@ -34,7 +34,9 @@ jobs:
             'photo storage': h.get('storageConfigured') is True,
             'viewer password configured': h.get('viewerPasswordConfigured') is True,
             'email OTP configured': h.get('emailConfigured') is True,
+            'email OTP delivered': h.get('emailDeliveryVerified') is True,
             'Brevo provider': h.get('emailProvider') == 'brevo',
+            'production ready': h.get('productionReady') is True,
             'free-plan compatible': h.get('freePlanCompatible') is True,
             'security guard v3': h.get('securityGuard') == 'v3',
             'book open': h.get('bookOpen') is True,
