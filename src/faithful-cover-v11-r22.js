@@ -28,16 +28,28 @@ async function ensureResetSchema(env){
   `);
   return resetSchemaReady;
 }
+async function tableExists(env,name){
+  const row=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(name).first().catch(()=>null);
+  return Boolean(row?.name);
+}
 async function adminSession(env,request){
   const token=cookieMap(request).rpp_admin;
   if(!token)return null;
   return env.DB.prepare("SELECT * FROM rpp_sessions WHERE token_hash=? AND kind='admin' AND expires_at>?")
     .bind(await sha256(token),new Date().toISOString()).first();
 }
+async function deleteIfPresent(env,table,sql,email){
+  if(!await tableExists(env,table))return 0;
+  const result=await env.DB.prepare(sql).bind(email).run();
+  return Number(result?.meta?.changes||0);
+}
 async function resetAuthor(env,email){
   await ensureResetSchema(env);
-  const story=await env.DB.prepare('SELECT id,photo_key FROM rpp_stories WHERE author_email=?').bind(email).first().catch(()=>null);
-  const revisions=(await env.DB.prepare('SELECT photo_key FROM rpp_story_revisions WHERE author_email=?').bind(email).all().catch(()=>({results:[]}))).results||[];
+
+  const hasStories=await tableExists(env,'rpp_stories');
+  const hasRevisions=await tableExists(env,'rpp_story_revisions');
+  const story=hasStories?await env.DB.prepare('SELECT id,photo_key FROM rpp_stories WHERE author_email=?').bind(email).first().catch(()=>null):null;
+  const revisions=hasRevisions?((await env.DB.prepare('SELECT photo_key FROM rpp_story_revisions WHERE author_email=?').bind(email).all().catch(()=>({results:[]}))).results||[]):[];
   const photoKeys=new Set();
   if(story?.photo_key)photoKeys.add(String(story.photo_key));
   for(const r of revisions)if(r?.photo_key)photoKeys.add(String(r.photo_key));
@@ -49,18 +61,17 @@ async function resetAuthor(env,email){
     }
   }
 
+  const deleted={sessions:0,otps:0,editCodes:0,revisions:0,stories:0,photos:deletedPhotos};
+  deleted.sessions=await deleteIfPresent(env,'rpp_sessions',"DELETE FROM rpp_sessions WHERE kind='author' AND subject=?",email);
+  deleted.otps=await deleteIfPresent(env,'rpp_otps','DELETE FROM rpp_otps WHERE email=?',email);
+  deleted.editCodes=await deleteIfPresent(env,'rpp_edit_codes','DELETE FROM rpp_edit_codes WHERE email=?',email);
+  deleted.revisions=await deleteIfPresent(env,'rpp_story_revisions','DELETE FROM rpp_story_revisions WHERE author_email=?',email);
+  deleted.stories=await deleteIfPresent(env,'rpp_stories','DELETE FROM rpp_stories WHERE author_email=?',email);
+
   const now=new Date().toISOString();
-  const statements=[
-    env.DB.prepare("DELETE FROM rpp_sessions WHERE kind='author' AND subject=?").bind(email),
-    env.DB.prepare('DELETE FROM rpp_otps WHERE email=?').bind(email),
-    env.DB.prepare('DELETE FROM rpp_edit_codes WHERE email=?').bind(email),
-    env.DB.prepare('DELETE FROM rpp_story_revisions WHERE author_email=?').bind(email),
-    env.DB.prepare('DELETE FROM rpp_stories WHERE author_email=?').bind(email),
-    env.DB.prepare('INSERT INTO rpp_author_resets(email,reset_at) VALUES(?,?) ON CONFLICT(email) DO UPDATE SET reset_at=excluded.reset_at').bind(email,now)
-  ];
-  const results=await env.DB.batch(statements);
-  const changes=results.map(r=>Number(r?.meta?.changes||0));
-  return {ok:true,email,resetAt:now,deleted:{sessions:changes[0],otps:changes[1],editCodes:changes[2],revisions:changes[3],stories:changes[4],photos:deletedPhotos}};
+  await env.DB.prepare('INSERT INTO rpp_author_resets(email,reset_at) VALUES(?,?) ON CONFLICT(email) DO UPDATE SET reset_at=excluded.reset_at').bind(email,now).run();
+
+  return {ok:true,email,resetAt:now,deleted};
 }
 
 const ADMIN_RESET_UI=`
