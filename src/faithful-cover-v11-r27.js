@@ -27,11 +27,20 @@ const REEDIT_NO_RELOAD=`<script>
   }
   function mark(){
     const btn=document.getElementById('rppEditLoginBtn');
-    if(btn){btn.dataset.r27Bound='delegated';if(!btn.getAttribute('type'))btn.setAttribute('type','button')}
+    if(!btn)return;
+    if(!btn.getAttribute('type'))btn.setAttribute('type','button');
+    if(btn.dataset.r27Bound==='direct')return;
+    btn.onclick=null;
+    btn.dataset.r27Bound='direct';
+    btn.addEventListener('click',e=>{
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      openReedit(btn);
+    },true);
   }
   document.addEventListener('click',e=>{
     const btn=e.target?.closest?.('#rppEditLoginBtn');
-    if(!btn)return;
+    if(!btn||btn.dataset.r27Bound==='direct')return;
     e.preventDefault();
     e.stopImmediatePropagation();
     openReedit(btn);
@@ -39,12 +48,12 @@ const REEDIT_NO_RELOAD=`<script>
   const run=()=>{mark();setTimeout(mark,120);setTimeout(mark,500);setTimeout(mark,1200)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);
-  document.addEventListener('click',e=>{if(e.target?.closest?.('#rppEditTab'))setTimeout(mark,0)},true);
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#rppEditTab')){setTimeout(mark,0);setTimeout(mark,80)}},true);
 })();
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.2 — email first, then choose first-time or re-edit */
+/* AUTHOR CLARITY r27.3 — email first, then choose first-time or re-edit */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -101,7 +110,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:1
 <script>
 (()=>{
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-2';
+    document.documentElement.dataset.rppAuthorClarity='r27-3';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
@@ -135,7 +144,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:1
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-2')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-3')}})
     .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
