@@ -47,7 +47,7 @@ jobs:
       - name: Full viewer-author-submit-reedit lifecycle
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
-        run: timeout 240s python -u scripts/full_product_qa.py
+        run: timeout 240s python -u scripts/full_product_qa_r26.py
       - name: Exercise 300-story rendering and navigation
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
