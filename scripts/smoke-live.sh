@@ -18,7 +18,7 @@ for i in $(seq 1 30); do
   sleep 4
 done
 [[ "$LIVE" == "$EXPECTED_BUILD" ]] || fail 'latest build is not live'
-pass 'latest r14 build is live'
+pass 'latest faithful build is live'
 
 echo '1) Static/live pages'
 for page in index author admin; do
@@ -36,41 +36,77 @@ not_contains /tmp/rpp-admin.html '654321' 'admin page has no demo admin code'
 
 echo '2) Public health'
 http "$BASE/api/health?ts=$(date +%s)" -o /tmp/rpp-health.json
+MODE=$(python3 - <<'PY'
+import json
+x=json.load(open('/tmp/rpp-health.json'))
+print('preview' if x.get('preview') is True else 'production')
+PY
+)
 python3 - <<'PY'
 import json
 x=json.load(open('/tmp/rpp-health.json'))
-checks={'health ok':x.get('ok') is True,'preview mode':x.get('preview') is True,'photo storage binding':x.get('storageConfigured') is True,'security guard v3':x.get('securityGuard')=='v3','author OTP direct':x.get('authorOtpDirect') is True,'diagnostics protected':x.get('diagnosticsProtected') is True,'story count hidden':'stories' not in x}
+base={
+  'health ok':x.get('ok') is True,
+  'photo storage binding':x.get('storageConfigured') is True,
+  'security guard v3':x.get('securityGuard')=='v3',
+  'author OTP direct':x.get('authorOtpDirect') is True,
+  'diagnostics protected':x.get('diagnosticsProtected') is True,
+  'story count hidden':'stories' not in x,
+}
+if x.get('preview') is True:
+  extra={'preview mode':True}
+else:
+  extra={
+    'production mode':x.get('preview') is False,
+    'viewer password configured':x.get('viewerPasswordConfigured') is True,
+    'email OTP configured':x.get('emailConfigured') is True,
+    'Brevo provider active':x.get('emailProvider')=='brevo',
+    'free-plan compatible':x.get('freePlanCompatible') is True,
+    'book open':x.get('bookOpen') is True,
+  }
+checks={**base,**extra}
 for k,v in checks.items():
  print(('  ✓ ' if v else '  ✗ ')+k)
  if not v: raise SystemExit(x)
 PY
+pass "detected live mode: $MODE"
 
-echo '3) Viewer authentication'
+echo '3) Viewer authentication boundary'
 CODE=$(curl -sS -o /tmp/rpp-stories0.json -w '%{http_code}' "$BASE/api/stories")
 [[ "$CODE" == 401 ]] && pass 'stories require viewer auth' || fail "stories unauth status=$CODE"
-CODE=$(curl -sS -c "$COOKIE" -b "$COOKIE" -o /tmp/rpp-login.json -w '%{http_code}' -X POST "$BASE/api/viewer/login" -H 'content-type: application/json' --data '{"password":"demo"}')
-[[ "$CODE" == 200 ]] && pass 'preview viewer login works' || fail "viewer login status=$CODE"
-CODE=$(curl -sS -c "$COOKIE" -b "$COOKIE" -o /tmp/rpp-stories.json -w '%{http_code}' "$BASE/api/stories")
-[[ "$CODE" == 200 ]] && pass 'stories load after login' || fail "stories after login status=$CODE"
 
-echo '4) Author OTP and fixed six-digit edit key'
-EMAIL="smoke-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}@example.invalid"
-CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-otp.json -w '%{http_code}' -X POST "$BASE/api/auth/request" -H 'content-type: application/json' --data "{\"email\":\"$EMAIL\"}")
-[[ "$CODE" == 200 ]] || fail "OTP request status=$CODE"
-OTP=$(python3 -c "import json; print(json.load(open('/tmp/rpp-otp.json')).get('previewCode',''))")
-[[ "$OTP" =~ ^[0-9]{6}$ ]] && pass 'six-digit email verification OTP issued' || fail 'preview OTP missing'
-CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-verify.json -w '%{http_code}' -X POST "$BASE/api/auth/verify" -H 'content-type: application/json' --data "{\"email\":\"$EMAIL\",\"code\":\"$OTP\"}")
-[[ "$CODE" == 200 ]] || fail "OTP verify status=$CODE"
-EDIT=$(python3 -c "import json; print(json.load(open('/tmp/rpp-verify.json')).get('editCode',''))")
-[[ "$EDIT" =~ ^[0-9]{6}$ ]] && pass 'fixed edit key is six digits' || { cat /tmp/rpp-verify.json; fail 'fixed six-digit edit key missing'; }
-CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-me.json -w '%{http_code}' "$BASE/api/me/story")
-[[ "$CODE" == 200 ]] && pass 'author session opens' || fail "author session status=$CODE"
+if [[ "$MODE" == 'preview' ]]; then
+  echo '4) Preview viewer + author flow'
+  CODE=$(curl -sS -c "$COOKIE" -b "$COOKIE" -o /tmp/rpp-login.json -w '%{http_code}' -X POST "$BASE/api/viewer/login" -H 'content-type: application/json' --data '{"password":"demo"}')
+  [[ "$CODE" == 200 ]] && pass 'preview viewer login works' || fail "viewer login status=$CODE"
+  CODE=$(curl -sS -c "$COOKIE" -b "$COOKIE" -o /tmp/rpp-stories.json -w '%{http_code}' "$BASE/api/stories")
+  [[ "$CODE" == 200 ]] && pass 'stories load after login' || fail "stories after login status=$CODE"
 
-echo '5) Preview write guard'
-CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-save.json -w '%{http_code}' -X PUT "$BASE/api/me/story" -H 'content-type: application/json' --data '{"record_date":"","soku":"磯子総区","bunku":"","honbu":"","shibu":"","category":"","name":"テスト","title":"テスト","body":"テスト","status":"draft"}')
-[[ "$CODE" == 403 ]] && pass 'preview blocks cloud story writes' || fail "preview write status=$CODE"
+  EMAIL="smoke-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}@example.invalid"
+  CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-otp.json -w '%{http_code}' -X POST "$BASE/api/auth/request" -H 'content-type: application/json' --data "{\"email\":\"$EMAIL\"}")
+  [[ "$CODE" == 200 ]] || fail "OTP request status=$CODE"
+  OTP=$(python3 -c "import json; print(json.load(open('/tmp/rpp-otp.json')).get('previewCode',''))")
+  [[ "$OTP" =~ ^[0-9]{6}$ ]] && pass 'six-digit preview verification OTP issued' || fail 'preview OTP missing'
+  CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-verify.json -w '%{http_code}' -X POST "$BASE/api/auth/verify" -H 'content-type: application/json' --data "{\"email\":\"$EMAIL\",\"code\":\"$OTP\"}")
+  [[ "$CODE" == 200 ]] || fail "OTP verify status=$CODE"
+  EDIT=$(python3 -c "import json; print(json.load(open('/tmp/rpp-verify.json')).get('editCode',''))")
+  [[ "$EDIT" =~ ^[0-9]{6}$ ]] && pass 'fixed edit key is six digits' || { cat /tmp/rpp-verify.json; fail 'fixed six-digit edit key missing'; }
+  CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-me.json -w '%{http_code}' "$BASE/api/me/story")
+  [[ "$CODE" == 200 ]] && pass 'author session opens' || fail "author session status=$CODE"
 
-echo '6) Logout'
+  echo '5) Preview write guard'
+  CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-save.json -w '%{http_code}' -X PUT "$BASE/api/me/story" -H 'content-type: application/json' --data '{"record_date":"","soku":"磯子総区","bunku":"","honbu":"","shibu":"","category":"","name":"テスト","title":"テスト","body":"テスト","status":"draft"}')
+  [[ "$CODE" == 403 ]] && pass 'preview blocks cloud story writes' || fail "preview write status=$CODE"
+else
+  echo '4) Production security boundary'
+  CODE=$(curl -sS -o /tmp/rpp-demo-login.json -w '%{http_code}' -X POST "$BASE/api/viewer/login" -H 'content-type: application/json' --data '{"password":"demo"}')
+  [[ "$CODE" == 401 ]] && pass 'preview demo password is rejected in production' || fail "production demo login status=$CODE"
+  CODE=$(curl -sS -o /tmp/rpp-me0.json -w '%{http_code}' "$BASE/api/me/story")
+  [[ "$CODE" == 401 ]] && pass 'author manuscript requires authentication' || fail "production author unauth status=$CODE"
+  pass 'real OTP delivery is intentionally not triggered by CI'
+fi
+
+echo '6) Logout endpoints'
 CODE=$(curl -sS -c "$AUTHOR_COOKIE" -b "$AUTHOR_COOKIE" -o /tmp/rpp-alogout.json -w '%{http_code}' -X POST "$BASE/api/auth/logout")
 [[ "$CODE" == 200 ]] && pass 'author logout works' || fail "author logout status=$CODE"
 CODE=$(curl -sS -c "$COOKIE" -b "$COOKIE" -o /tmp/rpp-vlogout.json -w '%{http_code}' -X POST "$BASE/api/viewer/logout")
