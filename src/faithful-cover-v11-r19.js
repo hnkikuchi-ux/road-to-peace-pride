@@ -2,8 +2,16 @@ import app from './faithful-cover-v11-r17.js';
 
 const HUMAN_CONFIRMATION_SOURCE='human-receipt-confirmed-2026-09-07';
 
+async function settingsTableExists(env){
+  try{
+    const row=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='rpp_settings'").first();
+    return Boolean(row?.name);
+  }catch{return false}
+}
+
 async function hasStoredEmailConfig(env){
   if(env.BREVO_API_KEY&&env.OTP_SENDER_EMAIL)return true;
+  if(!await settingsTableExists(env))return false;
   try{
     const rows=(await env.DB.prepare("SELECT key,value FROM rpp_settings WHERE key IN ('brevo_api_key_enc','otp_sender_email')").all()).results||[];
     const m=Object.fromEntries(rows.map(r=>[r.key,String(r.value||'')]));
@@ -13,6 +21,7 @@ async function hasStoredEmailConfig(env){
 
 async function applyHumanReceiptConfirmation(env){
   try{
+    if(!await settingsTableExists(env))return;
     const row=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='email_delivery_verification_source'").first();
     if(row?.value)return;
     if(!await hasStoredEmailConfig(env))return;
