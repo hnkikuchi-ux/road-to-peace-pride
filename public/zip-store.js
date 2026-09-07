@@ -64,3 +64,75 @@ async function makeZip(files){
 }
 g.RppZip={makeZip,toBytes,crc32};
 })(globalThis);
+
+// ADMIN MAIL FIX r18: the static admin asset always loads this file.
+// Capture the mail buttons before legacy inline handlers so a test can never run
+// before the Brevo API key has been persisted and verified in D1.
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+function show(text,ok=false){const m=$('mailMsg');if(!m)return;m.textContent=text;m.className='msg '+(ok?'ok':'warn')}
+async function api(url,opt={}){
+  const r=await fetch(url,{credentials:'same-origin',cache:'no-store',...opt});let d={};
+  try{d=await r.json()}catch{}
+  if(!r.ok)throw new Error(d.error||('HTTP '+r.status));
+  return d;
+}
+function eventText(d){
+  const e=d.deliveryEvent||{},name=String(e.event||'').toLowerCase(),reason=e.reason?(' / '+e.reason):'';
+  if(d.deliveryVerified||name.includes('delivered'))return 'Brevo配信確認：DELIVERED（受信側へ配信済み）';
+  if(/blocked|hard.?bounce|invalid|error|spam/.test(name))return 'Brevo配信エラー：'+(e.event||'unknown')+reason;
+  if(/deferred|soft.?bounce/.test(name))return 'Brevoで配信遅延：'+(e.event||'pending')+reason;
+  if(e.event)return 'Brevo受付済み・配信確認中：'+e.event+reason;
+  return d.accepted?'Brevo受付済み。配信結果を確認中です。':'テストメール送信を確認できませんでした。';
+}
+async function ensureSaved(requireKey=false){
+  const key=($('brevoKey')?.value||'').trim();
+  const sender=($('senderEmail')?.value||'').trim();
+  const senderName=($('senderName')?.value||'ROAD TO PEACE PRIDE').trim();
+  if(!sender)throw new Error('送信元メールアドレスを入力してください。');
+  if(key){
+    show('Brevo APIキーを暗号化保存中…');
+    await api('/api/admin/email-settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:key,sender_email:sender,sender_name:senderName})});
+  }
+  const check=await api('/api/admin/email-settings');
+  if(!check.configured){
+    if(requireKey&&!key)throw new Error('Brevo APIキーを入力してください。');
+    throw new Error('Brevo APIキーの保存を確認できませんでした。');
+  }
+  if(key&&$('brevoKey'))$('brevoKey').value='';
+  return check;
+}
+async function saveMail(btn){
+  btn.disabled=true;
+  try{const d=await ensureSaved(true);show('メール送信設定済（'+(d.source||'encrypted-d1')+'）','ok')}
+  catch(e){show('メール設定の保存に失敗しました：'+e.message)}
+  finally{btn.disabled=false}
+}
+async function testMail(btn){
+  const to=($('testTo')?.value||'').trim();
+  if(!to){show('テスト送信先を入力してください。');return}
+  btn.disabled=true;
+  try{
+    const saved=await ensureSaved(true);
+    show('APIキー保存確認済み（'+(saved.source||'encrypted-d1')+'）。Brevoへ送信中…','ok');
+    const d=await api('/api/admin/email-test',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to})});
+    show(eventText(d),!!d.deliveryVerified);
+  }catch(e){show('認証メール処理に失敗しました：'+e.message)}
+  finally{btn.disabled=false}
+}
+function mark(){
+  if(!$('brevoKey')||$('staticMailFixR18'))return;
+  const actions=$('testMail')?.closest('.actions');if(!actions)return;
+  const n=document.createElement('div');n.id='staticMailFixR18';n.className='note';n.style.marginTop='10px';n.style.fontWeight='700';
+  n.textContent='MAIL FIX r18｜APIキー保存確認後にBrevo送信します';
+  actions.insertAdjacentElement('afterend',n);
+}
+document.addEventListener('click',e=>{
+  const btn=e.target?.closest?.('#saveMail,#testMail');if(!btn)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  if(btn.id==='saveMail')saveMail(btn);else testMail(btn);
+},true);
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mark,{once:true});else mark();
+setTimeout(mark,100);
+})();
