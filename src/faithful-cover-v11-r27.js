@@ -53,7 +53,7 @@ const REEDIT_NO_RELOAD=`<script>
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.3 — email first, then choose first-time or re-edit */
+/* AUTHOR CLARITY r27.4 — email first, guide next, mode choices lower */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -101,7 +101,7 @@ body.rpp-author-r5 #auth #rppEmailFirstHint{
   font-size:12px!important;
   line-height:1.65!important
 }
-body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:10px!important}
+body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:12px!important;margin-bottom:10px!important}
 @media(max-width:560px){
   body.rpp-author-r5 .wrap{padding-top:8px!important}
   body.rpp-author-r5 #auth{margin-top:0!important}
@@ -110,7 +110,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:1
 <script>
 (()=>{
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-3';
+    document.documentElement.dataset.rppAuthorClarity='r27-4';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
@@ -131,8 +131,9 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:1
         hint.textContent='初回登録・再編集のどちらも、まずメールアドレスを入力してください。';
       }
       emailField.insertAdjacentElement('afterend',hint);
-      if(tabs)hint.insertAdjacentElement('afterend',tabs);
-      if(guide&&tabs)tabs.insertAdjacentElement('afterend',guide);
+      if(guide)hint.insertAdjacentElement('afterend',guide);
+      if(tabs&&guide)guide.insertAdjacentElement('afterend',tabs);
+      else if(tabs)hint.insertAdjacentElement('afterend',tabs);
     }
   };
   const run=()=>{apply();setTimeout(apply,120);setTimeout(apply,500)};
@@ -144,7 +145,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:8px!important;margin-bottom:1
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-3')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-4')}})
     .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
