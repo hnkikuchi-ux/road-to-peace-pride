@@ -75,7 +75,8 @@ try:
     otp2=request_preview_otp(d,w,email)
     verify_email_otp(d,w,otp2)
     w.until(EC.visibility_of_element_located((By.ID,'editor')))
-    ok(not d.find_element(By.ID,'rppCodeCheckpoint').is_displayed(),'returning email authentication does not replace the saved edit code')
+    checkpoints=d.find_elements(By.ID,'rppCodeCheckpoint')
+    ok(not checkpoints or not checkpoints[0].is_displayed(),'returning email authentication does not replace the saved edit code')
     w.until(lambda x:x.find_element(By.ID,'title').get_attribute('value')=='希望をつなぐために')
     ok(True,'existing manuscript opens automatically after returning email authentication')
 
