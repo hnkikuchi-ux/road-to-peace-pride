@@ -94,7 +94,7 @@ body.rpp-author-r5 #rppSubmitSuccessR28 span{font-size:12px;color:#e8e0c9}
   }
 
   function install(){
-    document.documentElement.dataset.rppReeditFix='r28-2';
+    document.documentElement.dataset.rppReeditFix='r28';
     const box=document.getElementById('rppEditLogin'),code=document.getElementById('rppEditCode');if(!box||!code)return;
     box.classList.remove('hidden');box.setAttribute('aria-hidden','false');
     let field=document.getElementById('rppEditEmailField');
@@ -163,7 +163,7 @@ const SUBMIT_CONFIRM=`<script>
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit-fix','r28-2');el.setAttribute('data-rpp-submission-ux','r28-2')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit-fix','r28');el.setAttribute('data-rpp-submission-ux','r28-2')}})
     .on('body',{element(el){el.append(REEDIT_FIX,{html:true});el.append(SUBMIT_CONFIRM,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
