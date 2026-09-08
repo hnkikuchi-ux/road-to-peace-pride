@@ -30,6 +30,11 @@ async function storeOtpAsEditCode(env,email,code){
   await env.DB.prepare('INSERT INTO rpp_edit_codes(email,code_hash,salt,attempts,locked_until,created_at,updated_at) VALUES(?,?,?,0,NULL,?,?) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,salt=excluded.salt,attempts=0,locked_until=NULL,updated_at=excluded.updated_at').bind(email,hash,salt,now,now).run();
   return normalized;
 }
+async function hasEditCode(env,email){
+  await ensureEditSchema(env);
+  const row=await env.DB.prepare('SELECT email FROM rpp_edit_codes WHERE email=?').bind(email).first().catch(()=>null);
+  return Boolean(row?.email);
+}
 async function tableExists(env,name){
   const row=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(name).first().catch(()=>null);
   return Boolean(row?.name);
@@ -69,8 +74,13 @@ async function verifyOneCode(request,env,ctx){
   const email=cleanEmail(data.email||payload.email),code=digits(payload.code);
   if(/^\S+@\S+\.\S+$/.test(email)&&code.length===6){
     try{
-      await storeOtpAsEditCode(env,email,code);
-      data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=true;data.editCodeCreated=true;data.editCodeReset=Boolean(payload.resetEditCode===true);
+      const existing=await hasEditCode(env,email),reset=Boolean(payload.resetEditCode===true);
+      if(!existing||reset){
+        await storeOtpAsEditCode(env,email,code);
+        data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=true;data.editCodeCreated=true;data.editCodeReset=reset;
+      }else{
+        data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=false;data.editCodeCreated=false;data.editCodeReset=false;
+      }
     }catch(e){console.error('r26 one-code persistence failed',e);return json({error:'6桁コードを再編集用として保存できませんでした。もう一度認証してください。'},500)}
   }
   if(email){
