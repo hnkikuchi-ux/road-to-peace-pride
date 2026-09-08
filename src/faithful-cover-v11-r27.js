@@ -59,7 +59,7 @@ const REEDIT_NO_RELOAD=`<script>
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.8 — recognition guide grouped before mode choices */
+/* AUTHOR CLARITY r27.9 — simple auth then automatic new/edit routing */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -76,7 +76,7 @@ body.rpp-author-r5 #auth .rpp-author-guide{
   background:linear-gradient(90deg,#fff4d2,#fffaf0)!important;
   border-color:#c69b3c!important;
   margin-top:14px!important;
-  margin-bottom:28px!important
+  margin-bottom:18px!important
 }
 body.rpp-author-r5 #auth .rpp-author-guide b{color:#76520f!important;opacity:1!important}
 body.rpp-author-r5 #auth input:not([type="checkbox"]){
@@ -86,20 +86,13 @@ body.rpp-author-r5 #auth input:not([type="checkbox"]){
 body.rpp-author-r5 #auth input::placeholder{
   color:#747a82!important;-webkit-text-fill-color:#747a82!important;opacity:1!important
 }
-body.rpp-author-r5 #auth .rpp-auth-tab,
-body.rpp-author-r5 #auth #rppEditTab{
-  color:#4a4338!important;-webkit-text-fill-color:#4a4338!important;opacity:1!important
-}
-body.rpp-author-r5 #auth .rpp-auth-tab.active,
-body.rpp-author-r5 #auth #rppFirstTab.active{
-  color:#1b160c!important;-webkit-text-fill-color:#1b160c!important;opacity:1!important
-}
+body.rpp-author-r5 #auth .rpp-auth-tabs,
+body.rpp-author-r5 #auth #rppEditLogin{display:none!important}
 body.rpp-author-r5 #auth button:disabled{
   opacity:.62!important;color:#665e50!important;-webkit-text-fill-color:#665e50!important
 }
 body.rpp-author-r5 #auth #send,
-body.rpp-author-r5 #auth #verify,
-body.rpp-author-r5 #auth #rppEditLoginBtn{
+body.rpp-author-r5 #auth #verify{
   color:#1c160c!important;-webkit-text-fill-color:#1c160c!important
 }
 body.rpp-author-r5 #auth > .note:first-of-type{
@@ -108,19 +101,13 @@ body.rpp-author-r5 #auth > .note:first-of-type{
   font-size:12px!important;
   line-height:1.7!important
 }
-body.rpp-author-r5 #auth #authmsg,
-body.rpp-author-r5 #auth #rppEditMsg{min-height:20px!important}
-body.rpp-author-r5 #auth .rpp-auth-tabs{
-  margin-top:0!important;
-  margin-bottom:10px!important;
-  padding-top:20px!important;
-  border-top:1px solid rgba(138,103,27,.18)!important
-}
+body.rpp-author-r5 #auth #authmsg{min-height:20px!important}
+body.rpp-author-r5 #submit,
+body.rpp-author-r5 #submitPreview{touch-action:manipulation}
 @media(max-width:560px){
   body.rpp-author-r5 .wrap{padding-top:8px!important}
   body.rpp-author-r5 #auth{margin-top:0!important}
-  body.rpp-author-r5 #auth .rpp-author-guide{margin-bottom:24px!important}
-  body.rpp-author-r5 #auth .rpp-auth-tabs{padding-top:18px!important}
+  body.rpp-author-r5 #auth .rpp-author-guide{margin-bottom:16px!important}
 }
 </style>
 <script>
@@ -151,7 +138,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{
     el.addEventListener('keydown',e=>{if(e.key==='Enter'&&el.value.replace(/\\D/g,'').length===6){e.preventDefault();document.getElementById(submitId)?.click()}});
   };
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-8';
+    document.documentElement.dataset.rppAuthorClarity='r27-9';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
@@ -174,21 +161,14 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{
     const authmsg=document.getElementById('authmsg');
     const deadline=document.getElementById('deadlineAuth');
 
+    if(tabs){tabs.classList.add('hidden');tabs.setAttribute('aria-hidden','true')}
+    if(editBox){editBox.classList.add('hidden');editBox.setAttribute('aria-hidden','true')}
     if(email){email.setAttribute('autocomplete','email');email.setAttribute('aria-describedby','rppRecognitionHelp')}
     if(send){send.textContent='認識コードを送信';send.setAttribute('type','button')}
     if(otp){otp.placeholder='6桁の認識コード';otp.setAttribute('aria-label','6桁認識コード');const label=otp.closest('.field')?.querySelector('label');if(label)label.textContent='6桁認識コード';numericCodeInput(otp,'verify')}
     const verify=document.getElementById('verify');if(verify)verify.setAttribute('type','button');
     if(authmsg){authmsg.setAttribute('role','status');authmsg.setAttribute('aria-live','polite')}
     if(guide)guide.innerHTML='<b>🔑 6桁の認識コードについて</b><br>初回のメール認証で届く6桁の認識コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。';
-
-    const edit=document.getElementById('rppEditCode');
-    if(edit){
-      edit.placeholder='6桁の認識コード';edit.setAttribute('aria-label','6桁認識コード');numericCodeInput(edit,'rppEditLoginBtn');
-      const label=edit.closest('.field')?.querySelector('label');if(label)label.textContent='6桁認識コード';
-    }
-    const editBtn=document.getElementById('rppEditLoginBtn');if(editBtn){editBtn.textContent='認識コードで編集する';editBtn.setAttribute('type','button')}
-    const editMsg=document.getElementById('rppEditMsg');if(editMsg){editMsg.setAttribute('role','status');editMsg.setAttribute('aria-live','polite')}
-    const editNote=document.querySelector('#rppEditLogin .rpp-code-note');if(editNote)editNote.textContent='初回の本人確認で使用した6桁の認識コードを入力してください。紛失した場合は、メールで新しい認識コードを再発行できます。';
 
     const card=document.getElementById('rppEditCodeCard');
     if(card){
@@ -208,7 +188,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{
       normalizeTree(cp);
     }
 
-    const ordered=[emailField,note,send,guide,otpbox,tabs,editBox,deadline,authmsg].filter(Boolean);
+    const ordered=[emailField,note,send,guide,otpbox,deadline,authmsg].filter(Boolean);
     let cursor=h1;
     for(const el of ordered){
       if(el===h1)continue;
@@ -232,22 +212,77 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{
     };
   }
   document.addEventListener('click',e=>{
-    const target=e.target?.closest?.('#send,#verify,#rppEditTab,#rppFirstTab,#rppEditLoginBtn,#rppCheckpointContinue');
+    const target=e.target?.closest?.('#send,#verify,#rppCheckpointContinue');
     if(!target)return;
     schedule();
     if(target.id==='send'){
       [180,420,800].forEach(ms=>setTimeout(()=>{const box=document.getElementById('otpbox'),input=document.getElementById('otp');if(box&&input&&!box.classList.contains('hidden')&&document.activeElement!==input)input.focus({preventScroll:true})},ms));
     }
-    if(target.id==='rppEditTab')setTimeout(()=>document.getElementById('rppEditCode')?.focus({preventScroll:true}),80);
   },true);
+})();
+</script>`;
+
+const SUBMISSION_FIX=`<script>
+(()=>{
+  const text=id=>String(document.getElementById(id)?.value||'').trim();
+  const setStatus=(message,cls='')=>{
+    const el=document.getElementById('savemsg');if(!el)return;
+    el.textContent=message;el.className='note '+cls;
+  };
+  const deadlineClosed=()=>document.getElementById('deadlineEditor')?.classList.contains('closed');
+  const repairControls=()=>{
+    document.documentElement.dataset.rppSubmitFix='r27-9';
+    const area=document.getElementById('formArea');
+    if(area&&!deadlineClosed())area.classList.remove('muted');
+    for(const id of ['submit','submitPreview','save','previewBtn']){
+      const b=document.getElementById(id);if(b&&!deadlineClosed()){b.disabled=false;b.setAttribute('type','button')}
+    }
+  };
+  const validate=()=>{
+    const name=text('name'),title=text('title'),body=text('body');
+    if(!name||!title||!body){setStatus('氏名・題名・本文を入力してください。','warn');return false}
+    if([...title].length>40){setStatus('題名は40字以内にしてください。','warn');return false}
+    const confirm=document.getElementById('confirm');
+    if(confirm&&confirm.offsetParent!==null&&!confirm.checked){setStatus('掲載内容の確認にチェックしてください。','warn');return false}
+    return true;
+  };
+  const submit=async(fromPreview)=>{
+    repairControls();
+    if(deadlineClosed()){setStatus('締切後のため提出できません。','warn');return}
+    if(!validate())return;
+    try{
+      if(fromPreview)document.getElementById('storyPreview')?.classList.add('hidden');
+      if(typeof saveServer!=='function')throw new Error('提出処理を読み込めませんでした。ページを更新してもう一度お試しください。');
+      const ok=await saveServer('submitted');
+      if(!ok)return;
+      const badge=document.getElementById('statusBadge');if(badge)badge.textContent='提出済';
+    }catch(e){setStatus(e?.message||'提出できませんでした。もう一度お試しください。','warn')}
+  };
+  document.addEventListener('click',e=>{
+    const btn=e.target?.closest?.('#submit,#submitPreview');if(!btn)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    submit(btn.id==='submitPreview');
+  },true);
+  for(const id of ['name','title','body']){
+    const el=document.getElementById(id);if(!el||el.dataset.rppSubmitInput==='1')continue;
+    el.dataset.rppSubmitInput='1';
+    el.addEventListener('input',()=>{
+      const msg=document.getElementById('savemsg');
+      if(msg&&msg.textContent.includes('氏名・題名・本文を入力してください'))msg.textContent='';
+      repairControls();
+    });
+  }
+  const run=()=>{repairControls();setTimeout(repairControls,150);setTimeout(repairControls,600)};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+  addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
 })();
 </script>`;
 
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-8')}})
-    .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-9');el.setAttribute('data-rpp-submit-fix','r27-9')}})
+    .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true});el.append(SUBMISSION_FIX,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
 
