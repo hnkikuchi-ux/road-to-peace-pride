@@ -53,7 +53,7 @@ const REEDIT_NO_RELOAD=`<script>
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.4 — email first, guide next, mode choices lower */
+/* AUTHOR CLARITY r27.5 — authenticate first; mode choices are lower */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -69,7 +69,7 @@ body.rpp-author-r5 #auth .rpp-author-guide{
   color:#4b3c20!important;opacity:1!important;
   background:linear-gradient(90deg,#fff4d2,#fffaf0)!important;
   border-color:#c69b3c!important;
-  margin-top:10px!important
+  margin-top:12px!important
 }
 body.rpp-author-r5 #auth .rpp-author-guide b{color:#76520f!important;opacity:1!important}
 body.rpp-author-r5 #auth input:not([type="checkbox"]){
@@ -101,7 +101,7 @@ body.rpp-author-r5 #auth #rppEmailFirstHint{
   font-size:12px!important;
   line-height:1.65!important
 }
-body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:12px!important;margin-bottom:10px!important}
+body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:10px!important}
 @media(max-width:560px){
   body.rpp-author-r5 .wrap{padding-top:8px!important}
   body.rpp-author-r5 #auth{margin-top:0!important}
@@ -110,30 +110,39 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:12px!important;margin-bottom:
 <script>
 (()=>{
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-4';
+    document.documentElement.dataset.rppAuthorClarity='r27-5';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
     if(h1&&h1.textContent!=='私の記録を綴る')h1.textContent='私の記録を綴る';
     if(!auth||!h1)return;
 
+    const note=auth.querySelector(':scope > .note');
+    if(note)note.textContent='初めて原稿を書く方は、メールに届く6桁コードで本人確認します。提出済みの原稿を編集する方は、下の「以前の原稿を編集する」から進めます。';
+
     const email=document.getElementById('email');
     const emailField=email?.closest?.('.field')||email?.parentElement;
+    const send=document.getElementById('send');
+    const otpbox=document.getElementById('otpbox');
     const tabs=auth.querySelector('.rpp-auth-tabs');
     const guide=auth.querySelector('.rpp-author-guide');
+    const editBox=document.getElementById('rppEditLogin');
+    const authmsg=document.getElementById('authmsg');
+    const deadline=document.getElementById('deadlineAuth');
 
-    if(emailField&&emailField.parentElement===auth){
-      h1.insertAdjacentElement('afterend',emailField);
-      let hint=document.getElementById('rppEmailFirstHint');
-      if(!hint){
-        hint=document.createElement('div');
-        hint.id='rppEmailFirstHint';
-        hint.textContent='初回登録・再編集のどちらも、まずメールアドレスを入力してください。';
-      }
-      emailField.insertAdjacentElement('afterend',hint);
-      if(guide)hint.insertAdjacentElement('afterend',guide);
-      if(tabs&&guide)guide.insertAdjacentElement('afterend',tabs);
-      else if(tabs)hint.insertAdjacentElement('afterend',tabs);
+    let hint=document.getElementById('rppEmailFirstHint');
+    if(!hint){
+      hint=document.createElement('div');
+      hint.id='rppEmailFirstHint';
+      hint.textContent='まずメールアドレスを入力し、本人確認を行ってください。';
+    }
+
+    const ordered=[note,emailField,hint,send,otpbox,tabs,guide,editBox,deadline,authmsg].filter(Boolean);
+    let cursor=h1;
+    for(const el of ordered){
+      if(el===h1)continue;
+      cursor.insertAdjacentElement('afterend',el);
+      cursor=el;
     }
   };
   const run=()=>{apply();setTimeout(apply,120);setTimeout(apply,500)};
@@ -145,7 +154,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:12px!important;margin-bottom:
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-4')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-5')}})
     .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
