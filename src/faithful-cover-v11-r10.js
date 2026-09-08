@@ -8,30 +8,17 @@ function json(data,status=200){return new Response(JSON.stringify(data),{status,
 function cookieMap(request){const out={};for(const p of (request.headers.get('cookie')||'').split(';')){const i=p.indexOf('=');if(i>0)out[p.slice(0,i).trim()]=decodeURIComponent(p.slice(i+1).trim())}return out}
 async function sha256(v){const b=await crypto.subtle.digest('SHA-256',enc.encode(String(v)));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
 async function ensureSafety(env){
-  if(!safetyReady)safetyReady=env.DB.exec(`
-    CREATE TABLE IF NOT EXISTS rpp_story_revisions(
-      id TEXT PRIMARY KEY,
-      story_id TEXT NOT NULL,
-      author_email TEXT NOT NULL,
-      record_date TEXT,
-      soku TEXT,
-      bunku TEXT,
-      honbu TEXT,
-      shibu TEXT,
-      category TEXT,
-      name TEXT,
-      title TEXT,
-      body TEXT,
-      photo_key TEXT,
-      status TEXT,
-      snapshot_at TEXT NOT NULL,
-      reason TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_rpp_story_revisions_story ON rpp_story_revisions(story_id,snapshot_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_rpp_story_revisions_email ON rpp_story_revisions(author_email,snapshot_at DESC);
-  `);
+  if(!safetyReady){
+    safetyReady=(async()=>{
+      await env.DB.prepare('CREATE TABLE IF NOT EXISTS rpp_story_revisions(id TEXT PRIMARY KEY,story_id TEXT NOT NULL,author_email TEXT NOT NULL,record_date TEXT,soku TEXT,bunku TEXT,honbu TEXT,shibu TEXT,category TEXT,name TEXT,title TEXT,body TEXT,photo_key TEXT,status TEXT,snapshot_at TEXT NOT NULL,reason TEXT NOT NULL)').run();
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_rpp_story_revisions_story ON rpp_story_revisions(story_id,snapshot_at DESC)').run();
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_rpp_story_revisions_email ON rpp_story_revisions(author_email,snapshot_at DESC)').run();
+      return true;
+    })().catch(e=>{safetyReady=null;throw e});
+  }
   return safetyReady;
 }
+async function safetyAvailable(env){try{await ensureSafety(env);return true}catch(e){console.error('r10 revision safety setup failed; continuing primary save',e);return false}}
 async function productionMode(env){
   const row=await env.DB.prepare("SELECT value FROM rpp_settings WHERE key='site_mode'").first().catch(()=>null);
   return String(row?.value||'preview')==='production';
@@ -75,45 +62,57 @@ async function hardenedFetch(request,env,ctx){
 
   if(path==='/api/me/story'&&request.method==='PUT'){
     if(!await productionMode(env))return app.fetch(request,env,ctx);
-    await ensureSafety(env);
+    const safety=await safetyAvailable(env);
     let b;try{b=await request.clone().json()}catch{return json({error:'入力内容を確認してください。'},400)}
     const soku=String(b.soku||'').trim(),date=String(b.record_date||'').trim(),status=b.status==='submitted'?'submitted':'draft';
     if(soku&&!GROUPS.includes(soku))return json({error:'組織は一覧から選択してください。'},400);
     if(date&&!validDate(date))return json({error:'日付を確認してください。'},400);
     if(status==='submitted'&&!GROUPS.includes(soku))return json({error:'掲載する組織を選択してください。'},400);
     if(status==='submitted'&&!validDate(date))return json({error:'記載日を入力してください。'},400);
-    const ses=await session(env,request,'author','rpp_author');
-    const old=ses?await env.DB.prepare('SELECT * FROM rpp_stories WHERE author_email=?').bind(ses.subject).first():null;
-    const take=await shouldSnapshot(env,old,{...b,status});
+    let old=null,take=false;
+    if(safety){
+      try{
+        const ses=await session(env,request,'author','rpp_author');
+        old=ses?await env.DB.prepare('SELECT * FROM rpp_stories WHERE author_email=?').bind(ses.subject).first():null;
+        take=await shouldSnapshot(env,old,{...b,status});
+      }catch(e){console.error('r10 revision pre-save check failed; continuing primary save',e);old=null;take=false}
+    }
     const response=await app.fetch(request,env,ctx);
-    if(response.ok&&take)await snapshot(env,old,status==='submitted'?'before-submit-or-edit':'autosave-checkpoint').catch(console.error);
+    if(response.ok&&take)await snapshot(env,old,status==='submitted'?'before-submit-or-edit':'autosave-checkpoint').catch(e=>console.error('r10 revision snapshot failed after primary save',e));
     return response;
   }
 
   if(path==='/api/me/photo'&&request.method==='POST'){
     if(!await productionMode(env))return app.fetch(request,env,ctx);
-    await ensureSafety(env);
+    const safety=await safetyAvailable(env);
     const type=(request.headers.get('content-type')||'').toLowerCase();
     if(!type.startsWith('image/jpeg'))return json({error:'写真はJPEG形式で保存してください。'},400);
     const bytes=await request.arrayBuffer();
     if(bytes.byteLength>3*1024*1024)return json({error:'写真は3MB以下にしてください。'},413);
     const u=new Uint8Array(bytes);if(u.length<3||u[0]!==0xff||u[1]!==0xd8||u[2]!==0xff)return json({error:'画像データを確認してください。'},400);
-    const ses=await session(env,request,'author','rpp_author');
-    const old=ses?await env.DB.prepare('SELECT * FROM rpp_stories WHERE author_email=?').bind(ses.subject).first():null;
-    let archive=null;if(old?.photo_key)archive=await archiveCurrentPhoto(env,old).catch(()=>null);
+    let old=null,archive=null;
+    if(safety){
+      try{
+        const ses=await session(env,request,'author','rpp_author');
+        old=ses?await env.DB.prepare('SELECT * FROM rpp_stories WHERE author_email=?').bind(ses.subject).first():null;
+        if(old?.photo_key)archive=await archiveCurrentPhoto(env,old).catch(()=>null);
+      }catch(e){console.error('r10 photo revision pre-save check failed; continuing primary photo save',e);old=null;archive=null}
+    }
     const next=new Request(request.url,{method:'POST',headers:request.headers,body:bytes});
     const response=await app.fetch(next,env,ctx);
-    if(response.ok&&old)await snapshot(env,old,'before-photo-change',archive||old.photo_key).catch(console.error);
+    if(response.ok&&old)await snapshot(env,old,'before-photo-change',archive||old.photo_key).catch(e=>console.error('r10 photo revision snapshot failed after primary save',e));
     return response;
   }
 
   if(path==='/api/admin/export.json'&&request.method==='GET'){
     const response=await app.fetch(request,env,ctx);if(!response.ok)return response;
-    await ensureSafety(env);
-    const data=await response.json();
-    const revisions=(await env.DB.prepare('SELECT * FROM rpp_story_revisions ORDER BY snapshot_at DESC').all()).results||[];
-    data.revisions=revisions;data.revision_count=revisions.length;data.backup_schema='rpp-backup-v2';
-    return new Response(JSON.stringify(data,null,2),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="road-to-peace-pride-backup-v2.json"','Cache-Control':'no-store'}});
+    if(!await safetyAvailable(env))return response;
+    try{
+      const data=await response.json();
+      const revisions=(await env.DB.prepare('SELECT * FROM rpp_story_revisions ORDER BY snapshot_at DESC').all()).results||[];
+      data.revisions=revisions;data.revision_count=revisions.length;data.backup_schema='rpp-backup-v2';
+      return new Response(JSON.stringify(data,null,2),{status:200,headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':'attachment; filename="road-to-peace-pride-backup-v2.json"','Cache-Control':'no-store'}});
+    }catch(e){console.error('r10 revision export enrichment failed; returning base export',e);return response}
   }
 
   return app.fetch(request,env,ctx);
