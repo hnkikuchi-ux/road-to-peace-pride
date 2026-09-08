@@ -30,10 +30,15 @@ async function storeOtpAsEditCode(env,email,code){
   await env.DB.prepare('INSERT INTO rpp_edit_codes(email,code_hash,salt,attempts,locked_until,created_at,updated_at) VALUES(?,?,?,0,NULL,?,?) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,salt=excluded.salt,attempts=0,locked_until=NULL,updated_at=excluded.updated_at').bind(email,hash,salt,now,now).run();
   return normalized;
 }
-async function hasEditCode(env,email){
+async function getEditCodeRow(env,email){
   await ensureEditSchema(env);
-  const row=await env.DB.prepare('SELECT email FROM rpp_edit_codes WHERE email=?').bind(email).first().catch(()=>null);
-  return Boolean(row?.email);
+  return env.DB.prepare('SELECT email,code_hash,salt,attempts,locked_until,created_at,updated_at FROM rpp_edit_codes WHERE email=?').bind(email).first().catch(()=>null);
+}
+async function restoreEditCodeRow(env,row){
+  if(!row?.email||!row?.code_hash||!row?.salt)return;
+  await ensureEditSchema(env);
+  const now=new Date().toISOString(),created=String(row.created_at||now);
+  await env.DB.prepare('INSERT INTO rpp_edit_codes(email,code_hash,salt,attempts,locked_until,created_at,updated_at) VALUES(?,?,?,0,NULL,?,?) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,salt=excluded.salt,attempts=0,locked_until=NULL,created_at=excluded.created_at,updated_at=excluded.updated_at').bind(row.email,row.code_hash,row.salt,created,now).run();
 }
 async function tableExists(env,name){
   const row=await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").bind(name).first().catch(()=>null);
@@ -69,17 +74,27 @@ async function resetAuthor(env,email){
 async function verifyOneCode(request,env,ctx){
   await ensureResetSchema(env);
   let payload={};try{payload=await request.clone().json()}catch{}
+  const payloadEmail=cleanEmail(payload.email),reset=Boolean(payload.resetEditCode===true);
+  let previousEdit=null;
+  if(/^\S+@\S+\.\S+$/.test(payloadEmail)&&!reset){
+    try{previousEdit=await getEditCodeRow(env,payloadEmail)}catch(e){console.error('r26 edit-code precheck failed',e)}
+  }
+
   const response=await baseApp.fetch(request,env,ctx);if(!response.ok)return response;
   let data={};try{data=await response.clone().json()}catch{return response}
-  const email=cleanEmail(data.email||payload.email),code=digits(payload.code);
+  const email=cleanEmail(data.email||payloadEmail),code=digits(payload.code);
   if(/^\S+@\S+\.\S+$/.test(email)&&code.length===6){
     try{
-      const existing=await hasEditCode(env,email),reset=Boolean(payload.resetEditCode===true);
-      if(!existing||reset){
+      if(previousEdit&&cleanEmail(previousEdit.email)===email&&!reset){
+        // Lower layers may rotate the edit code during email authentication.
+        // Restore the code that the author originally saved, while clearing a lockout
+        // because this email challenge has just been completed successfully.
+        await restoreEditCodeRow(env,previousEdit);
+        delete data.editCode;
+        data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=false;data.editCodeCreated=false;data.editCodeReset=false;
+      }else{
         await storeOtpAsEditCode(env,email,code);
         data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=true;data.editCodeCreated=true;data.editCodeReset=reset;
-      }else{
-        data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=false;data.editCodeCreated=false;data.editCodeReset=false;
       }
     }catch(e){console.error('r26 one-code persistence failed',e);return json({error:'6桁コードを再編集用として保存できませんでした。もう一度認証してください。'},500)}
   }
