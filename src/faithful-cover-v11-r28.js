@@ -122,18 +122,45 @@ body.rpp-author-r5 #rppSubmitSuccessR28 span{font-size:12px;color:#e8e0c9}
 
 const SUBMIT_CONFIRM=`<script>
 (()=>{
+  let submitIntentAt=0,submitIntentWasEdit=false;
   function ensureSuccess(){
     const submit=document.getElementById('submit');if(!submit)return null;
     let box=document.getElementById('rppSubmitSuccessR28');
     if(!box){box=document.createElement('div');box.id='rppSubmitSuccessR28';box.setAttribute('role','status');box.setAttribute('aria-live','assertive');box.setAttribute('tabindex','-1');submit.insertAdjacentElement('afterend',box)}
     return box;
   }
+  function hideSuccess(){const box=document.getElementById('rppSubmitSuccessR28');if(box)box.classList.remove('rpp-show')}
+  function normalizeSaveLabel(){
+    const save=document.getElementById('save');if(!save)return;
+    if(save.textContent.includes('提出済みのまま'))save.textContent='変更内容を保存';
+    if(!save.dataset.r28LabelWatch){
+      save.dataset.r28LabelWatch='1';
+      new MutationObserver(()=>{if(save.textContent.includes('提出済みのまま'))save.textContent='変更内容を保存'}).observe(save,{subtree:true,childList:true,characterData:true});
+    }
+  }
+  function installIntentHandlers(){
+    if(document.documentElement.dataset.r28SubmitIntentBound==='1')return;
+    document.documentElement.dataset.r28SubmitIntentBound='1';
+    document.addEventListener('click',e=>{
+      if(e.target?.closest?.('#submit')){
+        submitIntentAt=Date.now();
+        submitIntentWasEdit=String(document.getElementById('statusBadge')?.textContent||'').includes('提出済');
+        hideSuccess();
+      }else if(e.target?.closest?.('#save')){
+        submitIntentAt=0;
+        hideSuccess();
+        setTimeout(normalizeSaveLabel,0);
+      }
+    },true);
+    const editor=document.getElementById('editor');
+    if(editor&&!editor.dataset.r28DirtyWatch){editor.dataset.r28DirtyWatch='1';editor.addEventListener('input',hideSuccess,true)}
+  }
   function cleanLabels(){
-    document.documentElement.dataset.rppSubmissionUx='r28-2';
-    const save=document.getElementById('save');if(save&&save.textContent.includes('提出済みのまま'))save.textContent='変更内容を保存';
+    document.documentElement.dataset.rppSubmissionUx='r28-3';
+    normalizeSaveLabel();
     const auth=document.getElementById('auth');
     if(auth){const walker=document.createTreeWalker(auth,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(n=>{n.nodeValue=String(n.nodeValue||'').replace(/承認コード/g,'認識コード')})}
-    ensureSuccess();
+    ensureSuccess();installIntentHandlers();
   }
   function showSuccess(isEdit){
     const box=ensureSuccess();if(!box)return;
@@ -146,15 +173,20 @@ const SUBMIT_CONFIRM=`<script>
   window.fetch=async(input,init)=>{
     const url=typeof input==='string'?input:(input?.url||'');
     const method=String(init?.method||'GET').toUpperCase();
-    let submitted=false,isEdit=String(document.getElementById('statusBadge')?.textContent||'').includes('提出済');
+    let submitted=false;
     if(url.includes('/api/me/story')&&method!=='GET'){
       try{const body=typeof init?.body==='string'?JSON.parse(init.body):null;submitted=body?.status==='submitted'}catch{}
     }
     const response=await previousFetch(input,init);
-    if(submitted&&response.ok)setTimeout(()=>showSuccess(isEdit),80);
+    const hasFreshSubmitIntent=submitIntentAt>0&&(Date.now()-submitIntentAt)<15000;
+    if(submitted&&response.ok&&hasFreshSubmitIntent){
+      const wasEdit=submitIntentWasEdit;
+      submitIntentAt=0;
+      setTimeout(()=>showSuccess(wasEdit),80);
+    }
     return response;
   };
-  const run=()=>{cleanLabels();setTimeout(cleanLabels,150);setTimeout(cleanLabels,650);setTimeout(cleanLabels,1600)};
+  const run=()=>{cleanLabels();setTimeout(cleanLabels,150);setTimeout(cleanLabels,650);setTimeout(cleanLabels,1600);setTimeout(cleanLabels,3000)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)cleanLabels()});
 })();
@@ -163,7 +195,7 @@ const SUBMIT_CONFIRM=`<script>
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit-fix','r28');el.setAttribute('data-rpp-submission-ux','r28-2')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit-fix','r28');el.setAttribute('data-rpp-submission-ux','r28-3')}})
     .on('body',{element(el){el.append(REEDIT_FIX,{html:true});el.append(SUBMIT_CONFIRM,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
