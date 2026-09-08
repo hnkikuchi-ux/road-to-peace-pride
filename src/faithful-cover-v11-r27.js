@@ -59,7 +59,7 @@ const REEDIT_NO_RELOAD=`<script>
 </script>`;
 
 const AUTHOR_CLARITY=`<style id="rppAuthorClarityR27">
-/* AUTHOR CLARITY r27.7 — final recognition-code flow polish */
+/* AUTHOR CLARITY r27.8 — recognition guide grouped before mode choices */
 #rppAuthorHero{display:none!important}
 body.rpp-author-r5 .top{display:none!important}
 body.rpp-author-r5 .wrap{padding-top:10px!important}
@@ -75,7 +75,8 @@ body.rpp-author-r5 #auth .rpp-author-guide{
   color:#4b3c20!important;opacity:1!important;
   background:linear-gradient(90deg,#fff4d2,#fffaf0)!important;
   border-color:#c69b3c!important;
-  margin-top:12px!important
+  margin-top:14px!important;
+  margin-bottom:28px!important
 }
 body.rpp-author-r5 #auth .rpp-author-guide b{color:#76520f!important;opacity:1!important}
 body.rpp-author-r5 #auth input:not([type="checkbox"]){
@@ -109,10 +110,17 @@ body.rpp-author-r5 #auth > .note:first-of-type{
 }
 body.rpp-author-r5 #auth #authmsg,
 body.rpp-author-r5 #auth #rppEditMsg{min-height:20px!important}
-body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:10px!important}
+body.rpp-author-r5 #auth .rpp-auth-tabs{
+  margin-top:0!important;
+  margin-bottom:10px!important;
+  padding-top:20px!important;
+  border-top:1px solid rgba(138,103,27,.18)!important
+}
 @media(max-width:560px){
   body.rpp-author-r5 .wrap{padding-top:8px!important}
   body.rpp-author-r5 #auth{margin-top:0!important}
+  body.rpp-author-r5 #auth .rpp-author-guide{margin-bottom:24px!important}
+  body.rpp-author-r5 #auth .rpp-auth-tabs{padding-top:18px!important}
 }
 </style>
 <script>
@@ -143,7 +151,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:
     el.addEventListener('keydown',e=>{if(e.key==='Enter'&&el.value.replace(/\\D/g,'').length===6){e.preventDefault();document.getElementById(submitId)?.click()}});
   };
   const apply=()=>{
-    document.documentElement.dataset.rppAuthorClarity='r27-7';
+    document.documentElement.dataset.rppAuthorClarity='r27-8';
     document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const auth=document.getElementById('auth');
     const h1=auth?.querySelector('h1');
@@ -171,7 +179,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:
     if(otp){otp.placeholder='6桁の認識コード';otp.setAttribute('aria-label','6桁認識コード');const label=otp.closest('.field')?.querySelector('label');if(label)label.textContent='6桁認識コード';numericCodeInput(otp,'verify')}
     const verify=document.getElementById('verify');if(verify)verify.setAttribute('type','button');
     if(authmsg){authmsg.setAttribute('role','status');authmsg.setAttribute('aria-live','polite')}
-    if(guide)guide.innerHTML='<b>🔑 6桁の認識コードについて</b><br>初回の本人確認で届く6桁の認識コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。';
+    if(guide)guide.innerHTML='<b>🔑 6桁の認識コードについて</b><br>初回のメール認証で届く6桁の認識コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。';
 
     const edit=document.getElementById('rppEditCode');
     if(edit){
@@ -200,7 +208,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:
       normalizeTree(cp);
     }
 
-    const ordered=[emailField,note,send,otpbox,tabs,guide,editBox,deadline,authmsg].filter(Boolean);
+    const ordered=[emailField,note,send,guide,otpbox,tabs,editBox,deadline,authmsg].filter(Boolean);
     let cursor=h1;
     for(const el of ordered){
       if(el===h1)continue;
@@ -238,7 +246,7 @@ body.rpp-author-r5 #auth .rpp-auth-tabs{margin-top:14px!important;margin-bottom:
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-7')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-reedit','r27');el.setAttribute('data-rpp-author-clarity','r27-8')}})
     .on('body',{element(el){el.append(REEDIT_NO_RELOAD,{html:true});el.append(AUTHOR_CLARITY,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
