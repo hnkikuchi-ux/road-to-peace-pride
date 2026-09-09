@@ -157,8 +157,12 @@ const VIEWER_TOOLS=`<style id="rppViewerToolsR30">
     const fire=e=>{const now=Date.now();e?.preventDefault?.();e?.stopPropagation?.();if(now-lastGesture<350)return;lastGesture=now;adjust(delta)};
     btn.addEventListener('pointerup',fire,{passive:false});btn.addEventListener('click',fire,false);
   }
-  function removeFavorite(){el('fav')?.remove()}
-  function run(){removeFavorite();bind('fontDown',-STEP);bind('fontUp',STEP);applySize(currentSize());document.documentElement.dataset.rppViewerTools='r30-fontfix'}
+  function preserveFavoriteAnchor(){
+    const fav=el('fav');if(!fav)return;
+    fav.style.display='none';fav.setAttribute('aria-hidden','true');fav.tabIndex=-1;
+    fav.dataset.r30HiddenFavorite='1';
+  }
+  function run(){preserveFavoriteAnchor();bind('fontDown',-STEP);bind('fontUp',STEP);applySize(currentSize());document.documentElement.dataset.rppViewerTools='r30-fontfix';document.documentElement.dataset.rppReaderFix='favorite-anchor-preserved'}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
 })();
@@ -175,7 +179,7 @@ function injectAuthor(response){
 function injectViewer(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-viewer-tools','r30-fontfix')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-viewer-tools','r30-fontfix');el.setAttribute('data-rpp-reader-fix','favorite-anchor-preserved')}})
     .on('body',{element(el){el.append(VIEWER_TOOLS,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
