@@ -12,18 +12,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Wait for viewer tools deployment
+      - name: Wait for reader fix deployment
         run: |
           base='https://road-to-peace-pride.hn-kikuchi.workers.dev'
           for i in $(seq 1 36); do
-            page="$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "$base/?viewer-tools=${GITHUB_RUN_ID}-$i" || true)"
-            if printf '%s' "$page" | grep -Fq 'data-rpp-viewer-tools="r30-fontfix"'; then
+            page="$(curl -fsSL --max-time 12 -H 'Cache-Control: no-cache' "$base/?reader-fix=${GITHUB_RUN_ID}-$i" || true)"
+            if printf '%s' "$page" | grep -Fq 'data-rpp-reader-fix="favorite-anchor-preserved"'; then
               printf '%s' "$page" | grep -Fq '#reader #fav{display:none!important}'
+              printf '%s' "$page" | grep -Fq "fav.dataset.r30HiddenFavorite='1'"
               printf '%s' "$page" | grep -Fq 'dataset.rppReaderFont'
-              echo 'R30 VIEWER FONT/FAVORITE FIX IS LIVE'
+              echo 'R30 READER OPEN/FONT/FAVORITE FIX IS LIVE'
               exit 0
             fi
             sleep 10
           done
-          echo 'viewer tools marker did not appear in production'
+          echo 'reader fix marker did not appear in production'
           exit 1
