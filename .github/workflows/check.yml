@@ -23,6 +23,7 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r30.js
           node --check src/faithful-cover-v11-r29.js
           node --check src/faithful-cover-v11-r28.js
           node --check src/faithful-cover-v11-r27.js
@@ -37,6 +38,13 @@ jobs:
           node --check src/faithful-cover-v11-r11.js
           node --check src/faithful-cover-v11-r10.js
           python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/full_product_qa_r26.py scripts/scale_300_regression.py
+      - name: Verify r30 author polish
+        run: |
+          grep -Fq "import app from './faithful-cover-v11-r29.js'" src/faithful-cover-v11-r30.js
+          grep -Fq "data-rpp-author-polish','r30'" src/faithful-cover-v11-r30.js
+          grep -Fq "変更内容を再提出する" src/faithful-cover-v11-r30.js
+          grep -Fq "変更内容を保存" src/faithful-cover-v11-r30.js
+          grep -Fq "#editor label" src/faithful-cover-v11-r30.js
       - name: Verify r29 saved-edit and resubmit guard
         run: |
           grep -Fq "import app from './faithful-cover-v11-r28.js'" src/faithful-cover-v11-r29.js
@@ -92,7 +100,7 @@ jobs:
       - name: Verify active build and routing
         run: |
           grep -Fq '2026.09.08-faithful-v11-r27-reedit-stable' public/version.json
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r29.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r29 active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r30.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r30 active')"
       - name: Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
@@ -121,20 +129,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "RPP_BASE_URL=https://road-to-peace-pride.hn-kikuchi.workers.dev" >> "$GITHUB_ENV"
-      - name: Wait for r29 public deployment
+      - name: Wait for r30 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r29=${GITHUB_RUN_ID}-$i" | grep -Fq 'data-rpp-submission-guard="r29"'; then exit 0; fi
+            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r30=${GITHUB_RUN_ID}-$i" | grep -Fq 'data-rpp-author-polish="r30"'; then exit 0; fi
             sleep 10
           done
           exit 1
-      - name: Verify r29 is live
+      - name: Verify r30 is live
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r29=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-submission-guard="r29"'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r29=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-reedit-fix="r28"'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/?r29=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-viewer-cleanup="r29"'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r29=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/?r29=${GITHUB_RUN_ID}" | grep -Fq 'data-r25-stars="periodic"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r30=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-author-polish="r30"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r30=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-submission-guard="r29"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r30=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-reedit-fix="r28"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/?r30=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-viewer-cleanup="r29"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/admin.html?r30=${GITHUB_RUN_ID}" | grep -Fq '投稿者登録をリセット'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/?r30=${GITHUB_RUN_ID}" | grep -Fq 'data-r25-stars="periodic"'
       - run: bash scripts/smoke-live.sh
 
   production-300-read-burst:
@@ -190,14 +199,15 @@ jobs:
           base=os.environ['RPP_BASE_URL'];o=Options();o.add_argument('--headless=new');o.add_argument('--no-sandbox');o.add_argument('--disable-dev-shm-usage');o.add_argument('--lang=ja-JP');o.add_argument('--window-size=390,844')
           d=webdriver.Chrome(options=o);w=WebDriverWait(d,20)
           try:
-              d.get(base+'/author.html?prod-browser-r29=1');w.until(EC.visibility_of_element_located((By.ID,'auth')))
+              d.get(base+'/author.html?prod-browser-r30=1');w.until(EC.visibility_of_element_located((By.ID,'auth')))
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-mobile-compat')=='r25'
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-reedit-fix')=='r28'
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-submission-guard')=='r29'
+              assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-author-polish')=='r30'
               assert d.find_element(By.ID,'rppEditEmail').is_displayed()
               d.find_element(By.ID,'send').click();w.until(lambda x:'メールアドレスを入力してください' in x.find_element(By.ID,'authmsg').text)
               assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
-              d.save_screenshot('artifacts/screens/production-author-r29-chrome.png');print('R29 CHROME MOBILE INTERACTION PASSED')
+              d.save_screenshot('artifacts/screens/production-author-r30-chrome.png');print('R30 CHROME MOBILE INTERACTION PASSED')
           finally:d.quit()
           PY
       - name: Install WebKit Safari test browser
@@ -209,13 +219,13 @@ jobs:
           timeout 180s node <<'JS'
           const {webkit,devices}=require('playwright');const base=process.env.RPP_BASE_URL;
           (async()=>{const browser=await webkit.launch({headless:true}),iphone=devices['iPhone 13'];const cases=[{name:'safari',opts:{...iphone}},{name:'line',opts:{...iphone,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Line/15.15.0'}}];
-            try{for(const c of cases){const context=await browser.newContext(c.opts),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(base+'/author.html?r29-'+c.name+'=1',{waitUntil:'domcontentloaded'});await page.waitForSelector('#auth',{state:'visible'});const compat=await page.getAttribute('html','data-rpp-mobile-compat');if(compat!=='r25')throw new Error('missing mobile compat');const fix=await page.getAttribute('html','data-rpp-reedit-fix');if(fix!=='r28')throw new Error('missing r28 reedit fix');const guard=await page.getAttribute('html','data-rpp-submission-guard');if(guard!=='r29')throw new Error('missing r29 submission guard');if(!await page.locator('#rppEditEmail').isVisible())throw new Error('missing edit email');const classes=await page.getAttribute('html','class')||'';if(!classes.includes('rpp-ios'))throw new Error(c.name+' missing iOS class');if(c.name==='line'&&!classes.includes('rpp-line'))throw new Error('LINE class missing');await page.tap('#send');await page.waitForFunction(()=>document.querySelector('#authmsg')?.textContent.includes('メールアドレスを入力してください'));await page.waitForTimeout(500);if(errors.length)throw new Error(c.name+' page errors: '+errors.join(' | '));if(!await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2))throw new Error(c.name+' horizontal overflow');await page.screenshot({path:'artifacts/screens/production-author-r29-'+c.name+'.png',fullPage:true});await context.close();console.log('R29 '+c.name.toUpperCase()+' INTERACTION PASSED')}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
+            try{for(const c of cases){const context=await browser.newContext(c.opts),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(base+'/author.html?r30-'+c.name+'=1',{waitUntil:'domcontentloaded'});await page.waitForSelector('#auth',{state:'visible'});const compat=await page.getAttribute('html','data-rpp-mobile-compat');if(compat!=='r25')throw new Error('missing mobile compat');const fix=await page.getAttribute('html','data-rpp-reedit-fix');if(fix!=='r28')throw new Error('missing r28 reedit fix');const guard=await page.getAttribute('html','data-rpp-submission-guard');if(guard!=='r29')throw new Error('missing r29 submission guard');const polish=await page.getAttribute('html','data-rpp-author-polish');if(polish!=='r30')throw new Error('missing r30 author polish');if(!await page.locator('#rppEditEmail').isVisible())throw new Error('missing edit email');const classes=await page.getAttribute('html','class')||'';if(!classes.includes('rpp-ios'))throw new Error(c.name+' missing iOS class');if(c.name==='line'&&!classes.includes('rpp-line'))throw new Error('LINE class missing');await page.tap('#send');await page.waitForFunction(()=>document.querySelector('#authmsg')?.textContent.includes('メールアドレスを入力してください'));await page.waitForTimeout(500);if(errors.length)throw new Error(c.name+' page errors: '+errors.join(' | '));if(!await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2))throw new Error(c.name+' horizontal overflow');await page.screenshot({path:'artifacts/screens/production-author-r30-'+c.name+'.png',fullPage:true});await context.close();console.log('R30 '+c.name.toUpperCase()+' INTERACTION PASSED')}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
           JS
       - name: Upload visual QA screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: visual-qa-r29-ios-line
+          name: visual-qa-r30-ios-line
           path: artifacts/screens
           if-no-files-found: warn
           retention-days: 7
