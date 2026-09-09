@@ -2,19 +2,23 @@ import app from './faithful-cover-v11-r32.js';
 
 const AUTHOR_DEADLINE_UI=`<script>
 (()=>{
-  const OLD=/記録の編集・提出期限\s*[:：]\s*2026年10月31日\s*23:59/g;
   const NEW='提出期限：2026年10月31日';
-  function fix(){
-    const root=document.getElementById('auth')||document.getElementById('editor')||document.body;
-    if(!root)return;
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
-    const nodes=[];let n;
-    while((n=walker.nextNode())){if(OLD.test(n.nodeValue||''))nodes.push(n);OLD.lastIndex=0}
-    nodes.forEach(t=>{t.nodeValue=(t.nodeValue||'').replace(OLD,NEW);OLD.lastIndex=0});
-    document.documentElement.dataset.rppDeadline='date-only-r33';
+  const ids=['deadlineAuth','deadlineEditor'];
+  const watched=new WeakSet();
+  function fixOne(el){
+    if(!el)return;
+    if(el.textContent!==NEW)el.textContent=NEW;
+    el.classList.remove('hidden');
+    if(!watched.has(el)){
+      watched.add(el);
+      new MutationObserver(()=>{if(el.textContent!==NEW)el.textContent=NEW}).observe(el,{childList:true,characterData:true,subtree:true});
+    }
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{fix();setTimeout(fix,120);setTimeout(fix,500)},{once:true});
-  else {fix();setTimeout(fix,120);setTimeout(fix,500)}
+  function fix(){
+    ids.forEach(id=>fixOne(document.getElementById(id)));
+    document.documentElement.dataset.rppDeadline='date-only-r33-fixed';
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fix,{once:true});else fix();
   addEventListener('pageshow',fix);
   document.addEventListener('rpp:reedit-opened',()=>setTimeout(fix,0));
 })();
@@ -25,7 +29,7 @@ function injectAuthor(response){
   headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');
   headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-deadline','date-only-r33')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-deadline','date-only-r33-fixed')}})
     .on('body',{element(el){el.append(AUTHOR_DEADLINE_UI,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
