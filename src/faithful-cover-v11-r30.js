@@ -12,6 +12,7 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
   const submitted=()=>String(document.getElementById('statusBadge')?.textContent||'').includes('提出済');
   const successVisible=()=>document.getElementById('rppSubmitSuccessR28')?.classList.contains('rpp-show');
   const el=id=>document.getElementById(id);
+  let lastSubmitGesture=0;
   function syncButtons(){
     const isSubmitted=submitted();
     const submit=el('submit');
@@ -19,6 +20,7 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
     if(submit&&!submit.dataset.r30Busy){const t=isSubmitted?'変更内容を再提出する':'この内容で提出する';if(submit.textContent!==t)submit.textContent=t}
     if(save){const t=isSubmitted?'変更内容を保存':'下書き保存';if(save.textContent!==t)save.textContent=t}
     document.documentElement.dataset.rppAuthorPolish='r30';
+    document.documentElement.dataset.rppSubmitReliable='r30b';
   }
   function clearRedundantStatus(){
     const m=el('savemsg');if(!m)return;
@@ -65,6 +67,7 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
     message(isEdit?'変更内容を再提出しています…':'原稿を提出しています…');
     const state=el('saveState');if(state)state.textContent='Cloudflareへ保存中…';
     try{
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       const r=await fetch('/api/rpp/resubmit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify(d)});
       const type=String(r.headers.get('content-type')||'');let out={};
       if(type.includes('application/json')){try{out=await r.json()}catch{}}
@@ -81,10 +84,31 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
       btn.dataset.r30Busy='';btn.disabled=false;btn.classList.remove('rpp-submit-busy');syncButtons();
     }
   }
-  document.addEventListener('click',e=>{
-    const btn=e.target?.closest?.('#submit,#submitPreview');if(!btn)return;
-    e.preventDefault();e.stopImmediatePropagation();directSubmit(btn);
-  },true);
+  function submitGesture(e,btn){
+    const now=Date.now();
+    if(now-lastSubmitGesture<450){e?.preventDefault?.();return}
+    lastSubmitGesture=now;e?.preventDefault?.();e?.stopPropagation?.();directSubmit(btn);
+  }
+  function replaceAndBind(id){
+    const old=el(id);if(!old)return null;
+    if(old.dataset.r30Direct==='1')return old;
+    const btn=old.cloneNode(true);btn.type='button';btn.disabled=false;btn.removeAttribute('aria-disabled');btn.classList.remove('muted');btn.dataset.r30Direct='1';
+    old.replaceWith(btn);
+    btn.addEventListener('pointerup',e=>submitGesture(e,btn),{passive:false});
+    btn.addEventListener('click',e=>submitGesture(e,btn),false);
+    return btn;
+  }
+  function bindSubmitButtons(){replaceAndBind('submit');replaceAndBind('submitPreview');watch();syncButtons()}
+  async function restoreInteractivity(){
+    try{
+      const r=await fetch('/api/config',{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;
+      const d=await r.clone().json();
+      if(!d.deadlinePassed){
+        el('formArea')?.classList.remove('muted');
+        for(const id of ['submit','save','previewBtn']){const b=el(id);if(b){b.disabled=false;b.removeAttribute('aria-disabled')}}
+      }
+    }catch{}
+  }
   const nativeFetch=window.fetch.bind(window);
   window.fetch=async(input,init)=>{
     const response=await nativeFetch(input,init);const url=typeof input==='string'?input:(input?.url||'');
@@ -95,8 +119,8 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
     if(e.target?.closest?.('#save,#previewBtn')){setTimeout(sync,0);setTimeout(sync,180);setTimeout(sync,700)}
   },true);
   document.addEventListener('input',e=>{if(e.target?.closest?.('#formArea'))clearRedundantStatus()},true);
-  document.addEventListener('rpp:reedit-opened',()=>{setTimeout(sync,0);setTimeout(sync,120)});
-  const run=()=>{watch();sync();setTimeout(()=>{watch();sync()},120);setTimeout(()=>{watch();sync()},500);setTimeout(()=>{watch();sync()},1400)};
+  document.addEventListener('rpp:reedit-opened',()=>{setTimeout(()=>{bindSubmitButtons();restoreInteractivity();sync()},0);setTimeout(sync,120)});
+  const run=()=>{bindSubmitButtons();restoreInteractivity();watch();sync();setTimeout(()=>{bindSubmitButtons();watch();sync()},120);setTimeout(()=>{bindSubmitButtons();restoreInteractivity();watch();sync()},500);setTimeout(()=>{bindSubmitButtons();restoreInteractivity();watch();sync()},1400)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
 })();
@@ -105,7 +129,7 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
 function inject(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
-    .on('html',{element(el){el.setAttribute('data-rpp-author-polish','r30')}})
+    .on('html',{element(el){el.setAttribute('data-rpp-author-polish','r30');el.setAttribute('data-rpp-submit-reliable','r30b')}})
     .on('body',{element(el){el.append(AUTHOR_POLISH,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
