@@ -42,9 +42,11 @@ jobs:
       - name: Verify r31 first-time author guide
         run: |
           grep -Fq "import app from './faithful-cover-v11-r30.js'" src/faithful-cover-v11-r31.js
-          grep -Fq "data-rpp-first-time-guide','r31'" src/faithful-cover-v11-r31.js
-          grep -Fq '初めて原稿を書く方' src/faithful-cover-v11-r31.js
-          grep -Fq 'まずメールアドレスを入力して「認識コードを送信」を押してください。' src/faithful-cover-v11-r31.js
+          grep -Fq "data-rpp-first-time-guide','r31-stable'" src/faithful-cover-v11-r31.js
+          grep -Fq '初めての方' src/faithful-cover-v11-r31.js
+          grep -Fq 'メールアドレスを入力し、「認識コードを送信」を押してください。' src/faithful-cover-v11-r31.js
+          grep -Fq 'observer.observe(auth,{childList:true})' src/faithful-cover-v11-r31.js
+          grep -Fq '#auth #rppRecognitionHelp{display:none!important}' src/faithful-cover-v11-r31.js
       - name: Verify r30 author polish
         run: |
           grep -Fq "import app from './faithful-cover-v11-r29.js'" src/faithful-cover-v11-r30.js
@@ -139,14 +141,14 @@ jobs:
       - name: Wait for r31 public deployment
         run: |
           for i in $(seq 1 36); do
-            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}-$i" | grep -Fq 'data-rpp-first-time-guide="r31"'; then exit 0; fi
+            if curl -fsSL --max-time 10 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}-$i" | grep -Fq 'data-rpp-first-time-guide="r31-stable"'; then exit 0; fi
             sleep 10
           done
           exit 1
       - name: Verify r31 is live
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-first-time-guide="r31"'
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq '初めて原稿を書く方'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-first-time-guide="r31-stable"'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq '初めての方'
           curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-author-polish="r30"'
           curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-submission-guard="r29"'
           curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$RPP_BASE_URL/author.html?r31=${GITHUB_RUN_ID}" | grep -Fq 'data-rpp-reedit-fix="r28"'
@@ -213,9 +215,9 @@ jobs:
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-reedit-fix')=='r28'
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-submission-guard')=='r29'
               assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-author-polish')=='r30'
-              assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-first-time-guide')=='r31'
+              assert d.find_element(By.TAG_NAME,'html').get_attribute('data-rpp-first-time-guide')=='r31-stable'
               assert d.find_element(By.ID,'rppFirstTimeGuide').is_displayed()
-              assert '初めて原稿を書く方' in d.find_element(By.ID,'rppFirstTimeGuide').text
+              assert '初めての方' in d.find_element(By.ID,'rppFirstTimeGuide').text
               assert d.find_element(By.ID,'rppEditEmail').is_displayed()
               d.find_element(By.ID,'send').click();w.until(lambda x:'メールアドレスを入力してください' in x.find_element(By.ID,'authmsg').text)
               assert d.execute_script('return document.documentElement.scrollWidth<=document.documentElement.clientWidth+2')
@@ -231,7 +233,7 @@ jobs:
           timeout 180s node <<'JS'
           const {webkit,devices}=require('playwright');const base=process.env.RPP_BASE_URL;
           (async()=>{const browser=await webkit.launch({headless:true}),iphone=devices['iPhone 13'];const cases=[{name:'safari',opts:{...iphone}},{name:'line',opts:{...iphone,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Line/15.15.0'}}];
-            try{for(const c of cases){const context=await browser.newContext(c.opts),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(base+'/author.html?r31-'+c.name+'=1',{waitUntil:'domcontentloaded'});await page.waitForSelector('#auth',{state:'visible'});const compat=await page.getAttribute('html','data-rpp-mobile-compat');if(compat!=='r25')throw new Error('missing mobile compat');const fix=await page.getAttribute('html','data-rpp-reedit-fix');if(fix!=='r28')throw new Error('missing r28 reedit fix');const guard=await page.getAttribute('html','data-rpp-submission-guard');if(guard!=='r29')throw new Error('missing r29 submission guard');const polish=await page.getAttribute('html','data-rpp-author-polish');if(polish!=='r30')throw new Error('missing r30 author polish');const guide=await page.getAttribute('html','data-rpp-first-time-guide');if(guide!=='r31')throw new Error('missing r31 first-time guide');if(!await page.locator('#rppFirstTimeGuide').isVisible())throw new Error('first-time guide not visible');if(!await page.locator('#rppEditEmail').isVisible())throw new Error('missing edit email');const classes=await page.getAttribute('html','class')||'';if(!classes.includes('rpp-ios'))throw new Error(c.name+' missing iOS class');if(c.name==='line'&&!classes.includes('rpp-line'))throw new Error('LINE class missing');await page.tap('#send');await page.waitForFunction(()=>document.querySelector('#authmsg')?.textContent.includes('メールアドレスを入力してください'));await page.waitForTimeout(500);if(errors.length)throw new Error(c.name+' page errors: '+errors.join(' | '));if(!await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2))throw new Error(c.name+' horizontal overflow');await page.screenshot({path:'artifacts/screens/production-author-r31-'+c.name+'.png',fullPage:true});await context.close();console.log('R31 '+c.name.toUpperCase()+' INTERACTION PASSED')}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
+            try{for(const c of cases){const context=await browser.newContext(c.opts),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));await page.goto(base+'/author.html?r31-'+c.name+'=1',{waitUntil:'domcontentloaded'});await page.waitForSelector('#auth',{state:'visible'});const compat=await page.getAttribute('html','data-rpp-mobile-compat');if(compat!=='r25')throw new Error('missing mobile compat');const fix=await page.getAttribute('html','data-rpp-reedit-fix');if(fix!=='r28')throw new Error('missing r28 reedit fix');const guard=await page.getAttribute('html','data-rpp-submission-guard');if(guard!=='r29')throw new Error('missing r29 submission guard');const polish=await page.getAttribute('html','data-rpp-author-polish');if(polish!=='r30')throw new Error('missing r30 author polish');const guide=await page.getAttribute('html','data-rpp-first-time-guide');if(guide!=='r31-stable')throw new Error('missing r31 stable first-time guide');if(!await page.locator('#rppFirstTimeGuide').isVisible())throw new Error('first-time guide not visible');if(!await page.locator('#rppFirstTimeGuide').textContent().then(t=>t.includes('初めての方')))throw new Error('first-time guide text mismatch');if(!await page.locator('#rppEditEmail').isVisible())throw new Error('missing edit email');const classes=await page.getAttribute('html','class')||'';if(!classes.includes('rpp-ios'))throw new Error(c.name+' missing iOS class');if(c.name==='line'&&!classes.includes('rpp-line'))throw new Error('LINE class missing');await page.tap('#send');await page.waitForFunction(()=>document.querySelector('#authmsg')?.textContent.includes('メールアドレスを入力してください'));await page.waitForTimeout(500);if(errors.length)throw new Error(c.name+' page errors: '+errors.join(' | '));if(!await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth+2))throw new Error(c.name+' horizontal overflow');await page.screenshot({path:'artifacts/screens/production-author-r31-'+c.name+'.png',fullPage:true});await context.close();console.log('R31 '+c.name.toUpperCase()+' INTERACTION PASSED')}}finally{await browser.close()}})().catch(e=>{console.error(e);process.exit(1)});
           JS
       - name: Upload visual QA screenshots
         if: always()
