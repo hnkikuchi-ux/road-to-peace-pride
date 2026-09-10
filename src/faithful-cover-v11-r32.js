@@ -37,13 +37,7 @@ async function normalizeStoryWrite(request,env,ctx,targetPath){
 
 const AUTHOR_DATE_UI=`<style id="rppRecordDateR32">
 #formArea .field:has(#record_date){display:none!important}
-</style><script>
-(()=>{
-  function hide(){const input=document.getElementById('record_date');const f=input?.closest?.('.field');if(f)f.style.display='none';document.documentElement.dataset.rppRecordDate='auto-first-submit-r32'}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hide,{once:true});else hide();
-  addEventListener('pageshow',hide);document.addEventListener('rpp:reedit-opened',()=>setTimeout(hide,0));
-})();
-</script>`;
+</style>`;
 function injectAuthor(response){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter().on('html',{element(el){el.setAttribute('data-rpp-record-date','auto-first-submit-r32')}}).on('body',{element(el){el.append(AUTHOR_DATE_UI,{html:true})}}).transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));

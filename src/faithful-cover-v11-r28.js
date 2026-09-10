@@ -76,7 +76,7 @@ body.rpp-author-r5 #rppSubmitSuccessR28 span{font-size:12px;color:#e8e0c9}
       const d=await safeJson(r);
       if(!r.ok)throw new Error(d.error||'認識できませんでした。');
       syncEmail(mail);
-      msg('認証しました。この6桁を今後の再編集にも使えます。');
+      msg('認証しました。この6桁の認識コードを今後の再編集にも使えます。');
       await openExisting(mail);
     }catch(e){msg(e?.message||'認証できませんでした。',true)}finally{if(btn)btn.disabled=false}
   }
@@ -85,7 +85,7 @@ body.rpp-author-r5 #rppSubmitSuccessR28 span{font-size:12px;color:#e8e0c9}
     let re=document.getElementById('rppReissueBox');
     if(!re){
       re=document.createElement('div');re.id='rppReissueBox';re.className='hidden';
-      re.innerHTML='<p class="rpp-r28-reissue-help">保存した6桁コードが使えない場合は、登録メールアドレスへ新しい認識コードを再発行できます。同じメールアドレスで認証すれば、提出済みの原稿をそのまま開きます。</p><button id="rppReissueBtn" type="button" class="btn secondary">認識コードを再発行する</button><div id="rppReissueVerifyBox" class="field"><label for="rppReissueCode">新しい6桁の認識コード</label><input id="rppReissueCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="メールに届いた6桁コード"></div><button id="rppReissueVerify" type="button" class="btn primary">新しい認識コードで編集する</button>';
+      re.innerHTML='<p class="rpp-r28-reissue-help">保存した6桁の認識コードが使えない場合は、登録メールアドレスへ新しい認識コードを再発行できます。同じメールアドレスで認証すれば、提出済みの原稿をそのまま開きます。</p><button id="rppReissueBtn" type="button" class="btn secondary">認識コードを再発行する</button><div id="rppReissueVerifyBox" class="field"><label for="rppReissueCode">新しい6桁の認識コード</label><input id="rppReissueCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="メールに届いた6桁の認識コード"></div><button id="rppReissueVerify" type="button" class="btn primary">新しい認識コードで編集する</button>';
       box.appendChild(re);
     }
     const ri=document.getElementById('rppReissueCode');if(ri&&!ri.dataset.r28Digits){ri.dataset.r28Digits='1';ri.addEventListener('input',()=>{ri.value=digits(ri.value)})}
@@ -113,10 +113,10 @@ body.rpp-author-r5 #rppSubmitSuccessR28 span{font-size:12px;color:#e8e0c9}
     installReissue(box);
   }
 
-  const run=()=>{install();setTimeout(install,120);setTimeout(install,500);setTimeout(install,1400);setTimeout(install,2400)};
+  const run=()=>{install();requestAnimationFrame(install)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)install()});
-  document.addEventListener('click',e=>{if(e.target?.closest?.('#logout'))setTimeout(run,80)},true);
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#logout'))requestAnimationFrame(run)},true);
 })();
 </script>`;
 
@@ -159,7 +159,6 @@ const SUBMIT_CONFIRM=`<script>
     document.documentElement.dataset.rppSubmissionUx='r28-3';
     normalizeSaveLabel();
     const auth=document.getElementById('auth');
-    if(auth){const walker=document.createTreeWalker(auth,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(n=>{n.nodeValue=String(n.nodeValue||'').replace(/承認コード/g,'認識コード')})}
     ensureSuccess();installIntentHandlers();
   }
   function showSuccess(isEdit){
@@ -186,7 +185,7 @@ const SUBMIT_CONFIRM=`<script>
     }
     return response;
   };
-  const run=()=>{cleanLabels();setTimeout(cleanLabels,150);setTimeout(cleanLabels,650);setTimeout(cleanLabels,1600);setTimeout(cleanLabels,3000)};
+  const run=()=>{cleanLabels();requestAnimationFrame(cleanLabels)};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)cleanLabels()});
 })();

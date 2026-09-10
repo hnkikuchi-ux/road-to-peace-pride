@@ -61,7 +61,8 @@ body.rpp-author-r5 #rppSubmitSuccessR28{transition:opacity .18s ease}
   const now=()=>Date.now();
   function submittedMode(){return String(document.getElementById('statusBadge')?.textContent||'').includes('提出済')}
   function successBox(){return document.getElementById('rppSubmitSuccessR28')}
-  function hideSuccess(){const b=successBox();if(b)b.classList.remove('rpp-show')}
+  function hideSuccess(force=false){const b=successBox();if(!b)return;if(!force&&b.dataset.rppSuccessLock==='1')return;if(force)delete b.dataset.rppSuccessLock;b.classList.remove('rpp-show')}
+  function unlockSuccess(){const b=successBox();if(b)delete b.dataset.rppSuccessLock}
   function forceSaveLabel(){
     const save=document.getElementById('save');if(!save)return;
     if(submittedMode()&&save.textContent!=='変更内容を保存')save.textContent='変更内容を保存';
@@ -87,10 +88,10 @@ body.rpp-author-r5 #rppSubmitSuccessR28{transition:opacity .18s ease}
       submitIntent={until:now()+1500,isEdit:submittedMode()};
       setTimeout(()=>{if(submitIntent&&submitIntent.until<=now())submitIntent=null},1700);
     }
-    if(e.target?.closest?.('#save')){manualSaveIntent=true;submitIntent=null;hideSuccess();setTimeout(()=>{manualSaveIntent=false},1800)}
+    if(e.target?.closest?.('#save')){manualSaveIntent=true;submitIntent=null;unlockSuccess();hideSuccess();setTimeout(()=>{manualSaveIntent=false},1800)}
   },true);
-  document.addEventListener('input',e=>{if(e.target?.closest?.('#formArea'))hideSuccess()},true);
-  document.addEventListener('change',e=>{if(e.target?.closest?.('#formArea'))hideSuccess()},true);
+  document.addEventListener('input',e=>{if(e.target?.closest?.('#formArea')){unlockSuccess();hideSuccess()}},true);
+  document.addEventListener('change',e=>{if(e.target?.closest?.('#formArea')){unlockSuccess();hideSuccess()}},true);
 
   const previousFetch=window.fetch.bind(window);
   window.fetch=async(input,init)=>{
@@ -111,34 +112,18 @@ body.rpp-author-r5 #rppSubmitSuccessR28{transition:opacity .18s ease}
     }
     const response=await previousFetch(input,nextInit);
     if(url.includes('/api/me/story')&&method==='PUT'){
-      if(storyIntent==='submit'&&response.ok)setTimeout(()=>showSuccess(isEdit),120);
+      if(storyIntent==='submit'&&response.ok)requestAnimationFrame(()=>showSuccess(isEdit));
       if(storyIntent==='edit-draft'){
-        setTimeout(hideSuccess,90);setTimeout(hideSuccess,180);setTimeout(forceSaveLabel,0);setTimeout(forceSaveLabel,180);
-        if(response.ok&&wasManualSave){setTimeout(showDraftSaved,0);setTimeout(showDraftSaved,180)}
+        queueMicrotask(()=>{hideSuccess();forceSaveLabel()});requestAnimationFrame(()=>{hideSuccess();forceSaveLabel()});
+        if(response.ok&&wasManualSave)requestAnimationFrame(showDraftSaved)
       }
     }
     return response;
   };
-  function run(){document.documentElement.dataset.rppSubmissionGuard='r29';hideSuccess();forceSaveLabel();setTimeout(forceSaveLabel,120);setTimeout(forceSaveLabel,600);setTimeout(forceSaveLabel,1500)}
+  function run(){document.documentElement.dataset.rppSubmissionGuard='r29';hideSuccess(true);forceSaveLabel();requestAnimationFrame(forceSaveLabel)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden){forceSaveLabel();hideSuccess()}});
-  document.addEventListener('rpp:reedit-opened',()=>setTimeout(forceSaveLabel,0));
-})();
-</script>`;
-
-const VIEWER_CLEANUP=`<script>
-(()=>{
-  const phrase='原文のまま掲載';
-  function scrub(){
-    const body=document.body;if(!body)return;
-    const walker=document.createTreeWalker(body,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
-    nodes.forEach(n=>{if(String(n.nodeValue||'').trim()===phrase)n.nodeValue=''});
-    body.querySelectorAll('*').forEach(el=>{if(el.children.length===0&&String(el.textContent||'').trim()===phrase)el.remove()});
-    document.documentElement.dataset.rppViewerCleanup='r29';
-  }
-  const start=()=>{scrub();let n=0;const t=setInterval(()=>{scrub();if(++n>=16)clearInterval(t)},250)};
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-  document.addEventListener('click',()=>{setTimeout(scrub,0);setTimeout(scrub,220);setTimeout(scrub,700)},true);
+  document.addEventListener('rpp:reedit-opened',()=>requestAnimationFrame(forceSaveLabel));
 })();
 </script>`;
 
@@ -146,7 +131,7 @@ function injectHtml(response,{author=false}={}){
   const headers=new Headers(response.headers);headers.set('Cache-Control','no-store, no-cache, must-revalidate, max-age=0');headers.delete('Content-Length');
   return new HTMLRewriter()
     .on('html',{element(el){el.setAttribute('data-rpp-viewer-cleanup','r29');if(author)el.setAttribute('data-rpp-submission-guard','r29')}})
-    .on('body',{element(el){el.append(VIEWER_CLEANUP,{html:true});if(author)el.append(AUTHOR_GUARD,{html:true})}})
+    .on('body',{element(el){if(author)el.append(AUTHOR_GUARD,{html:true})}})
     .transform(new Response(response.body,{status:response.status,statusText:response.statusText,headers}));
 }
 

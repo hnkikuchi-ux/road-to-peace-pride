@@ -83,8 +83,8 @@ body.rpp-author-r5 #editor .deadline:not(.closed){
       h.dataset.r6Title='1';
       const reset=(h.textContent||'').trim().startsWith('新しい');
       h.innerHTML=reset
-        ? '<span class="rpp-title-line">新しい編集用承認コードを</span><br><span class="rpp-title-line">保存してください</span>'
-        : '<span class="rpp-title-line">編集用承認コードを</span><br><span class="rpp-title-line">保存してください</span>';
+        ? '<span class="rpp-title-line">新しい6桁の認識コードを</span><br><span class="rpp-title-line">保存してください</span>'
+        : '<span class="rpp-title-line">6桁の認識コードを</span><br><span class="rpp-title-line">保存してください</span>';
     }
   };
   const start=()=>{

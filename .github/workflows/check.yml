@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/faithful-cover-v11-r33.js
+          node --check src/faithful-cover-v11-r32.js
           node --check src/faithful-cover-v11-r31.js
           node --check src/faithful-cover-v11-r30.js
           node --check src/faithful-cover-v11-r29.js
@@ -42,13 +44,11 @@ jobs:
       - name: Verify r31 first-time author guide
         run: |
           grep -Fq "import app from './faithful-cover-v11-r30.js'" src/faithful-cover-v11-r31.js
-          grep -Fq "data-rpp-first-time-guide','r31-static-stable'" src/faithful-cover-v11-r31.js
-          grep -Fq '初めての方' src/faithful-cover-v11-r31.js
-          grep -Fq 'メールアドレスを入力して「認識コードを送信」を押してください。' src/faithful-cover-v11-r31.js
-          grep -Fq '#auth{display:flex!important;flex-direction:column!important}' src/faithful-cover-v11-r31.js
-          grep -Fq "el.after(GUIDE_HTML,{html:true})" src/faithful-cover-v11-r31.js
-          grep -Fq '#auth>#rppFirstTimeGuide{order:2}' src/faithful-cover-v11-r31.js
-          grep -Fq '#auth>#rppRecognitionHelp{display:none!important}' src/faithful-cover-v11-r31.js
+          grep -Fq "data-rpp-first-time-guide','r31-markup-fixed'" src/faithful-cover-v11-r31.js
+          grep -Fq '#rppFirstTimeGuide{' src/faithful-cover-v11-r31.js
+          grep -Fq 'id="rppFirstTimeGuide"' public/author.html
+          grep -Fq '初めての方' public/author.html
+          grep -Fq 'メールアドレスを入力し、「認識コードを送信」を押してください。' public/author.html
           ! grep -Fq 'MutationObserver' src/faithful-cover-v11-r31.js
       - name: Verify r30 author polish
         run: |
@@ -66,7 +66,7 @@ jobs:
           grep -Fq "storyIntent='submit'" src/faithful-cover-v11-r29.js
           grep -Fq "save.textContent='変更内容を保存'" src/faithful-cover-v11-r29.js
           grep -Fq "再提出するまでは掲載内容は変わりません" src/faithful-cover-v11-r29.js
-          grep -Fq "const phrase='原文のまま掲載'" src/faithful-cover-v11-r29.js
+          ! grep -Fq '原文のまま掲載' src/faithful-cover-v11-r29.js
           grep -Fq "data-rpp-submission-guard','r29'" src/faithful-cover-v11-r29.js
       - name: Verify r28 logged-out re-edit fix
         run: |
@@ -111,8 +111,10 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq '2026.09.08-faithful-v11-r27-reedit-stable' public/version.json
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r31.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r31 active')"
+          grep -Fq 'faithful-v11-r33-final-qa-20260910' public/version.json
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r33.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r33 active')"
+      - name: Final author API lifecycle QA
+        run: node scripts/final_api_qa.mjs
       - name: Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
@@ -151,7 +153,7 @@ jobs:
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsSL --max-time 8 -H 'Cache-Control: no-cache' "$BASE/author.html?r31=${GITHUB_RUN_ID}-$i" | grep -Fq "data-rpp-first-time-guide=\"r31-static-stable\""; then
+            if curl -fsSL --max-time 8 -H 'Cache-Control: no-cache' "$BASE/author.html?r33=${GITHUB_RUN_ID}-$i" | grep -Fq "data-rpp-first-time-guide=\"r31-markup-fixed\""; then
               echo 'r31 stable author guide is live'
               exit 0
             fi
@@ -163,11 +165,12 @@ jobs:
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r31=${GITHUB_RUN_ID}" -o /tmp/author.html
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r33=${GITHUB_RUN_ID}" -o /tmp/author.html
           grep -Fq '初めての方' /tmp/author.html
-          grep -Fq 'メールアドレスを入力して「認識コードを送信」を押してください。' /tmp/author.html
-          grep -Fq 'r31-static-stable' /tmp/author.html
-          curl -fsS --max-time 15 "$BASE/api/health?r31=${GITHUB_RUN_ID}" -o /tmp/health.json
+          grep -Fq 'メールアドレスを入力し、「認識コードを送信」を押してください。' /tmp/author.html
+          grep -Fq 'r31-markup-fixed' /tmp/author.html
+          grep -Fq '提出期限：2026年10月31日' /tmp/author.html
+          curl -fsS --max-time 15 "$BASE/api/health?r33=${GITHUB_RUN_ID}" -o /tmp/health.json
           python3 - <<'PY'
           import json
           h=json.load(open('/tmp/health.json'))

@@ -102,13 +102,13 @@ const AUTHOR_SCRIPT=`<script>
     document.documentElement.dataset.rppOneCode='r25';
     if(document.title!=='私の記録を綴る | ROAD TO PEACE PRIDE')document.title='私の記録を綴る | ROAD TO PEACE PRIDE';
     const guide=document.querySelector('.rpp-author-guide');
-    setHtml(guide,'<b>🔑 6桁コードについて</b><br>初回のメール認証で届く6桁コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。');
-    setText(document.querySelector('#auth > .note'),'初回はメールに届く6桁コードで本人確認します。この同じ6桁コードを、提出後の再編集にも使用します。');
-    const edit=document.getElementById('rppEditCode');if(edit){edit.maxLength=6;edit.placeholder='6桁コード';edit.setAttribute('inputmode','numeric');setText(edit.closest('.field')?.querySelector('label'),'6桁コード')}
-    setText(document.getElementById('rppEditLoginBtn'),'6桁コードで編集する');
-    setText(document.querySelector('#rppEditLogin .rpp-code-note'),'初回のメール認証で使用した6桁コードを入力してください。紛失した場合は、メール認証で新しい6桁コードを再発行できます。');
-    const card=document.getElementById('rppEditCodeCard');if(card){setText(card.querySelector('h2'),'あなたの6桁コード');setText(card.querySelector('.rpp-code-saved-badge'),'再編集にも使う6桁コードです');setText(card.querySelector('#rppCopyEditCode'),'6桁コードをコピー')}
-    const cp=document.getElementById('rppCodeCheckpoint');if(cp){setText(cp.querySelector('.rpp-checkpoint-kicker'),'YOUR 6-DIGIT KEY');setText(cp.querySelector('#rppCheckpointTitle'),'メールで届いた6桁コードを保存してください');setText(cp.querySelector('.rpp-checkpoint-lead'),'本人確認で使用した同じ6桁コードです。このコードが、あとから原稿を編集するための「鍵」になります。');setText(cp.querySelector('#rppCheckpointCopy'),'6桁コードをコピー');setHtml(cp.querySelector('.rpp-saved-check span'),'<b>スクリーンショットまたはメモで保存しました</b><br>次回編集するときも、この同じ6桁コードを使用します。');setText(cp.querySelector('.rpp-checkpoint-foot'),'紛失した場合は、登録メールアドレスへの本人確認で新しい6桁コードを再発行できます。');}
+    setHtml(guide,'<b>🔑 6桁の認識コードについて</b><br>初回のメール認証で届く6桁の認識コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。');
+    setText(document.querySelector('#auth > .note'),'初回はメールに届く6桁の認識コードで本人確認します。この同じ6桁の認識コードを、提出後の再編集にも使用します。');
+    const edit=document.getElementById('rppEditCode');if(edit){edit.maxLength=6;edit.placeholder='6桁の認識コード';edit.setAttribute('inputmode','numeric');setText(edit.closest('.field')?.querySelector('label'),'6桁の認識コード')}
+    setText(document.getElementById('rppEditLoginBtn'),'以前の原稿を編集する');
+    setText(document.querySelector('#rppEditLogin .rpp-code-note'),'初回のメール認証で使用した6桁の認識コードを入力してください。紛失した場合は、メール認証で新しい6桁の認識コードを再発行できます。');
+    const card=document.getElementById('rppEditCodeCard');if(card){setText(card.querySelector('h2'),'あなたの6桁の認識コード');setText(card.querySelector('.rpp-code-saved-badge'),'再編集にも使う6桁の認識コードです');setText(card.querySelector('#rppCopyEditCode'),'6桁の認識コードをコピー')}
+    const cp=document.getElementById('rppCodeCheckpoint');if(cp){setText(cp.querySelector('.rpp-checkpoint-kicker'),'YOUR 6-DIGIT KEY');setText(cp.querySelector('#rppCheckpointTitle'),'メールで届いた6桁の認識コードを保存してください');setText(cp.querySelector('.rpp-checkpoint-lead'),'本人確認で使用した同じ6桁の認識コードです。この認識コードが、あとから原稿を編集するための「鍵」になります。');setText(cp.querySelector('#rppCheckpointCopy'),'6桁の認識コードをコピー');setHtml(cp.querySelector('.rpp-saved-check span'),'<b>スクリーンショットまたはメモで保存しました</b><br>次回編集するときも、この同じ6桁の認識コードを使用します。');setText(cp.querySelector('.rpp-checkpoint-foot'),'紛失した場合は、登録メールアドレスへの本人確認で新しい6桁の認識コードを再発行できます。');}
   }
   function mountSubmitted(){
     const panel=document.getElementById('editor')?.querySelector('.panel'),row=panel?.querySelector('.save-row');if(!panel||!row)return;
@@ -124,13 +124,13 @@ const AUTHOR_SCRIPT=`<script>
   const nativeFetch=window.fetch.bind(window);
   window.fetch=async(input,init)=>{
     const response=await nativeFetch(input,init);const url=typeof input==='string'?input:(input?.url||'');
-    if(url.includes('/api/auth/verify')){try{const d=await response.clone().json();if(d?.accountResetAt&&d?.email){const e=String(d.email).trim().toLowerCase();try{localStorage.removeItem('rpp_draft_'+e)}catch{};try{sessionStorage.removeItem('rpp_latest_edit_code')}catch{};document.documentElement.dataset.rppCleanReregister='1'}}catch{};setTimeout(refresh,0);setTimeout(refresh,100);setTimeout(refresh,350)}
-    if(url.includes('/api/me/story')){setTimeout(syncSubmitted,0);setTimeout(syncSubmitted,180)}
+    if(url.includes('/api/auth/verify')){try{const d=await response.clone().json();if(d?.accountResetAt&&d?.email){const e=String(d.email).trim().toLowerCase();try{localStorage.removeItem('rpp_draft_'+e)}catch{};try{sessionStorage.removeItem('rpp_latest_edit_code')}catch{};document.documentElement.dataset.rppCleanReregister='1'}}catch{};queueMicrotask(refresh);requestAnimationFrame(refresh)}
+    if(url.includes('/api/me/story')){queueMicrotask(syncSubmitted);requestAnimationFrame(syncSubmitted)}
     return response;
   };
-  document.addEventListener('click',e=>{if(e.target?.closest?.('#save,#submit,#submitPreview,#rppCheckpointContinue,#rppEditLoginBtn')){setTimeout(refresh,0);setTimeout(refresh,220);setTimeout(refresh,700)}},true);
+  document.addEventListener('click',e=>{if(e.target?.closest?.('#save,#submit,#submitPreview,#rppCheckpointContinue,#rppEditLoginBtn'))requestAnimationFrame(refresh)},true);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refresh,{once:true});else refresh();
-  addEventListener('pageshow',refresh);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});setTimeout(refresh,180);setTimeout(refresh,700);
+  addEventListener('pageshow',refresh);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});requestAnimationFrame(refresh);
 })();
 </script>`;
 
@@ -139,7 +139,7 @@ const ADMIN_RESET_UI=`<style>
 #rppAuthorResetPanel .rpp-danger{border-color:rgba(230,130,105,.62);color:#ffd7cc;background:rgba(180,62,35,.13)}
 @media(max-width:640px){#rppAuthorResetPanel .rpp-reset-row{grid-template-columns:1fr}#rppAuthorResetPanel .rpp-danger{width:100%;min-height:46px}}
 </style><script>
-(()=>{function mount(){if(document.getElementById('rppAuthorResetPanel'))return;const heading=[...document.querySelectorAll('h2')].find(x=>x.textContent.includes('AUTHORS｜投稿者一覧'));const authors=heading?.closest('.panel');if(!authors)return;const panel=document.createElement('div');panel.className='panel';panel.id='rppAuthorResetPanel';panel.innerHTML='<div class="ey">AUTHOR RESET</div><h2>投稿者登録をリセット</h2><p class="note">テスト登録をやり直す場合に使用します。原稿・6桁コード・メール認証・ログイン状態・編集履歴・関連写真を削除し、同じメールアドレスで初回登録からやり直せます。</p><div class="rpp-reset-row"><div class="field" style="margin:0"><label>削除するメールアドレス</label><input id="rppResetEmail" class="input" type="email" autocomplete="off" placeholder="example@email.com"></div><button id="rppResetBtn" class="pill rpp-danger">登録を完全削除</button></div><div id="rppResetMsg" class="msg"></div>';authors.parentNode.insertBefore(panel,authors);const btn=panel.querySelector('#rppResetBtn'),input=panel.querySelector('#rppResetEmail'),msg=panel.querySelector('#rppResetMsg');btn.onclick=async()=>{const email=(input.value||'').trim().toLowerCase();if(!/^\\S+@\\S+\\.\\S+$/.test(email)){msg.textContent='メールアドレスを確認してください。';msg.className='msg warn';return}if(!confirm(email+' の登録データを完全に削除します。\\n同じメールアドレスで初回登録からやり直せます。よろしいですか？'))return;btn.disabled=true;msg.textContent='削除中…';msg.className='msg';try{const r=await fetch('/api/admin/author-reset',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email})});const d=await r.json();if(!r.ok)throw new Error(d.error||('HTTP '+r.status));input.value='';msg.textContent=email+' の登録を削除しました。初回登録からやり直せます。';msg.className='msg ok';document.getElementById('refresh')?.click()}catch(e){msg.textContent='削除できませんでした：'+e.message;msg.className='msg warn'}finally{btn.disabled=false}}}
+(()=>{function mount(){if(document.getElementById('rppAuthorResetPanel'))return;const heading=[...document.querySelectorAll('h2')].find(x=>x.textContent.includes('AUTHORS｜投稿者一覧'));const authors=heading?.closest('.panel');if(!authors)return;const panel=document.createElement('div');panel.className='panel';panel.id='rppAuthorResetPanel';panel.innerHTML='<div class="ey">AUTHOR RESET</div><h2>投稿者登録をリセット</h2><p class="note">テスト登録をやり直す場合に使用します。原稿・6桁の認識コード・メール認証・ログイン状態・編集履歴・関連写真を削除し、同じメールアドレスで初回登録からやり直せます。</p><div class="rpp-reset-row"><div class="field" style="margin:0"><label>削除するメールアドレス</label><input id="rppResetEmail" class="input" type="email" autocomplete="off" placeholder="example@email.com"></div><button id="rppResetBtn" class="pill rpp-danger">登録を完全削除</button></div><div id="rppResetMsg" class="msg"></div>';authors.parentNode.insertBefore(panel,authors);const btn=panel.querySelector('#rppResetBtn'),input=panel.querySelector('#rppResetEmail'),msg=panel.querySelector('#rppResetMsg');btn.onclick=async()=>{const email=(input.value||'').trim().toLowerCase();if(!/^\\S+@\\S+\\.\\S+$/.test(email)){msg.textContent='メールアドレスを確認してください。';msg.className='msg warn';return}if(!confirm(email+' の登録データを完全に削除します。\\n同じメールアドレスで初回登録からやり直せます。よろしいですか？'))return;btn.disabled=true;msg.textContent='削除中…';msg.className='msg';try{const r=await fetch('/api/admin/author-reset',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email})});const d=await r.json();if(!r.ok)throw new Error(d.error||('HTTP '+r.status));input.value='';msg.textContent=email+' の登録を削除しました。初回登録からやり直せます。';msg.className='msg ok';document.getElementById('refresh')?.click()}catch(e){msg.textContent='削除できませんでした：'+e.message;msg.className='msg warn'}finally{btn.disabled=false}}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();setTimeout(mount,180);setTimeout(mount,700)})();
 </script>`;
 
@@ -181,7 +181,7 @@ export default{
       let data={};try{data=await response.clone().json()}catch{return response}
       const email=cleanEmail(data.email||payload.email),code=digits(payload.code);
       if(/^\S+@\S+\.\S+$/.test(email)&&code.length===6){
-        try{await storeOtpAsEditCode(env,email,code);data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=true;data.editCodeCreated=true;data.editCodeReset=Boolean(payload.resetEditCode===true)}catch(e){console.error('r25 one-code persistence failed',e);return json({error:'6桁コードを再編集用として保存できませんでした。もう一度認証してください。'},500)}
+        try{await storeOtpAsEditCode(env,email,code);data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;data.editCodeSameAsOtp=true;data.editCodeCreated=true;data.editCodeReset=Boolean(payload.resetEditCode===true)}catch(e){console.error('r25 one-code persistence failed',e);return json({error:'6桁の認識コードを再編集用として保存できませんでした。もう一度認証してください。'},500)}
       }
       if(email){const marker=await env.DB.prepare('SELECT reset_at FROM rpp_author_resets WHERE email=?').bind(email).first().catch(()=>null);if(marker?.reset_at){data.accountResetAt=marker.reset_at;await env.DB.prepare('DELETE FROM rpp_author_resets WHERE email=?').bind(email).run().catch(()=>{})}}
       const headers=new Headers(response.headers);headers.set('Content-Type','application/json; charset=utf-8');headers.set('Cache-Control','no-store');return new Response(JSON.stringify(data),{status:response.status,statusText:response.statusText,headers});

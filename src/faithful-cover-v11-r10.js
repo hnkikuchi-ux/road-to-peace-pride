@@ -68,7 +68,6 @@ async function hardenedFetch(request,env,ctx){
     if(soku&&!GROUPS.includes(soku))return json({error:'組織は一覧から選択してください。'},400);
     if(date&&!validDate(date))return json({error:'日付を確認してください。'},400);
     if(status==='submitted'&&!GROUPS.includes(soku))return json({error:'掲載する組織を選択してください。'},400);
-    if(status==='submitted'&&!validDate(date))return json({error:'記載日を入力してください。'},400);
     let old=null,take=false;
     if(safety){
       try{

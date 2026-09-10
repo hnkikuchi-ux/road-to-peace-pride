@@ -82,7 +82,7 @@ async function consumeRateLimit(env,key,limit,windowMs){
 }
 async function checkOtpRate(env,request,email){
   const [emailKey,ipKey]=await Promise.all([sha256(`otp-email:${String(email).toLowerCase()}`),sha256(`otp-ip:${clientIp(request)}`)]);
-  if(!await consumeRateLimit(env,emailKey,6,60*60*1000))return {ok:false,error:'認証コードの送信回数が多いため、しばらく待ってからお試しください。'};
+  if(!await consumeRateLimit(env,emailKey,6,60*60*1000))return {ok:false,error:'認識コードの送信回数が多いため、しばらく待ってからお試しください。'};
   if(!await consumeRateLimit(env,ipKey,200,60*60*1000))return {ok:false,error:'この接続元からの認証要求が多いため、しばらく待ってからお試しください。'};
   return {ok:true};
 }

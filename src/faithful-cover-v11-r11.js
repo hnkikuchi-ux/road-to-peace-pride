@@ -17,10 +17,11 @@ async function ensureSchema(env){
   `);
   return schemaReady;
 }
-async function replaceWith6(env,email){
+async function replaceWith6(env,email,preferredCode=''){
   await ensureSchema(env);
   const p=pepper(env);if(!p)throw new Error('EDIT_CODE_SECRET_MISSING');
-  const code=random6(),salt=randomHex(16),hash=await sha256(`${email}:${salt}:${code}:${p}`),now=new Date().toISOString();
+  const entered=String(preferredCode||'').replace(/\D/g,'');
+  const code=/^\d{6}$/.test(entered)?entered:random6(),salt=randomHex(16),hash=await sha256(`${email}:${salt}:${code}:${p}`),now=new Date().toISOString();
   await env.DB.prepare('INSERT INTO rpp_edit_codes(email,code_hash,salt,attempts,locked_until,created_at,updated_at) VALUES(?,?,?,0,NULL,?,?) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,salt=excluded.salt,attempts=0,locked_until=NULL,updated_at=excluded.updated_at').bind(email,hash,salt,now,now).run();
   return code;
 }
@@ -30,18 +31,18 @@ async function createSession(env,email,maxAge=43200){
   return token;
 }
 async function handleSixLogin(request,env){
-  await ensureSchema(env);const p=pepper(env);if(!p)return json({error:'承認コードの保護キーが未設定です。'},503);
+  await ensureSchema(env);const p=pepper(env);if(!p)return json({error:'認識コードの保護キーが未設定です。'},503);
   const b=await request.json().catch(()=>({})),email=emailOf(b.email),code=String(b.code||'').replace(/\D/g,'');
-  if(!/^\S+@\S+\.\S+$/.test(email)||code.length!==6)return json({error:'メールアドレスと6桁の承認コードを確認してください。'},400);
+  if(!/^\S+@\S+\.\S+$/.test(email)||code.length!==6)return json({error:'メールアドレスと6桁の認識コードを確認してください。'},400);
   const row=await env.DB.prepare('SELECT * FROM rpp_edit_codes WHERE email=?').bind(email).first();
-  if(!row)return json({error:'承認コードがまだ発行されていません。まずメール認証を行ってください。'},404);
+  if(!row)return json({error:'認識コードがまだ発行されていません。まずメール認証を行ってください。'},404);
   if(row.locked_until&&Date.parse(row.locked_until)>Date.now())return json({error:'認証試行が続いたため一時的にロックしています。15分ほど待ってからお試しください。'},429);
   const got=await sha256(`${email}:${row.salt}:${code}:${p}`);
   if(got!==row.code_hash){
     let attempts=Number(row.attempts||0)+1,locked=null;
     if(attempts>=8){attempts=0;locked=new Date(Date.now()+15*60*1000).toISOString()}
     await env.DB.prepare('UPDATE rpp_edit_codes SET attempts=?,locked_until=?,updated_at=? WHERE email=?').bind(attempts,locked,new Date().toISOString(),email).run();
-    return json({error:locked?'認証試行が続いたため15分間ロックしました。':'6桁の承認コードを確認してください。'},locked?429:401);
+    return json({error:locked?'認証試行が続いたため15分間ロックしました。':'6桁の認識コードを確認してください。'},locked?429:401);
   }
   await env.DB.prepare('UPDATE rpp_edit_codes SET attempts=0,locked_until=NULL,updated_at=? WHERE email=?').bind(new Date().toISOString(),email).run();
   const token=await createSession(env,email,43200);
@@ -55,10 +56,10 @@ const SIX_UI=`
     const code=document.getElementById('rppEditCode');
     if(!code)return false;
     const old=sessionStorage.getItem('rpp_latest_edit_code');if(old&&!/^\\d{6}$/.test(old))sessionStorage.removeItem('rpp_latest_edit_code');
-    code.maxLength=6;code.placeholder='6桁の承認コード';code.setAttribute('inputmode','numeric');
-    const field=code.closest('.field');const label=field&&field.querySelector('label');if(label&&label.textContent!=='承認コード（6桁）')label.textContent='承認コード（6桁）';
-    const guide=document.querySelector('.rpp-author-guide');const guideHtml='<b>🔑 6桁の承認コードについて</b><br>初回のメール認証後に、あなた専用の6桁コードを発行します。この同じコードを、提出後の再編集でも使います。スクリーンショットやメモで保存してください。';if(guide&&guide.innerHTML!==guideHtml)guide.innerHTML=guideHtml;
-    const note=document.querySelector('#auth > .note');const noteText='初回はメールに届く確認コードで本人確認します。認証後に、再編集にも使う固定6桁コードを発行します。';if(note&&note.textContent!==noteText)note.textContent=noteText;
+    code.maxLength=6;code.placeholder='6桁の認識コード';code.setAttribute('inputmode','numeric');
+    const field=code.closest('.field');const label=field&&field.querySelector('label');if(label&&label.textContent!=='認識コード（6桁）')label.textContent='認識コード（6桁）';
+    const guide=document.querySelector('.rpp-author-guide');const guideHtml='<b>🔑 6桁の認識コードについて</b><br>初回のメール認証後に、あなた専用の6桁コードを発行します。この同じコードを、提出後の再編集でも使います。スクリーンショットやメモで保存してください。';if(guide&&guide.innerHTML!==guideHtml)guide.innerHTML=guideHtml;
+    const note=document.querySelector('#auth > .note');const noteText='初回はメールに届く認識コードで本人確認します。認証後に、再編集にも使う固定6桁コードを発行します。';if(note&&note.textContent!==noteText)note.textContent=noteText;
     const msg=document.querySelector('#rppEditLogin .rpp-code-note');const msgText='この6桁コードは繰り返し使えます。紛失した場合は、登録メールアドレスで本人確認して新しい6桁コードを再発行できます。';if(msg&&msg.textContent!==msgText)msg.textContent=msgText;
     const btn=document.getElementById('rppEditLoginBtn');
     if(btn&&!btn.dataset.sixBound){
@@ -67,12 +68,12 @@ const SIX_UI=`
         const email=(document.getElementById('email')?.value||'').trim();
         const val=(document.getElementById('rppEditCode')?.value||'').replace(/\\D/g,'');
         const out=document.getElementById('rppEditMsg');
-        if(!email||val.length!==6){if(out)out.textContent='メールアドレスと6桁の承認コードを入力してください。';return}
+        if(!email||val.length!==6){if(out)out.textContent='メールアドレスと6桁の認識コードを入力してください。';return}
         btn.disabled=true;
         try{
           const r=await fetch('/api/edit-code/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email,code:val})});
           const d=await r.json();
-          if(!r.ok){if(out)out.textContent=d.error||'6桁の承認コードを確認してください。';return}
+          if(!r.ok){if(out)out.textContent=d.error||'6桁の認識コードを確認してください。';return}
           if(out)out.textContent='認証しました。原稿を開きます。';location.reload();
         }catch(e){if(out)out.textContent='通信できませんでした。'}finally{btn.disabled=false}
       };
@@ -80,13 +81,9 @@ const SIX_UI=`
     document.querySelectorAll('.rpp-edit-code-value').forEach(el=>{const v=el.textContent.replace(/\\D/g,'');const shown=v.length===6?v.slice(0,3)+' '+v.slice(3):'';if(shown&&el.textContent!==shown)el.textContent=shown});
     return true;
   };
-  const run=()=>{apply();setTimeout(apply,120);setTimeout(apply,500);setTimeout(apply,1200)};
+  const run=()=>requestAnimationFrame(apply);
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
-  const relevant='#rppEditCodeCard,#rppCodeCheckpoint,#rppEditLogin';
-  new MutationObserver(ms=>{
-    const hit=ms.some(m=>[...m.addedNodes].some(n=>n.nodeType===1&&(n.matches?.(relevant)||n.querySelector?.(relevant))));
-    if(hit)setTimeout(apply,0);
-  }).observe(document.body,{subtree:true,childList:true});
+  addEventListener('pageshow',run);
 })();
 </script>`;
 function inject(response){return new HTMLRewriter().on('body',{element(el){el.append(SIX_UI,{html:true})}}).transform(response)}
@@ -102,11 +99,11 @@ export default {
       const email=emailOf(data.email||payload.email);
       if(email&&data.editCode){
         try{
-          const code=await replaceWith6(env,email);
+          const code=await replaceWith6(env,email,payload.code);
           const headers=new Headers(response.headers);headers.set('Content-Type','application/json; charset=utf-8');headers.set('Cache-Control','no-store');
           data.editCode=code;data.editCodeDigits=6;data.editCodePersistent=true;
           return new Response(JSON.stringify(data),{status:response.status,headers});
-        }catch(e){if(String(e?.message)==='EDIT_CODE_SECRET_MISSING')return json({error:'承認コードの保護キーが未設定です。管理者にご連絡ください。'},503);return json({error:'6桁の承認コードを発行できませんでした。'},500)}
+        }catch(e){if(String(e?.message)==='EDIT_CODE_SECRET_MISSING')return json({error:'認識コードの保護キーが未設定です。管理者にご連絡ください。'},503);return json({error:'6桁の認識コードを発行できませんでした。'},500)}
       }
       return response;
     }

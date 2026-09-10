@@ -69,8 +69,7 @@ html body #gate #gateAuthorLink.rpp-action{color:#efd38a!important;text-indent:0
     const heroSub=document.querySelector('#rppAuthorHero .rpp-author-sub');if(heroSub)heroSub.textContent='記録を綴る・編集';
     const previewBar=document.querySelector('#previewBar');if(previewBar)previewBar.textContent=previewBar.textContent.replace('原稿・写真','記録・写真');
 
-    const rewriteDeadline=e=>{if(!e)return;const next=e.textContent.replaceAll('原稿受付','記録の受付').replaceAll('原稿の編集・提出期限','記録の編集・提出期限').replaceAll('原稿の締切','記録の締切');if(e.textContent!==next)e.textContent=next;};
-    for(const id of ['deadlineAuth','deadlineEditor']){const e=document.getElementById(id);if(!e)continue;rewriteDeadline(e);new MutationObserver(()=>rewriteDeadline(e)).observe(e,{childList:true,subtree:true,characterData:true});}
+    for(const id of ['deadlineAuth','deadlineEditor']){const e=document.getElementById(id);if(e)e.textContent='提出期限：2026年10月31日';}
 
     const photo=document.querySelector('#photo');
     if(photo&&!document.querySelector('#rppFilePicker')){

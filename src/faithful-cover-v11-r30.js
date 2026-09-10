@@ -53,7 +53,7 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
     let b=el('rppSubmitSuccessR28');
     if(!b){b=document.createElement('div');b.id='rppSubmitSuccessR28';b.style.cssText='margin:18px 0;padding:18px 16px;border:2px solid #d8b866;background:rgba(216,184,102,.10);color:#f2dc98;text-align:center;line-height:1.8';el('submit')?.insertAdjacentElement('afterend',b)}
     b.innerHTML='<b style="display:block;font-size:20px;margin-bottom:6px">✓ '+(isEdit?'変更内容を再提出しました！':'提出が完了しました！')+'</b><span>原稿は正常に保存されています。締切までは再編集できます。</span>';
-    b.classList.add('rpp-show');
+    b.classList.add('rpp-show');b.dataset.rppSuccessLock='1';
     b.setAttribute('role','status');b.setAttribute('aria-live','polite');
     b.scrollIntoView?.({block:'center',behavior:'smooth'});
     message('','ok');
@@ -112,15 +112,15 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
   const nativeFetch=window.fetch.bind(window);
   window.fetch=async(input,init)=>{
     const response=await nativeFetch(input,init);const url=typeof input==='string'?input:(input?.url||'');
-    if(url.includes('/api/me/story')){setTimeout(sync,0);setTimeout(sync,80);setTimeout(sync,220)}
+    if(url.includes('/api/me/story')){queueMicrotask(sync);requestAnimationFrame(sync)}
     return response;
   };
   document.addEventListener('click',e=>{
-    if(e.target?.closest?.('#save,#previewBtn')){setTimeout(sync,0);setTimeout(sync,180);setTimeout(sync,700)}
+    if(e.target?.closest?.('#save,#previewBtn')){queueMicrotask(sync);requestAnimationFrame(sync)}
   },true);
   document.addEventListener('input',e=>{if(e.target?.closest?.('#formArea'))clearRedundantStatus()},true);
-  document.addEventListener('rpp:reedit-opened',()=>{setTimeout(()=>{bindSubmitButtons();restoreInteractivity();sync()},0);setTimeout(sync,120)});
-  const run=()=>{bindSubmitButtons();restoreInteractivity();watch();sync();setTimeout(()=>{bindSubmitButtons();watch();sync()},120);setTimeout(()=>{bindSubmitButtons();restoreInteractivity();watch();sync()},500);setTimeout(()=>{bindSubmitButtons();restoreInteractivity();watch();sync()},1400)};
+  document.addEventListener('rpp:reedit-opened',()=>{bindSubmitButtons();restoreInteractivity();sync();requestAnimationFrame(sync)});
+  const run=()=>{bindSubmitButtons();restoreInteractivity();watch();sync();requestAnimationFrame(()=>{bindSubmitButtons();watch();sync()})};
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
   addEventListener('pageshow',run);document.addEventListener('visibilitychange',()=>{if(!document.hidden)run()});
 })();

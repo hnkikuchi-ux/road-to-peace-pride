@@ -121,7 +121,9 @@ input:focus,textarea:focus,select:focus{transform:translateY(-1px)}
  const fav=document.querySelector('#fav');
  if(fav)new MutationObserver(()=>{const active=fav.textContent.includes('★');fav.classList.toggle('rpp-selected',active);fav.setAttribute('aria-pressed',active?'true':'false')}).observe(fav,{childList:true,subtree:true,characterData:true});
  decorate(document);polishWords();
- new MutationObserver(muts=>{for(const m of muts)for(const n of m.addedNodes)if(n.nodeType===1){decorate(n);polishWords()}}).observe(document.documentElement,{childList:true,subtree:true});
+ const list=document.getElementById('tocList');
+ if(list)new MutationObserver(()=>decorate(list)).observe(list,{childList:true});
+ addEventListener('pageshow',()=>{decorate(document);polishWords()});
 })();
 </script>`;
 

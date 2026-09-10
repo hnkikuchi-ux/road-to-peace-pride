@@ -68,10 +68,10 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
     const cover=document.getElementById('cover');if(!cover)return false;
     if(!cover.dataset.r13Observed){
       cover.dataset.r13Observed='1';
-      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class'],childList:true,subtree:true,characterData:true});
-      const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>{setTimeout(applyPublic,80);setTimeout(applyPublic,320);setTimeout(applyPublic,900)})
+      new MutationObserver(()=>applyPublic()).observe(cover,{attributes:true,attributeFilter:['class']});
+      const unlock=document.getElementById('unlock');if(unlock)unlock.addEventListener('click',()=>requestAnimationFrame(applyPublic))
     }
-    applyPublic();setTimeout(applyPublic,120);setTimeout(applyPublic,500);setTimeout(applyPublic,1200);return true;
+    applyPublic();return true;
   };
 
   const removeLegacySectionHeads=()=>{
@@ -119,8 +119,8 @@ body.rpp-author-clean .rpp-org-detail-field input{min-height:48px}
   const applyAuthor=()=>{document.body.classList.add('rpp-author-clean');removeLegacySectionHeads();hideHelperText();installOrgDetail();removeLegacySectionHeads();hideHelperText();};
   const queueAuthor=()=>{if(authorQueued)return;authorQueued=true;setTimeout(()=>{authorQueued=false;applyAuthor()},0)};
   const installAuthor=()=>{
-    applyAuthor();setTimeout(applyAuthor,150);setTimeout(applyAuthor,600);setTimeout(applyAuthor,1400);setTimeout(applyAuthor,2600);
-    const editor=document.getElementById('editor');if(editor&&!editor.dataset.r13AuthorObserved){editor.dataset.r13AuthorObserved='1';new MutationObserver(queueAuthor).observe(editor,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
+    applyAuthor();requestAnimationFrame(applyAuthor);
+    const editor=document.getElementById('editor');if(editor&&!editor.dataset.r13AuthorObserved){editor.dataset.r13AuthorObserved='1';new MutationObserver(queueAuthor).observe(editor,{attributes:true,attributeFilter:['class']})}
   };
 
   const start=()=>{const p=location.pathname;const authorPage=p==='/author'||p==='/author/'||p==='/author.html'||p==='/author.html/';authorPage?installAuthor():installPublic()};

@@ -160,11 +160,11 @@ body.rpp-merged-home #tocBtn{letter-spacing:.12em!important}
     const auth=document.getElementById('auth'),editor=document.getElementById('editor');
     if(!auth||!editor)return;
     const note=auth.querySelector('.note');
-    if(note)note.textContent='初回はメールに届く6桁コードで本人確認します。認証後に「編集用承認コード」を発行します。提出後の再編集に必要なため、必ず保存してください。';
+    if(note)note.textContent='初回はメールに届く6桁の認識コードで本人確認します。この同じ認識コードを、提出後の再編集にも使用します。';
     const h1=auth.querySelector('h1');
     const guide=document.createElement('div');
     guide.className='rpp-author-guide';
-    guide.innerHTML='<b>🔑 編集用承認コードについて</b><br>メール認証が完了すると、あなた専用の編集用承認コードが表示されます。提出後に原稿を編集するときに必要です。スクリーンショットやメモで必ず保存してください。';
+    guide.innerHTML='<b>🔑 認識コードについて</b><br>初回のメール認証で届く6桁の認識コードを、そのまま提出後の再編集にも使用します。スクリーンショットまたはメモで保存してください。';
     if(h1)h1.insertAdjacentElement('afterend',guide);
 
     const tabs=document.createElement('div');
@@ -173,7 +173,7 @@ body.rpp-merged-home #tocBtn{letter-spacing:.12em!important}
     guide.insertAdjacentElement('afterend',tabs);
     const editBox=document.createElement('div');
     editBox.id='rppEditLogin';editBox.className='hidden';
-    editBox.innerHTML='<div class="field"><label>編集用承認コード（8桁）</label><input id="rppEditCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="8桁の編集用承認コード"></div><button type="button" id="rppEditLoginBtn" class="btn primary">承認コードで編集する</button><div id="rppEditMsg" class="note"></div><button type="button" id="rppForgotCode" class="btn secondary" style="margin-top:9px;width:100%">承認コードを忘れた方</button><div class="rpp-code-note">紛失した場合は、登録したメールアドレスに届く本人確認コードで再発行できます。</div>';
+    editBox.innerHTML='<div class="field"><label>6桁の認識コード</label><input id="rppEditCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6桁の認識コード"></div><button type="button" id="rppEditLoginBtn" class="btn primary">以前の原稿を編集する</button><div id="rppEditMsg" class="note"></div><button type="button" id="rppForgotCode" class="btn secondary" style="margin-top:9px;width:100%">認識コードを忘れた方</button><div class="rpp-code-note">紛失した場合は、登録したメールアドレスに届く認識コードで再発行できます。</div>';
     const authmsg=document.getElementById('authmsg');
     if(authmsg)authmsg.insertAdjacentElement('beforebegin',editBox); else auth.appendChild(editBox);
     const send=document.getElementById('send'),otpbox=document.getElementById('otpbox');
@@ -184,7 +184,7 @@ body.rpp-merged-home #tocBtn{letter-spacing:.12em!important}
       editBox.classList.toggle('hidden',!edit);
       if(send)send.classList.toggle('hidden',edit);
       if(otpbox)otpbox.classList.add('hidden');
-      if(authmsg)authmsg.textContent=edit?'メールアドレスと、保存している編集用承認コードを入力してください。':'';
+      if(authmsg)authmsg.textContent=edit?'登録メールアドレスと、保存している6桁の認識コードを入力してください。':'';
     };
     firstTab.onclick=()=>setMode('first');editTab.onclick=()=>setMode('edit');
 
@@ -193,8 +193,8 @@ body.rpp-merged-home #tocBtn{letter-spacing:.12em!important}
       sessionStorage.setItem('rpp_latest_edit_code',code);
       let card=document.getElementById('rppEditCodeCard');
       if(!card){card=document.createElement('div');card.id='rppEditCodeCard';card.className='rpp-edit-code-card';editor.insertAdjacentElement('afterbegin',card)}
-      const shown=String(code).replace(/(\d{4})(\d{4})/,'$1 $2');
-      card.innerHTML='<div class="rpp-kicker">YOUR EDIT CODE</div><h2>'+(reset?'新しい編集用承認コード':'あなたの編集用承認コード')+'</h2><div class="rpp-edit-code-value">'+shown+'</div><p><b>このコードは、提出後に原稿を編集するときに必要です。</b><br>必ずスクリーンショットまたはメモで保存してください。</p><p>紛失した場合は、登録メールアドレスで本人確認して再発行できます。</p><button type="button" id="rppCopyEditCode" class="btn secondary">承認コードをコピー</button><div id="rppCopyState" class="note"></div>';
+      const shown=String(code).replace(/(\d{3})(\d{3})/,'$1 $2');
+      card.innerHTML='<div class="rpp-kicker">YOUR EDIT CODE</div><h2>'+(reset?'新しい6桁の認識コード':'あなたの6桁の認識コード')+'</h2><div class="rpp-edit-code-value">'+shown+'</div><p><b>このコードは、提出後に原稿を編集するときに必要です。</b><br>必ずスクリーンショットまたはメモで保存してください。</p><p>紛失した場合は、登録メールアドレスで本人確認して再発行できます。</p><button type="button" id="rppCopyEditCode" class="btn secondary">認識コードをコピー</button><div id="rppCopyState" class="note"></div>';
       const copy=card.querySelector('#rppCopyEditCode');
       if(copy)copy.onclick=async()=>{try{await navigator.clipboard.writeText(String(code));card.querySelector('#rppCopyState').textContent='コピーしました。安全な場所に保存してください。'}catch(e){card.querySelector('#rppCopyState').textContent='コピーできない場合は、スクリーンショットまたはメモで保存してください。'}};
     };
@@ -219,17 +219,17 @@ body.rpp-merged-home #tocBtn{letter-spacing:.12em!important}
       const email=(document.getElementById('email')?.value||'').trim().toLowerCase();
       const code=(document.getElementById('rppEditCode')?.value||'').replace(/\D/g,'');
       const msg=document.getElementById('rppEditMsg');
-      if(!email||code.length!==8){if(msg)msg.textContent='メールアドレスと8桁の編集用承認コードを入力してください。';return}
+      if(!email||code.length!==6){if(msg)msg.textContent='メールアドレスと6桁の認識コードを入力してください。';return}
       loginBtn.disabled=true;
       try{
         const r=await nativeFetch('/api/edit-code/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({email,code})});
         const d=await r.json();
-        if(!r.ok){if(msg)msg.textContent=d.error||'承認コードを確認してください。';return}
+        if(!r.ok){if(msg)msg.textContent=d.error||'認識コードを確認してください。';return}
         if(msg)msg.textContent='認証しました。原稿を開きます。';location.reload();
       }catch(e){if(msg)msg.textContent='通信できませんでした。'}finally{loginBtn.disabled=false}
     };
     const forgot=document.getElementById('rppForgotCode');
-    if(forgot)forgot.onclick=()=>{sessionStorage.setItem('rpp_reset_edit_code','1');setMode('first');if(authmsg)authmsg.textContent='登録メールアドレスに6桁の本人確認コードを送信してください。認証後、新しい編集用承認コードを発行します。'};
+    if(forgot)forgot.onclick=()=>{sessionStorage.setItem('rpp_reset_edit_code','1');setMode('first');if(authmsg)authmsg.textContent='登録メールアドレスに6桁の認識コードを送信してください。認証後、この認識コードを再編集にも使用できます。'};
     const logout=document.getElementById('logout');if(logout)logout.addEventListener('click',()=>sessionStorage.removeItem('rpp_latest_edit_code'),{capture:true});
   });
 })();
@@ -240,7 +240,7 @@ let editSchemaReady;
 function editJson(data,status=200,headers={}){return new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...headers}})}
 function editEmail(v){return String(v||'').trim().toLowerCase()}
 function editRandomHex(bytes=32){const b=new Uint8Array(bytes);crypto.getRandomValues(b);return Array.from(b,x=>x.toString(16).padStart(2,'0')).join('')}
-function editRandomCode(){const b=new Uint8Array(8);crypto.getRandomValues(b);return Array.from(b,x=>String(x%10)).join('')}
+function editRandomCode(){const b=new Uint8Array(6);crypto.getRandomValues(b);return Array.from(b,x=>String(x%10)).join('')}
 async function editSha(v){const b=await crypto.subtle.digest('SHA-256',editEnc.encode(String(v)));return Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('')}
 function editSessionCookie(token,maxAge=43200){return `rpp_author=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`}
 function editPepper(env){return String(env.EDIT_CODE_PEPPER||env.OTP_PEPPER||env.SETUP_KEY||'')}
@@ -256,9 +256,10 @@ async function createAuthorSession(env,email,maxAge=43200){
   await env.DB.prepare('INSERT INTO rpp_sessions(token_hash,kind,subject,expires_at,created_at) VALUES(?,?,?,?,?)').bind(hash,'author',email,expires,now.toISOString()).run();
   return token;
 }
-async function issueEditCode(env,email,reset=false){
+async function issueEditCode(env,email,reset=false,preferredCode=''){
   await ensureEditSchema(env);const pepper=editPepper(env);if(!pepper)throw new Error('EDIT_CODE_SECRET_MISSING');
-  const code=editRandomCode(),salt=editRandomHex(16),hash=await editSha(`${email}:${salt}:${code}:${pepper}`),now=new Date().toISOString();
+  const entered=String(preferredCode||'').replace(/\D/g,'');
+  const code=/^\d{6}$/.test(entered)?entered:editRandomCode(),salt=editRandomHex(16),hash=await editSha(`${email}:${salt}:${code}:${pepper}`),now=new Date().toISOString();
   await env.DB.prepare('INSERT INTO rpp_edit_codes(email,code_hash,salt,attempts,locked_until,created_at,updated_at) VALUES(?,?,?,0,NULL,?,?) ON CONFLICT(email) DO UPDATE SET code_hash=excluded.code_hash,salt=excluded.salt,attempts=0,locked_until=NULL,updated_at=excluded.updated_at').bind(email,hash,salt,now,now).run();
   return {code,reset};
 }
@@ -271,29 +272,29 @@ async function handleVerify(request,env,ctx){
     await ensureEditSchema(env);
     const existing=await env.DB.prepare('SELECT email FROM rpp_edit_codes WHERE email=?').bind(email).first();
     let issued=null;
-    if(!existing||payload.resetEditCode===true)issued=await issueEditCode(env,email,Boolean(existing&&payload.resetEditCode===true));
+    if(!existing||payload.resetEditCode===true)issued=await issueEditCode(env,email,Boolean(existing&&payload.resetEditCode===true),payload.code);
     const headers=new Headers(response.headers);
     const setCookie=headers.get('Set-Cookie');if(setCookie&&/rpp_author=/i.test(setCookie))headers.set('Set-Cookie',setCookie.replace(/Max-Age=\d+/i,'Max-Age=43200'));
     headers.set('Content-Type','application/json; charset=utf-8');headers.set('Cache-Control','no-store');
     return new Response(JSON.stringify({...data,...(issued?{editCode:issued.code,editCodeCreated:!issued.reset,editCodeReset:issued.reset}:{})}),{status:response.status,headers});
   }catch(e){
-    if(String(e&&e.message)==='EDIT_CODE_SECRET_MISSING')return editJson({error:'編集用承認コードの保護キーが未設定です。管理者にご連絡ください。'},503);
-    return editJson({error:'編集用承認コードを発行できませんでした。'},500);
+    if(String(e&&e.message)==='EDIT_CODE_SECRET_MISSING')return editJson({error:'認識コードの保護キーが未設定です。管理者にご連絡ください。'},503);
+    return editJson({error:'認識コードを発行できませんでした。'},500);
   }
 }
 async function handleEditLogin(request,env){
-  await ensureEditSchema(env);const pepper=editPepper(env);if(!pepper)return editJson({error:'編集用承認コードの保護キーが未設定です。'},503);
+  await ensureEditSchema(env);const pepper=editPepper(env);if(!pepper)return editJson({error:'認識コードの保護キーが未設定です。'},503);
   const b=await request.json().catch(()=>({})),email=editEmail(b.email),code=String(b.code||'').replace(/\D/g,'');
-  if(!/^\S+@\S+\.\S+$/.test(email)||code.length!==8)return editJson({error:'メールアドレスと8桁の編集用承認コードを確認してください。'},400);
+  if(!/^\S+@\S+\.\S+$/.test(email)||code.length!==6)return editJson({error:'メールアドレスと6桁の認識コードを確認してください。'},400);
   const row=await env.DB.prepare('SELECT * FROM rpp_edit_codes WHERE email=?').bind(email).first();
-  if(!row)return editJson({error:'編集用承認コードがまだ発行されていません。まずメール認証を行ってください。'},404);
+  if(!row)return editJson({error:'認識コードがまだ発行されていません。まずメール認証を行ってください。'},404);
   if(row.locked_until&&Date.parse(row.locked_until)>Date.now())return editJson({error:'認証試行が続いたため一時的にロックしています。15分ほど待ってからお試しください。'},429);
   const got=await editSha(`${email}:${row.salt}:${code}:${pepper}`);
   if(got!==row.code_hash){
     let attempts=Number(row.attempts||0)+1,locked=null;
     if(attempts>=8){attempts=0;locked=new Date(Date.now()+15*60*1000).toISOString()}
     await env.DB.prepare('UPDATE rpp_edit_codes SET attempts=?,locked_until=?,updated_at=? WHERE email=?').bind(attempts,locked,new Date().toISOString(),email).run();
-    return editJson({error:locked?'認証試行が続いたため15分間ロックしました。':'編集用承認コードを確認してください。'},locked?429:401);
+    return editJson({error:locked?'認証試行が続いたため15分間ロックしました。':'認識コードを確認してください。'},locked?429:401);
   }
   await env.DB.prepare('UPDATE rpp_edit_codes SET attempts=0,locked_until=NULL,updated_at=? WHERE email=?').bind(new Date().toISOString(),email).run();
   const token=await createAuthorSession(env,email,43200);

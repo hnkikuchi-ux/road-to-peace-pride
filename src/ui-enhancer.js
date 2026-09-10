@@ -47,9 +47,8 @@ body:after{width:46vw!important;min-width:240px!important;height:90vh!important;
 
   function protectSubmittedSave(){
     const btn=$('#save'),badge=$('#statusBadge');if(!btn||!badge)return;
-    const refresh=()=>{btn.textContent=badge.textContent.trim()==='提出済'?'変更内容を保存（提出済みのまま）':'下書き保存'};
+    btn.textContent=badge.textContent.trim()==='提出済'?'変更内容を保存':'下書き保存';
     btn.onclick=()=>{const status=badge.textContent.trim()==='提出済'?'submitted':'draft';if(typeof window.saveServer==='function')return window.saveServer(status)};
-    refresh();new MutationObserver(refresh).observe(badge,{childList:true,subtree:true,characterData:true});
   }
 
   function showRecovery(local,server,email){
