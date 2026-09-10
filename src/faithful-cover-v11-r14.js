@@ -49,8 +49,10 @@ body.rpp-consent-open{overflow:hidden!important}
  function ensureDistrictSections(){
    const list=document.getElementById('tocList');if(!list)return false;
    list.dataset.r14Managed='1';
-   if(document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length>=6)return true;
-   let ss=[];try{ss=stories||[]}catch(e){return false}
+   let ss=[];try{ss=Array.isArray(stories)?stories:[]}catch(e){return false}
+   const signature=JSON.stringify(ss.map(s=>[s?.id,s?.title,s?.name,s?.soku,s?.org]));
+   const sections=[...list.children].filter(x=>x.classList&&x.classList.contains('rpp-district-section')&&!x.classList.contains('rpp-legacy-section'));
+   if(sections.length===6&&list.dataset.r14Signature===signature)return true;
    let flat=[...list.children].filter(x=>x.classList&&x.classList.contains('toc-item'));
    if(!flat.length&&ss.length){list.textContent='';flat=ss.map((s,i)=>{const item=makeTocItem(s,i);list.appendChild(item);return item})}
    document.body.classList.add('rpp-district-book');
@@ -65,7 +67,8 @@ body.rpp-consent-open{overflow:hidden!important}
      if(items.length)items.forEach(x=>sec.appendChild(x));else{const e=document.createElement('div');e.className='rpp-district-empty';e.textContent='この章の記録は、これから掲載されます。';sec.appendChild(e)}
      list.appendChild(sec);
    });
-   return document.querySelectorAll('.rpp-district-section:not(.rpp-legacy-section)').length===6;
+   list.dataset.r14Signature=signature;
+   return [...list.children].filter(x=>x.classList&&x.classList.contains('rpp-district-section')&&!x.classList.contains('rpp-legacy-section')).length===6;
  }
  function settleContents(){[0,40,120,260,520,950,1600].forEach(ms=>setTimeout(ensureDistrictSections,ms))}
  function returnToContents(){
@@ -87,6 +90,8 @@ body.rpp-consent-open{overflow:hidden!important}
      if(!s.ok)throw new Error(data.error||'読み込みに失敗しました。');
      stories=data.stories||[];
      try{renderToc()}catch(e){}
+     document.documentElement.dataset.rppStoriesLoaded='1';
+     document.dispatchEvent(new CustomEvent('rpp:stories-loaded',{detail:{count:stories.length}}));
      settleContents();
    }catch(e){if(msg)msg.textContent=e?.message||'読み込みに失敗しました。'}finally{busy=false;if(unlock)unlock.disabled=false}
  }
@@ -100,6 +105,8 @@ body.rpp-consent-open{overflow:hidden!important}
    const back=document.getElementById('backToc');if(back){back.onclick=returnToContents;back.dataset.r14Back='1'}
    const pw=document.getElementById('pw');if(pw&&!pw.dataset.r14Enter){pw.dataset.r14Enter='1';pw.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();openViewer()}})}
    const cover=document.getElementById('cover');if(cover&&!cover.dataset.r14ResumeConsent){cover.dataset.r14ResumeConsent='1';new MutationObserver(()=>{if(!cover.classList.contains('hidden')&&!accepted())showNow()}).observe(cover,{attributes:true,attributeFilter:['class']})}
+   document.addEventListener('rpp:stories-loaded',ensureDistrictSections);
+   if(document.documentElement.dataset.rppStoriesLoaded==='1')ensureDistrictSections();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();

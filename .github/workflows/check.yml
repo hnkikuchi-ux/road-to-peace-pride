@@ -40,7 +40,7 @@ jobs:
           node --check src/faithful-cover-v11-r12.js
           node --check src/faithful-cover-v11-r11.js
           node --check src/faithful-cover-v11-r10.js
-          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/full_product_qa_r26.py scripts/scale_300_regression.py scripts/mobile_browser_smoke.py scripts/production_300_read_burst.py
+          python -m py_compile scripts/cache_refresh_smoke.py scripts/faithful_v11_smoke.py scripts/logout_smoke.py scripts/full_product_qa.py scripts/full_product_qa_r26.py scripts/scale_300_regression.py scripts/empty_contents_regression.py scripts/mobile_browser_smoke.py scripts/production_300_read_burst.py
       - name: Verify r31 first-time author guide
         run: |
           grep -Fq "import app from './faithful-cover-v11-r30.js'" src/faithful-cover-v11-r31.js
@@ -111,7 +111,9 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq 'faithful-v11-r33-final-qa-20260910-3' public/version.json
+          grep -Fq 'faithful-v11-r33-final-qa-20260910-4' public/version.json
+          grep -Fq "rpp:stories-loaded" public/index.html
+          grep -Fq "この章の記録は、これから掲載されます。" src/faithful-cover-v11-r14.js
           node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r33.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r33 active')"
       - name: Final author API lifecycle QA
         run: node scripts/final_api_qa.mjs

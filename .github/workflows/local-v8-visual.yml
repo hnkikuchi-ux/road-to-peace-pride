@@ -52,6 +52,10 @@ jobs:
         env:
           RPP_BASE_URL: http://127.0.0.1:8787
         run: timeout 150s python -u scripts/scale_300_regression.py
+      - name: Keep all six contents chapters when no stories are published
+        env:
+          RPP_BASE_URL: http://127.0.0.1:8787
+        run: timeout 90s python -u scripts/empty_contents_regression.py
       - name: Show Worker log on failure
         if: failure()
         run: cat /tmp/rpp-wrangler.log || true
