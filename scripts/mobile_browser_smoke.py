@@ -79,8 +79,10 @@ try:
     wait.until(EC.visibility_of_element_located((By.ID, 'gate')))
     favorite = driver.find_element(By.ID, 'fav')
     check(not favorite.is_displayed(), 'favorite control is not displayed')
-    check(driver.find_element(By.ID, 'fontDown').text.strip() == 'A−'
-          and driver.find_element(By.ID, 'fontUp').text.strip() == 'A＋',
+    # Selenium's visible-text property is empty while the reader panel is hidden
+    # behind the password gate. Inspect the actual labels without changing state.
+    check(driver.find_element(By.ID, 'fontDown').get_attribute('textContent').strip() == 'A−'
+          and driver.find_element(By.ID, 'fontUp').get_attribute('textContent').strip() == 'A＋',
           'reader font controls remain present')
     check(driver.execute_script(
         'return document.documentElement.scrollWidth <= document.documentElement.clientWidth + 2'

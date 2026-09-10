@@ -1,11 +1,15 @@
-name: Verify r20 live deployment
+name: Verify current live deployment
 
 on:
   push:
     branches: [main]
     paths:
-      - 'src/faithful-cover-v11-r20.js'
-      - 'src/faithful-cover-v11-r19.js'
+      - 'src/faithful-cover-v11-r33.js'
+      - 'src/faithful-cover-v11-r32.js'
+      - 'src/faithful-cover-v11-r31.js'
+      - 'src/faithful-cover-v11-r30.js'
+      - 'src/faithful-cover-v11-r29.js'
+      - 'public/author.html'
       - 'public/zip-store.js'
       - 'public/version.json'
       - 'wrangler.jsonc'
@@ -20,34 +24,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
-      - name: Wait for r20 version
+      - name: Wait for current version
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsS --max-time 8 "$BASE/version.json?r20=${GITHUB_RUN_ID}-$i" | grep -Fq '2026.09.07-faithful-v11-r20-one-code-author-clean'; then
-              echo 'r20 version is live'
+            if curl -fsS --max-time 8 "$BASE/version.json?r33=${GITHUB_RUN_ID}-$i" | grep -Fq 'faithful-v11-r33-final-qa-20260910'; then
+              echo 'current r33 version is live'
               exit 0
             fi
             sleep 10
           done
-          echo 'r20 version did not become live in time'
+          echo 'current r33 version did not become live in time'
           exit 1
-      - name: Verify author one-code UI is live
+      - name: Verify final author UI is live
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r20=${GITHUB_RUN_ID}" -o /tmp/author.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
-          grep -Fq 'ONE CODE r20' /tmp/author.html
-          grep -Fq 'メールで届いた6桁コードを保存してください' /tmp/author.html
-          grep -Fq '#rppAuthorHero .rpp-author-title' /tmp/author.html
-          echo 'r20 unified author UI is live'
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r33=${GITHUB_RUN_ID}" -o /tmp/author.html -w 'final_url=%{url_effective}\nhttp=%{http_code}\n'
+          grep -Fq 'data-rpp-first-time-guide="r31-markup-fixed"' /tmp/author.html
+          grep -Fq 'メールアドレスを入力し、「認識コードを送信」を押してください。' /tmp/author.html
+          grep -Fq '提出期限：2026年10月31日' /tmp/author.html
+          echo 'final r33 author UI is live'
       - name: Verify static mail fix asset
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r20=${GITHUB_RUN_ID}" > /tmp/zip-store.js
+          curl -fsS --max-time 15 -H 'Cache-Control: no-cache' "$BASE/zip-store.js?r33=${GITHUB_RUN_ID}" > /tmp/zip-store.js
           grep -Fq 'ADMIN MAIL FIX r18' /tmp/zip-store.js
           grep -Fq 'ensureSaved' /tmp/zip-store.js
           echo 'static admin mail fix remains live'
@@ -55,7 +59,7 @@ jobs:
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsS --max-time 15 "$BASE/api/health?r20=${GITHUB_RUN_ID}" -o /tmp/health.json
+          curl -fsS --max-time 15 "$BASE/api/health?r33=${GITHUB_RUN_ID}" -o /tmp/health.json
           python3 - <<'PY'
           import json
           h=json.load(open('/tmp/health.json'))

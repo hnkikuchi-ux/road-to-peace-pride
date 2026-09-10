@@ -68,7 +68,17 @@ body.rpp-author-r5 #editor #submit.rpp-submit-busy{opacity:.72!important;cursor:
     const state=el('saveState');if(state)state.textContent='Cloudflareへ保存中…';
     try{
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      const r=await fetch('/api/rpp/resubmit',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify(d)});
+      // Keep the preview environment local-only, as the base author flow promises.
+      // Production uses the ordinary story endpoint for the first submission and
+      // the dedicated resubmit endpoint only for an already submitted manuscript.
+      if(typeof config==='object'&&config?.preview&&typeof saveServer==='function'){
+        const ok=await saveServer('submitted');
+        if(!ok)throw new Error('提出内容を保存できませんでした。');
+        showSubmitSuccess(isEdit);document.dispatchEvent(new Event('rpp:resubmit-success'));return;
+      }
+      const endpoint=isEdit?'/api/rpp/resubmit':'/api/me/story';
+      const method=isEdit?'POST':'PUT';
+      const r=await fetch(endpoint,{method,headers:{'Content-Type':'application/json','Accept':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify(d)});
       const type=String(r.headers.get('content-type')||'');let out={};
       if(type.includes('application/json')){try{out=await r.json()}catch{}}
       else{try{await r.text()}catch{}}
