@@ -111,7 +111,7 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq 'faithful-v11-r33-final-qa-20260910' public/version.json
+          grep -Fq 'faithful-v11-r33-final-qa-20260910-2' public/version.json
           node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r33.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r33 active')"
       - name: Final author API lifecycle QA
         run: node scripts/final_api_qa.mjs

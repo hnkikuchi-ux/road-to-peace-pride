@@ -26,7 +26,7 @@ jobs:
       - name: Wait for current version
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?diag=$i" | grep -Fq 'faithful-v11-r33-final-qa-20260910'; then exit 0; fi
+            if curl -fsS --max-time 8 "$RPP_BASE_URL/version.json?diag=$i" | grep -Fq 'faithful-v11-r33-final-qa-20260910-2'; then exit 0; fi
             sleep 5
           done
           exit 1
