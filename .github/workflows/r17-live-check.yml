@@ -30,7 +30,7 @@ jobs:
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsS --max-time 8 "$BASE/version.json?r33=${GITHUB_RUN_ID}-$i" | grep -Fq 'faithful-v11-r33-final-qa-20260910-2'; then
+            if curl -fsS --max-time 8 "$BASE/version.json?r33=${GITHUB_RUN_ID}-$i" | grep -Fq 'faithful-v11-r33-final-qa-20260910-3'; then
               echo 'current r33 version is live'
               exit 0
             fi

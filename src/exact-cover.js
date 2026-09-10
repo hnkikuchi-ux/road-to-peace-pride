@@ -48,16 +48,10 @@ body.rpp-gate-active .wrap{width:100%!important;max-width:none!important;margin:
  if(unlock){unlock.setAttribute('aria-label','記録をひらく');unlock.setAttribute('title','記録をひらく')}
  if(author){author.setAttribute('aria-label','私の記録を綴る / WRITE YOUR STORY');author.setAttribute('title','私の記録を綴る / WRITE YOUR STORY')}
  if(!card.querySelector('.rpp-exact-sparkles')){const s=document.createElement('div');s.className='rpp-exact-sparkles';for(const [x,y,d,l] of [[12,15,3.1,-.4],[74,14,4.1,-1.8],[24,28,3.6,-.9],[87,31,3.2,-2.1],[15,46,4.4,-2.8],[78,48,3.5,-.5],[28,54,3,-1.6],[83,57,4,-2.3],[12,80,3.4,-1.2],[88,80,3.7,-2.7]]){const i=document.createElement('i');i.style.left=x+'%';i.style.top=y+'%';i.style.setProperty('--d',d+'s');i.style.setProperty('--l',l+'s');s.appendChild(i)}card.appendChild(s)}
- const load=async()=>{
-   try{
-     const names=['01.txt','02.txt','03.txt'];
-     const parts=await Promise.all(names.map(async n=>{const r=await fetch('/assets/top-master/'+n,{cache:'force-cache'});if(!r.ok)throw new Error('cover asset '+n+' '+r.status);return (await r.text()).trim()}));
-     const raw=atob(parts.join(''));const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
-     const url=URL.createObjectURL(new Blob([bytes],{type:'image/webp'}));
-     const img=new Image();img.onload=()=>{card.style.setProperty('background-image','url("'+url+'")','important');card.classList.add('rpp-master-ready');card.dataset.master='approved-941x1672'};img.onerror=()=>URL.revokeObjectURL(url);img.src=url;
-   }catch(e){console.error('approved cover load failed',e);card.style.setProperty('background-image',"url('/assets/mobile-dawn.svg')",'important');card.classList.add('rpp-master-ready')}
- };
- load();
+ // The live vector cover is the maintained source used by exact-cover-avif.js.
+ // Set it synchronously here too so the gate never waits for legacy image chunks.
+ card.style.setProperty('background-image',"url('/assets/mobile-dawn.svg')",'important');
+ card.classList.add('rpp-master-ready');
 })();
 </script>`;
 
