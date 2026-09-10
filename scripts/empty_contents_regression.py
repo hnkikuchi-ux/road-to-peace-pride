@@ -90,7 +90,7 @@ try:
     check(len(sections) == 6, 'returning viewer sees all six organization chapters')
     check(names == GROUPS, 'organization names and order stay unchanged at zero stories')
     check(empty_texts == [EMPTY_TEXT] * 6, 'every empty chapter shows the agreed guidance')
-    check(not driver.find_elements(By.XPATH, "//*[contains(text(),'公開済みの原稿はまだありません。')]"),
+    check(not driver.find_elements(By.CSS_SELECTOR, '#tocList > .note'),
           'legacy generic empty message is removed')
     check(all(head.get_attribute('role') == 'button' for head in heads),
           'all six empty chapters remain usable accordions')
