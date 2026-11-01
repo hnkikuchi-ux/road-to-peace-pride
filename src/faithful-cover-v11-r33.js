@@ -2,7 +2,7 @@ import app from './faithful-cover-v11-r32.js';
 
 const AUTHOR_DEADLINE_UI=`<script>
 (()=>{
-  const text='提出期限：2026年10月31日';
+  const text='提出期限：2026年11月13日';
   function fix(){
     for(const id of ['deadlineAuth','deadlineEditor']){
       const el=document.getElementById(id);
