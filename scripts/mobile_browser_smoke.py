@@ -1,8 +1,6 @@
 import os
 import sys
 import time
-import json
-import urllib.request
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -49,10 +47,12 @@ def severe_errors():
 
 
 try:
-    with urllib.request.urlopen(BASE + '/api/config', timeout=15) as response:
-        final_edition = json.load(response).get('finalEdition', False)
     print('1) Author page at LINE-sized viewport', flush=True)
     driver.get(BASE + '/author.html?mobile-final-qa=' + str(int(time.time())))
+    wait.until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
+    check(driver.find_element(By.TAG_NAME, 'html').get_attribute('data-rpp-final-edition-support') == 'r34',
+          'current final edition build is loaded')
+    final_edition = any('投稿受付は終了しました' in h.text for h in driver.find_elements(By.TAG_NAME, 'h1'))
     if final_edition:
         wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'h1')))
         check('投稿受付は終了しました' in driver.find_element(By.TAG_NAME, 'h1').text,
