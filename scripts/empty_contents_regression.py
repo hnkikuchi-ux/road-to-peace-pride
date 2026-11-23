@@ -96,7 +96,7 @@ try:
           'all six empty chapters remain usable accordions')
     driver.execute_script('arguments[0].click()', heads[0])
     wait.until(lambda d: 'rpp-open' in (sections[0].get_attribute('class') or ''))
-    check(sections[0].find_element(By.CSS_SELECTOR, '.rpp-district-empty').is_displayed(),
+    check(wait.until(lambda d: sections[0].find_element(By.CSS_SELECTOR, '.rpp-district-empty').is_displayed()),
           'opening an empty chapter reveals its guidance')
     check(driver.execute_script(
         'return document.documentElement.scrollWidth <= window.innerWidth + 2'
