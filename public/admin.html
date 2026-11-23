@@ -44,6 +44,13 @@
 
     <div class="panel"><h2>BACKUP｜バックアップ</h2><p class="note">JSONは本文の復旧用、CSVは一覧確認用です。「文章＋写真を完全ZIP」はJSON・CSV・写真・マニフェストを同梱します。外部CDNを使わず、このサイトだけでZIPを生成します。写真が多い場合はPCでの実行を推奨します。</p><div class="actions"><a class="pill" href="/api/admin/export.json" download>JSONバックアップ</a><a class="pill" href="/api/admin/export.csv" download>CSV出力</a><button id="fullBackup" class="pill">文章＋写真を完全ZIP</button></div><div class="progress hidden" id="progressBox"><div id="progressBar"></div></div><div id="backupMsg" class="msg"></div></div>
 
+    <section class="panel" id="finalEditionPanel" aria-labelledby="finalEditionHeading"><h2 id="finalEditionHeading">最終閲覧版・原稿追加</h2>
+      <p id="editionState" role="status" style="font-size:16px"></p>
+      <p class="note">管理者が受け取った原稿と写真を追加できます。既存の原稿は上書きしません。</p>
+      <div class="field"><label for="importFile">追加する原稿ファイル（JSON）</label><input id="importFile" class="input" type="file" accept="application/json,.json"></div>
+      <ul id="importPreview" style="font-size:16px;line-height:1.8"></ul><p id="importMessage" role="status" style="font-size:16px"></p>
+      <div class="actions"><button id="confirmImport" class="btn primary" disabled>確認した原稿を掲載する</button><button id="closeEdition" class="pill">受付を終了して最終閲覧版にする</button></div>
+    </section>
     <div class="panel"><h2>AUTHORS｜投稿者一覧</h2><div class="toolbar"><input id="search" class="input" placeholder="氏名・メール・組織・題名で検索"><select id="filter"><option value="all">すべて</option><option value="submitted">提出済</option><option value="draft">下書き</option><option value="photo">写真あり</option></select><button id="refresh" class="pill">再読込</button></div><div id="listSummary" class="note" style="margin-top:10px"></div><div class="table-wrap"><table><thead><tr><th>状態</th><th>氏名</th><th>組織</th><th>題名</th><th>メール</th><th>写真</th><th>更新</th><th>確認</th></tr></thead><tbody id="rows"></tbody></table></div></div>
 
     <div class="panel"><button id="logout" class="pill">管理画面からログアウト</button></div>
@@ -57,6 +64,7 @@
     <div class="actions"><button id="closeStoryDialog" class="pill" type="button">閉じる</button></div>
   </div>
 </dialog>
+<dialog id="moveStoryDialog" class="story-dialog"><div class="story-dialog-inner"><h2>総区を変更</h2><p id="moveStoryName"></p><label for="moveSoku">移動先の総区</label><select id="moveSoku"><option>中区</option><option>南総区</option><option>港南総区</option><option>磯子総区</option><option>栄区</option><option>金沢総区</option></select><p id="moveMessage" role="status"></p><div class="actions"><button id="saveMove" class="pill">総区の変更を保存</button><button id="cancelMove" class="pill">閉じる</button></div></div></dialog>
 <div id="previewBar" class="preview hidden">PREVIEW MODE｜投稿内容は本番データへ保存しない安全確認モードです。</div>
 <script src="./zip-store.js"></script>
 <script>
@@ -84,5 +92,6 @@ async function fullBackup(){if(!globalThis.RppZip?.makeZip){msg('#backupMsg','ZI
 $('#go').onclick=login;$('#password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('#saveSettings').onclick=saveSettings;$('#saveMail').onclick=saveMail;$('#testMail').onclick=testMail;$('#refresh').onclick=loadAll;$('#search').oninput=renderRows;$('#filter').onchange=renderRows;$('#fullBackup').onclick=fullBackup;$('#closeStoryDialog').onclick=()=>$('#storyDialog').close();$('#storyDialog').addEventListener('click',e=>{if(e.target===$('#storyDialog'))$('#storyDialog').close()});$('#logout').onclick=async()=>{await fetch('/api/admin/logout',{method:'POST',credentials:'same-origin'});location.reload()};
 (async()=>{try{await loadAll();$('#login').classList.add('hidden');$('#dash').classList.remove('hidden')}catch{}})();
 </script>
+<script src="./admin-final-edition.js"></script>
 </body>
 </html>

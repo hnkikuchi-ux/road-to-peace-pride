@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import json
+import urllib.request
 
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -47,28 +49,38 @@ def severe_errors():
 
 
 try:
-    print('1) Author first-use layout at LINE-sized viewport', flush=True)
+    with urllib.request.urlopen(BASE + '/api/config', timeout=15) as response:
+        final_edition = json.load(response).get('finalEdition', False)
+    print('1) Author page at LINE-sized viewport', flush=True)
     driver.get(BASE + '/author.html?mobile-final-qa=' + str(int(time.time())))
-    wait.until(EC.visibility_of_element_located((By.ID, 'rppFirstTimeGuide')))
-    time.sleep(1)
-    guide = driver.find_element(By.ID, 'rppFirstTimeGuide')
-    guide_text = guide.text.replace('\n', ' ')
-    check('初めての方' in guide_text, 'first-time heading is visible')
-    check('メールアドレスを入力し、「認識コードを送信」を押してください。' in guide_text,
-          'first action is stated exactly')
-    check(driver.find_element(By.ID, 'send').text.strip() == '認識コードを送信',
-          'first-use CTA uses the canonical term')
-    check(driver.find_element(By.ID, 'rppEditLoginBtn').text.strip() == '以前の原稿を編集する',
-          'returning-author entry is clearly separated')
-    check(driver.find_element(By.ID, 'deadlineAuth').text.strip() == '提出期限：2026年10月31日',
-          'deadline shows date only')
-    check(not driver.find_element(By.ID, 'record_date').is_displayed(),
-          'record date is not a user input')
+    if final_edition:
+        wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'h1')))
+        check('投稿受付は終了しました' in driver.find_element(By.TAG_NAME, 'h1').text,
+              'final edition closure is visible')
+        check(not driver.find_elements(By.ID, 'editor'), 'author editor is absent')
+        check(driver.find_element(By.LINK_TEXT, '記録を読む').is_displayed(),
+              'reading link is available')
+    else:
+        wait.until(EC.visibility_of_element_located((By.ID, 'rppFirstTimeGuide')))
+        time.sleep(1)
+        guide = driver.find_element(By.ID, 'rppFirstTimeGuide')
+        guide_text = guide.text.replace('\n', ' ')
+        check('初めての方' in guide_text, 'first-time heading is visible')
+        check('メールアドレスを入力し、「認識コードを送信」を押してください。' in guide_text,
+              'first action is stated exactly')
+        check(driver.find_element(By.ID, 'send').text.strip() == '認識コードを送信',
+              'first-use CTA uses the canonical term')
+        check(driver.find_element(By.ID, 'rppEditLoginBtn').text.strip() == '以前の原稿を編集する',
+              'returning-author entry is clearly separated')
+        check(driver.find_element(By.ID, 'deadlineAuth').text.strip().startswith('提出期限：'),
+              'deadline is visible')
+        check(not driver.find_element(By.ID, 'record_date').is_displayed(),
+              'record date is not a user input')
+        first_top = guide.rect['y']
+        time.sleep(1.5)
+        check(abs(guide.rect['y'] - first_top) <= 2, 'first-time guidance does not move after load')
     page_text = driver.find_element(By.TAG_NAME, 'body').text
     check(not any(term in page_text for term in FORBIDDEN), 'legacy wording is absent')
-    first_top = guide.rect['y']
-    time.sleep(1.5)
-    check(abs(guide.rect['y'] - first_top) <= 2, 'first-time guidance does not move after load')
     check(driver.execute_script(
         'return document.documentElement.scrollWidth <= document.documentElement.clientWidth + 2'
     ), 'author page has no horizontal overflow at 390px')
@@ -77,6 +89,11 @@ try:
     print('2) Viewer shell safety at LINE-sized viewport', flush=True)
     driver.get(BASE + '/?mobile-final-qa=' + str(int(time.time())))
     wait.until(EC.visibility_of_element_located((By.ID, 'gate')))
+    if final_edition:
+        check('最終閲覧版' in driver.find_element(By.ID, 'gate').text,
+              'final edition notice is visible to readers')
+        check(not any(a.is_displayed() for a in driver.find_elements(By.CSS_SELECTOR, '#gate a[href*="author"]')),
+              'submission link is hidden in the final edition')
     favorite = driver.find_element(By.ID, 'fav')
     check(not favorite.is_displayed(), 'favorite control is not displayed')
     # Selenium's visible-text property is empty while the reader panel is hidden

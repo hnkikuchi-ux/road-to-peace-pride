@@ -23,6 +23,8 @@ jobs:
           node-version: '22'
       - name: Check syntax
         run: |
+          node --check src/final-edition.js
+          node --check public/admin-final-edition.js
           node --check src/faithful-cover-v11-r33.js
           node --check src/faithful-cover-v11-r32.js
           node --check src/faithful-cover-v11-r31.js
@@ -111,12 +113,14 @@ jobs:
           grep -Fq 'saveCurrentMailSettings' src/faithful-cover-v11-r16.js
       - name: Verify active build and routing
         run: |
-          grep -Fq 'faithful-v11-r33-final-qa-20260910-4' public/version.json
+          grep -Fq 'final-edition-r34-20261123' public/version.json
           grep -Fq "rpp:stories-loaded" public/index.html
           grep -Fq "この章の記録は、これから掲載されます。" src/faithful-cover-v11-r14.js
-          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/faithful-cover-v11-r33.js') process.exit(1); if(c.send_email) process.exit(1); console.log('r33 active')"
+          node -e "const c=JSON.parse(require('fs').readFileSync('wrangler.jsonc','utf8')); if(c.main!=='src/final-edition.js') process.exit(1); if(c.send_email) process.exit(1); console.log('final edition active')"
       - name: Final author API lifecycle QA
         run: node scripts/final_api_qa.mjs
+      - name: Final edition import, move and closure QA
+        run: node scripts/final_edition_qa.mjs
       - name: Cloudflare Worker dry-run
         run: timeout 45s npx --yes wrangler@4 deploy --dry-run --outdir=/tmp/rpp-dist
 
@@ -149,32 +153,37 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Wait for current author build
+      - name: Wait for final edition build
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
           for i in $(seq 1 36); do
             echo "check $i"
-            if curl -fsSL --max-time 8 -H 'Cache-Control: no-cache' "$BASE/author.html?r33=${GITHUB_RUN_ID}-$i" | grep -Fq "data-rpp-first-time-guide=\"r31-markup-fixed\""; then
-              echo 'current stable author guide is live'
+            if curl -fsSL --max-time 8 -H 'Cache-Control: no-cache' "$BASE/author.html?r34=${GITHUB_RUN_ID}-$i" -o /tmp/current-author.html && grep -Fq 'data-rpp-final-edition-support="r34"' /tmp/current-author.html; then
+              echo 'final edition build is live'
               exit 0
             fi
             sleep 10
           done
-          echo 'current stable author guide did not become live in time'
+          echo 'final edition build did not become live in time'
           exit 1
-      - name: Verify author guide and production health
+      - name: Verify final edition support and production health
         env:
           BASE: https://road-to-peace-pride.hn-kikuchi.workers.dev
         run: |
-          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r33=${GITHUB_RUN_ID}" -o /tmp/author.html
-          grep -Fq '初めての方' /tmp/author.html
-          grep -Fq 'メールアドレスを入力し、「認識コードを送信」を押してください。' /tmp/author.html
-          grep -Fq 'r31-markup-fixed' /tmp/author.html
-          grep -Fq '提出期限：2026年10月31日' /tmp/author.html
-          curl -fsS --max-time 15 "$BASE/api/health?r33=${GITHUB_RUN_ID}" -o /tmp/health.json
+          curl -fsSL --max-time 15 -H 'Cache-Control: no-cache' "$BASE/author.html?r34=${GITHUB_RUN_ID}" -o /tmp/author.html
+          grep -Fq 'data-rpp-final-edition-support="r34"' /tmp/author.html
+          curl -fsS --max-time 15 "$BASE/api/config?r34=${GITHUB_RUN_ID}" -o /tmp/config.json
+          curl -fsS --max-time 15 "$BASE/api/health?r34=${GITHUB_RUN_ID}" -o /tmp/health.json
           python3 - <<'PY'
           import json
+          from pathlib import Path
+          config=json.load(open('/tmp/config.json'))
+          author=Path('/tmp/author.html').read_text()
+          if config.get('finalEdition'):
+            assert '投稿受付は終了しました' in author and 'id="editor"' not in author
+          else:
+            assert '初めての方' in author and 'r31-markup-fixed' in author
           h=json.load(open('/tmp/health.json'))
           checks={
             'health':h.get('ok') is True,

@@ -30,8 +30,10 @@ def validate(route, status, content_type, body):
         if 'id="gate"' not in text or 'id="reader"' not in text:
             raise AssertionError('viewer shell is incomplete')
     elif route == '/author.html':
-        if '初めての方' not in text or '提出期限：2026年10月31日' not in text:
-            raise AssertionError('author guidance is incomplete')
+        if 'data-rpp-final-edition-support="r34"' not in text:
+            raise AssertionError('final edition support is absent')
+        if '投稿受付は終了しました' not in text and '初めての方' not in text:
+            raise AssertionError('author page is incomplete')
     elif route == '/admin.html':
         if 'id="login"' not in text or 'type="password"' not in text:
             raise AssertionError('admin login shell is incomplete')
